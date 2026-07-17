@@ -36,7 +36,7 @@ Optionally logs when an item is equipped or unequipped on an actor. Enable this 
 Optionally logs when Active Effects are added, removed, enabled, or disabled on an actor. Enable this via the **Track Active Effects** setting.
 
 ### 🐉 DnD5e Specific Features
-The module includes deep integration with the generic DnD5e system (5.2+):
+The module includes integration with the DnD5e system (5.2+):
 - **Heroic Inspiration**: Logs when a player gains or spends Inspiration.
 - **Death Saves**: Separately tracks successes and failures during tense death saving throws.
 - **Spell Preparation**: Logs when a spell is prepared or unprepared from a character's spell list.
