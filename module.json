@@ -4,8 +4,8 @@
   "description": "<p>Posts a tiny one-line chat message whenever a token's HP, Temp HP, or Temp Max HP changes.</p>",
   "url": "https://github.com/nschoenwald/niks-tiny-changelogs",
   "manifest": "https://github.com/nschoenwald/niks-tiny-changelogs/releases/latest/download/module.json",
-  "download": "https://github.com/nschoenwald/niks-tiny-changelogs/releases/download/14.8/module.zip",
-  "version": "14.8 Test 1",
+  "download": "https://github.com/nschoenwald/niks-tiny-changelogs/releases/download/14.8.2/module.zip",
+  "version": "14.8.2",
   "authors": [
     {
       "name": "nikolai.sw",

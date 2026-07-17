@@ -1,6 +1,6 @@
 # Changelog
 
-## 14.8
+## 14.8.2
 
 - **Architecture Overhaul**: Completely refactored the module into a **System Adapter Pattern**. 
   - System-specific logic is no longer hardcoded into the main script.
