@@ -9,6 +9,7 @@
   - Settings are dynamically registered so that only the configuration relevant to your active game system is displayed.
 - Added support for the **Mörk Borg** game system (thanks to [@HectorCastelli](https://github.com/HectorCastelli)!), including:
   - **HP** tracking via `system.hp.value`.
+  - **Attributes** tracking (increase/decrease), with a dedicated **Track Attributes** setting.
   - **Omens** tracking (gain/spend), with a dedicated **Track Omens** setting.
   - **Powers** tracking (use/recover), with a dedicated **Track Powers** setting.
   - **Silver** currency tracking via the existing **Track Currency** setting.

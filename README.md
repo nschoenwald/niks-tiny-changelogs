@@ -46,6 +46,7 @@ The module includes deep integration with the generic DnD5e system (5.2+):
 
 ### 💀 Mörk Borg Specific Features
 The module includes integration with the Mörk Borg system:
+- **Attributes**: Logs when a characters increases or decreases an Attribute score.
 - **Omens**: Logs when a character gains or spends Omens.
 - **Powers**: Logs when a character uses or recovers Powers.
 - **Silver**: Tracked automatically via the Currency Tracking setting.
