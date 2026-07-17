@@ -2,6 +2,7 @@
 // Multi-system (auto-detect + configurable paths) with System Adapters.
 
 import SystemManager from "./systems/index.mjs";
+import CustomTrackerConfig from "./custom-tracker-config.mjs";
 
 const MOD_ID = "niks-tiny-changelogs";
 const MAX_NAME_CHARS = 25;
@@ -109,13 +110,16 @@ function buildRecipients(actor) {
   return recipients.length > 0 ? recipients : gmUsers.map(u => u.id);
 }
 
-async function postMonitorMessage(actor, line, cls, kind, isMultiline = false) {
+async function postMonitorMessage(actor, line, cls, kind, isMultiline = false, customColor = null) {
   const whisper = buildRecipients(actor);
   const cssLine = isMultiline ? "tiny-monitor-line tm-multiline" : "tiny-monitor-line";
 
+  const flags = { isMonitorMsg: true, kind, cls };
+  if (customColor) flags.customColor = customColor;
+
   const msgData = {
     content: `<div class="${cssLine}">${line}</div>`,
-    flags: { [MOD_ID]: { isMonitorMsg: true, kind, cls } }
+    flags: { [MOD_ID]: flags }
   };
   if (whisper.length > 0) msgData.whisper = whisper;
   await ChatMessage.create(msgData);
@@ -190,6 +194,24 @@ Hooks.once("init", () => {
   // Delegate system specific settings
   adapter.registerSettings();
 
+  game.settings.registerMenu(MOD_ID, "customTrackedResourcesMenu", {
+    name: "Custom Tracked Values",
+    label: "Configure",
+    hint: "Configure custom actor data paths to track (e.g. Wounds, Fatigue) along with their messages, colors, and icons.",
+    icon: "fas fa-cogs",
+    type: CustomTrackerConfig,
+    restricted: true
+  });
+
+  game.settings.register(MOD_ID, "customTrackedResources", {
+    name: "Custom Tracked Resources",
+    hint: "Internal setting for storing custom tracked resources.",
+    scope: "world",
+    config: false,
+    type: String,
+    default: "[]"
+  });
+
   game.settings.register(MOD_ID, "autoDetectPaths", {
     name: "Auto-Detect HP Paths",
     hint: "If enabled, the module attempts to automatically determine the correct data paths for HP and other attributes based on the active system. Disable this to manually configure paths below.",
@@ -257,7 +279,30 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
   const context = { getWorldBool, willUpdatePath, readRaw, readNumber };
   const systemPayload = adapter.buildPreUpdatePayload(actor, update, context);
 
-  if (!willHP && !willTHP && !willTHPMax && !currencyPayload && !systemPayload) return;
+  // Custom Tracked Values
+  let customPayload = null;
+  const customSetting = game.settings.get(MOD_ID, "customTrackedResources");
+  if (customSetting) {
+    try {
+      const customResources = JSON.parse(customSetting);
+      const changedCustom = [];
+      for (const res of customResources) {
+        if (willUpdatePath(update, res.path)) {
+          changedCustom.push({
+            ...res,
+            oldValue: readNumber(actor, res.path)
+          });
+        }
+      }
+      if (changedCustom.length > 0) {
+        customPayload = changedCustom;
+      }
+    } catch (e) {
+      console.error(`[${MOD_ID}] Failed to parse customTrackedResources:`, e);
+    }
+  }
+
+  if (!willHP && !willTHP && !willTHPMax && !currencyPayload && !systemPayload && !customPayload) return;
 
   options[MOD_ID] = {
     oldHP: willHP ? readNumber(actor, hpPath) : undefined,
@@ -267,7 +312,8 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
       ? Object.fromEntries(currencyPayload.coins.map(p => [p, readNumber(actor, p)]))
       : Object.fromEntries(currencyPayload.coins.map(k => [k, readNumber(actor, `${currencyPayload.basePath}.${k}`)]))
     } : undefined,
-    system: systemPayload
+    system: systemPayload,
+    custom: customPayload
   };
 });
 
@@ -286,6 +332,7 @@ Hooks.on("updateActor", (actor, update, options, userId) => {
     oldTHPMax: undefined,
     currencyOld: {},
     system: {},
+    custom: [],
     timer: null
   };
 
@@ -314,6 +361,18 @@ Hooks.on("updateActor", (actor, update, options, userId) => {
       } else if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
         // Simple shallow merge for nested objects like deathSaves
         pending.system[k] = { ...v, ...pending.system[k] };
+      }
+    }
+  }
+
+  if (payload.custom) {
+    pending.custom = pending.custom || [];
+    for (const c of payload.custom) {
+      const existing = pending.custom.find(x => x.path === c.path);
+      if (!existing) {
+        pending.custom.push(c);
+      } else if (existing.oldValue === undefined) {
+        existing.oldValue = c.oldValue;
       }
     }
   }
@@ -437,6 +496,36 @@ async function processActorUpdate(actor, data) {
   if (Object.keys(data.system).length > 0) {
     const context = { link, postMonitorMessage, readRaw, readNumber, getWorldBool };
     await adapter.processActorUpdate(actor, data.system, context);
+  }
+
+  // Custom Tracked Resources
+  if (data.custom && data.custom.length > 0) {
+    for (const res of data.custom) {
+      if (res.oldValue !== undefined) {
+        const newVal = readNumber(actor, res.path);
+        const delta = newVal - res.oldValue;
+        if (delta !== 0) {
+          const isGain = delta > 0;
+          const sign = isGain ? "+" : "-";
+          const abs = Math.abs(delta);
+          const isSimple = getWorldBool("simpleOutput");
+          
+          let actionMsg = isGain ? res.msgGain : res.msgLoss;
+          actionMsg = actionMsg.replace(/{name}/g, res.name).replace(/{old}/g, res.oldValue).replace(/{new}/g, newVal).replace(/{diff}/g, String(abs));
+          
+          const text = isSimple
+            ? `${res.name}: ${sign} ${abs}`
+            : `${actionMsg} (${res.oldValue} ${sign} ${abs} → ${newVal})`;
+
+          const iconHtml = (res.icon.includes('/') || res.icon.includes('.')) 
+            ? `<img src="${res.icon}" style="width: 14px; height: 14px; border: none; align-self: center;" />`
+            : `<i class="${res.icon}"></i>`;
+
+          const line = `${iconHtml} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
+          await postMonitorMessage(actor, line, "tiny-monitor-custom", "custom", false, res.color);
+        }
+      }
+    }
   }
 }
 
@@ -745,6 +834,12 @@ function applyMonitorStyling(message, html) {
   li.classList.add("tiny-monitor-msg");
   const cls = message.getFlag(MOD_ID, "cls");
   if (cls) li.classList.add(cls);
+  
+  const customColor = message.getFlag(MOD_ID, "customColor");
+  if (customColor) {
+    li.style.backgroundColor = customColor;
+  }
+
   if (getWorldBool("compactMessages", true)) li.classList.add("tm-compact");
 }
 

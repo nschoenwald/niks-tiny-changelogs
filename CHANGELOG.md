@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.9
+
+- Added **Custom Tracked Values** feature. You can now configure any arbitrary actor data path to be tracked (e.g., Wounds, Fatigue, Bennies) complete with customizable gain/loss messages, icons, and message colors. Configure this via the new dedicated submenu in the module settings.
+
 ## 14.8.2
 
 - **Architecture Overhaul**: Completely refactored the module into a **System Adapter Pattern**. 

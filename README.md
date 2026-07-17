@@ -35,6 +35,30 @@ Optionally logs when an item is equipped or unequipped on an actor. Enable this 
 ### ✨ Active Effect Tracking *(disabled by default)*
 Optionally logs when Active Effects are added, removed, enabled, or disabled on an actor. Enable this via the **Track Active Effects** setting.
 
+### 🛠️ Custom Tracked Values
+Have a homebrew mechanic or playing a system that isn't fully supported out of the box? You can now define **Custom Tracked Values** via a dedicated submenu in the module settings.
+
+#### How to Configure Custom Tracked Values
+1. Go to the module settings and click the **Configure** button under the "Custom Tracked Values" setting to open the configuration window.
+2. Click the **+** icon to add a new tracked resource.
+3. Configure the following fields:
+   - **Name**: The display name of the resource (e.g., `Wounds` or `Fatigue`).
+   - **Path**: The exact data path on the actor (e.g., `system.attributes.fatigue.value`).
+   - **Gain Msg**: The message to show when the value increases (e.g., `gained {name}`).
+   - **Loss Msg**: The message to show when the value decreases (e.g., `healed {name}`).
+   - **Icon**: A FontAwesome class name (e.g., `fa-solid fa-droplet`) OR use the file picker button to select an image/svg from your Foundry server!
+   - **Color**: Select a custom background color for the chat message using the color picker.
+4. Click **Save Changes**.
+
+**Formatting Placeholders:**
+Your gain and loss messages can use the following placeholders to make them dynamic:
+- `{name}` - The name you gave the resource.
+- `{old}` - The value before the update.
+- `{new}` - The new value after the update.
+- `{diff}` - The absolute difference between the old and new values.
+
+*Note: The module evaluates changes numerically. If you track a boolean property (true/false), it will be treated as `1` (true) or `0` (false). A change from false to true triggers a gain of +1.*
+
 ### 🐉 DnD5e Specific Features
 The module includes integration with the DnD5e system (5.2+):
 - **Heroic Inspiration**: Logs when a player gains or spends Inspiration.

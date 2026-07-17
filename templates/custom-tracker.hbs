@@ -1,0 +1,53 @@
+<form autocomplete="off">
+  <div class="form-group" style="flex-direction: column; align-items: stretch;">
+    <p class="notes" style="margin-bottom: 15px;">
+      Define custom data paths to track on your actors. Paths must be valid properties on the Actor's data (e.g., <code>system.attributes.fatigue.value</code>).
+      <br><br>
+      <strong>Formatting Placeholders:</strong> You can use <code>{name}</code>, <code>{old}</code>, <code>{new}</code>, and <code>{diff}</code> in your gain/loss messages to make them dynamic. Note that boolean (true/false) properties are treated numerically (1 or 0).
+      <br><br>
+      <strong>Icons:</strong> Type a FontAwesome class (e.g., <code>fa-solid fa-droplet</code>) or click the file picker icon to browse for an image.
+      <br><br>
+      <a href="https://github.com/nschoenwald/niks-tiny-changelogs#%EF%B8%8F-custom-tracked-values" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Read the full documentation and examples on GitHub</a>
+    </p>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+      <thead>
+        <tr>
+          <th>Name (e.g. Wounds)</th>
+          <th>Path (e.g. system.wounds.value)</th>
+          <th>Gain Msg (e.g. gained a wound)</th>
+          <th>Loss Msg (e.g. healed a wound)</th>
+          <th>Icon (FA Class or Path)</th>
+          <th>Color</th>
+          <th><a class="tracker-action" data-action="add" title="Add Resource"><i class="fa-solid fa-plus"></i></a></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each resources}}
+        <tr class="tracker-row" data-index="{{@index}}">
+          <td><input type="text" name="resources.{{@index}}.name" value="{{this.name}}" required /></td>
+          <td><input type="text" name="resources.{{@index}}.path" value="{{this.path}}" required /></td>
+          <td><input type="text" name="resources.{{@index}}.msgGain" value="{{this.msgGain}}" required /></td>
+          <td><input type="text" name="resources.{{@index}}.msgLoss" value="{{this.msgLoss}}" required /></td>
+          <td>
+            <div style="display: flex; gap: 4px;">
+              <input type="text" name="resources.{{@index}}.icon" value="{{this.icon}}" required placeholder="fa-solid fa-star or icon.svg" />
+              <button type="button" class="custom-file-picker" data-type="image" data-target="resources.{{@index}}.icon" title="Browse Files" tabindex="-1" style="flex: 0 0 24px; padding: 0;">
+                <i class="fas fa-file-import fa-fw"></i>
+              </button>
+            </div>
+          </td>
+          <td><input type="color" name="resources.{{@index}}.color" value="{{this.color}}" required /></td>
+          <td style="text-align: center;"><a class="tracker-action" data-action="delete" title="Delete Resource"><i class="fa-solid fa-trash"></i></a></td>
+        </tr>
+        {{else}}
+        <tr><td colspan="7" style="text-align: center; padding: 10px;">No custom tracked resources defined. Click the + icon to add one.</td></tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  <footer class="sheet-footer flexrow" style="margin-top: 15px;">
+    <button type="submit" name="submit">
+      <i class="fas fa-save"></i> Save Changes
+    </button>
+  </footer>
+</form>
