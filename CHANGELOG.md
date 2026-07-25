@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.9.3
+
+- **D&D 5e**: Fixed tracking for spell slots, death saves, and XP payload keys following adapter refactoring (thanks to [@zxlit](https://github.com/zxlit) in [#10](https://github.com/nschoenwald/niks-tiny-changelogs/pull/10)!).
+
 ## 14.9
 
 - Added **Custom Tracked Values** feature. You can now configure any arbitrary actor data path to be tracked complete with customizable gain/loss messages, icons, and message colors. Configure this via the new dedicated submenu in the module settings. This is meant for advanced users.
