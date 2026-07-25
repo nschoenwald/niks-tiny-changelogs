@@ -75,7 +75,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
       const successPath = "system.attributes.death.success";
       const failurePath = "system.attributes.death.failure";
       if (context.willUpdatePath(update, successPath) || context.willUpdatePath(update, failurePath)) {
-        payload.deathSaves = {
+        payload.deathSavesOld = {
           oldSucc: context.readNumber(actor, successPath),
           oldFail: context.readNumber(actor, failurePath)
         };
@@ -88,14 +88,16 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
       const slotPaths = levels.map(lvl => ({ level: lvl, path: `system.spells.spell${lvl}.value` }));
       const changedSlots = slotPaths.filter(s => context.willUpdatePath(update, s.path) && foundry.utils.hasProperty(actor, s.path));
       if (changedSlots.length > 0) {
-        payload.spellSlots = changedSlots.map(s => ({ level: s.level, path: s.path, oldValue: context.readNumber(actor, s.path) }));
+        payload.spellSlotsOld = Object.fromEntries(
+          changedSlots.map(s => [s.level, { level: s.level, path: s.path, oldValue: context.readNumber(actor, s.path) }])
+        );
       }
     }
 
     // XP
     const xpPath = "system.details.xp.value";
     if (context.getWorldBool("trackDnd5eXP", true) && actor.type === "character" && context.willUpdatePath(update, xpPath)) {
-      payload.xp = { oldXP: context.readNumber(actor, xpPath) };
+      payload.oldXP = context.readNumber(actor, xpPath);
     }
 
     return Object.keys(payload).length > 0 ? payload : null;
