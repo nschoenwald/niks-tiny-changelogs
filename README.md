@@ -6,6 +6,33 @@
 
 It keeps track of health changes, currency adjustments, item inventory updates, monitors deleted chat messages, and includes specialized tracking for DnD5e mechanics like inspiration, death saves, and spell usage, as well as Mörk Borg mechanics like Omens, Powers, and Silver.
 
+---
+
+## Compatibility
+
+- **Foundry VTT**: V13 – V14
+- **System**: System-agnostic (Dedicated tracking for DnD5e, PF2e, Shadowdark, Mörk Borg, Demonlord)
+
+---
+
+## Other Modules by Nik
+
+### 🎲 D&D 5e Specific
+* **[Nik's DnD5e Tweaks](https://github.com/nschoenwald/niks-dnd5e-tweaks)** – Consolidated collection of quality-of-life enhancements and combat automation tweaks for DnD5e.
+
+### ⚔️ Combat & Token Tools
+* **[Nik's Token Tags](https://github.com/nschoenwald/niks-token-tags)** – Automatically numbers duplicate combatant NPCs (A, B, C…) with color-coded letter overlays.
+* **[Nik's Shared NPC Initiative](https://github.com/nschoenwald/niks-shared-npc-initiative)** – Groups NPCs of the same type in combat so they share a single initiative roll.
+* **[Nik's Movement Control](https://github.com/nschoenwald/niks-movement-control)** – GM controls to toggle player movement and automatically restrict/allow movement on combat start and end.
+
+### ⚙️ Utilities & System Management
+* **[Nik's Settings Locks](https://github.com/nschoenwald/niks-settings-locks)** – Soft-lock and hard-lock client settings and keybindings across all connected players.
+* **[Nik's Compendium Search Tweaks](https://github.com/nschoenwald/niks-compendium-search-tweaks)** – Configure which compendium packs are included or excluded from native sidebar search.
+* **[Nik's Show & Tell](https://github.com/nschoenwald/niks-show-and-tell)** – Share popout images to chat and paste image files directly into chat messages.
+* **[Nik's Zoom / Pan Options](https://github.com/nschoenwald/niks-zoom-pan-options)** – Touchpad and scroll wheel pan/zoom controls and canvas navigation enhancements.
+
+---
+
 ## Features
 
 ### 🫀 Core Health Tracking
