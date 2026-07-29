@@ -83,7 +83,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
     }
 
     // Spell Slots
-    if (context.getWorldBool("trackDnd5eSpellSlots", true)) {
+    if (context.getWorldBool("trackDnd5eSpellSlots", true) && foundry.utils.hasProperty(update, "system.spells")) {
       const levels = [1, 2, 3, 4, 5, 6, 7, 8, 9];
       const slotPaths = levels.map(lvl => ({ level: lvl, path: `system.spells.spell${lvl}.value` }));
       const changedSlots = slotPaths.filter(s => context.willUpdatePath(update, s.path) && foundry.utils.hasProperty(actor, s.path));

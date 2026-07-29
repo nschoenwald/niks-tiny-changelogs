@@ -25,10 +25,30 @@ const ITEM_DEBOUNCE = new Map();
 // Utilities
 // -------------------------------
 
+let cachedCustomResources = null;
+
+export function clearCustomResourcesCache() {
+  cachedCustomResources = null;
+}
+
+function getCustomResources() {
+  if (cachedCustomResources !== null) return cachedCustomResources;
+  const customSetting = game.settings.get(MOD_ID, "customTrackedResources");
+  if (customSetting) {
+    try {
+      cachedCustomResources = JSON.parse(customSetting);
+    } catch (e) {
+      console.error(`[${MOD_ID}] Failed to parse customTrackedResources:`, e);
+      cachedCustomResources = [];
+    }
+  } else {
+    cachedCustomResources = [];
+  }
+  return cachedCustomResources;
+}
+
 function escapeHTML(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+  return foundry.utils.escapeHTML(String(str ?? ""));
 }
 
 function clipName(name) {
@@ -38,10 +58,9 @@ function clipName(name) {
 }
 
 function getActorLink(actor) {
-  const token = actor.token || actor.getActiveTokens()[0];
-  const rawName = token?.name || actor.name;
+  const rawName = actor?.token?.name ?? actor?.name ?? "";
   const label = clipName(rawName);
-  return `@UUID[${actor.uuid}]{${label}}`;
+  return `@UUID[${actor?.uuid ?? ""}]{${label}}`;
 }
 
 function getWorldBool(key, def = false) {
@@ -110,7 +129,7 @@ function buildRecipients(actor) {
   return recipients.length > 0 ? recipients : gmUsers.map(u => u.id);
 }
 
-async function postMonitorMessage(actor, line, cls, kind, isMultiline = false, customColor = null) {
+function buildMonitorMessageData(actor, line, cls, kind, isMultiline = false, customColor = null) {
   const whisper = buildRecipients(actor);
   const cssLine = isMultiline ? "tiny-monitor-line tm-multiline" : "tiny-monitor-line";
 
@@ -122,6 +141,11 @@ async function postMonitorMessage(actor, line, cls, kind, isMultiline = false, c
     flags: { [MOD_ID]: flags }
   };
   if (whisper.length > 0) msgData.whisper = whisper;
+  return msgData;
+}
+
+async function postMonitorMessage(actor, line, cls, kind, isMultiline = false, customColor = null) {
+  const msgData = buildMonitorMessageData(actor, line, cls, kind, isMultiline, customColor);
   await ChatMessage.create(msgData);
 }
 
@@ -209,7 +233,8 @@ Hooks.once("init", () => {
     scope: "world",
     config: false,
     type: String,
-    default: "[]"
+    default: "[]",
+    onChange: () => clearCustomResourcesCache()
   });
 
   game.settings.register(MOD_ID, "autoDetectPaths", {
@@ -241,6 +266,9 @@ Hooks.once("init", () => {
     hint: "Manual System Data Path for Currency. Use this to override the default detection if needed.",
     scope: "world", config: true, type: String, default: ""
   });
+
+  const renderHook = game.release.generation >= 14 ? "renderChatMessageHTML" : "renderChatMessage";
+  Hooks.on(renderHook, applyMonitorStyling);
 
   console.log(`[${MOD_ID}] Initialized.`);
 });
@@ -281,24 +309,19 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
 
   // Custom Tracked Values
   let customPayload = null;
-  const customSetting = game.settings.get(MOD_ID, "customTrackedResources");
-  if (customSetting) {
-    try {
-      const customResources = JSON.parse(customSetting);
-      const changedCustom = [];
-      for (const res of customResources) {
-        if (willUpdatePath(update, res.path)) {
-          changedCustom.push({
-            ...res,
-            oldValue: readNumber(actor, res.path)
-          });
-        }
+  const customResources = getCustomResources();
+  if (customResources.length > 0) {
+    const changedCustom = [];
+    for (const res of customResources) {
+      if (willUpdatePath(update, res.path)) {
+        changedCustom.push({
+          ...res,
+          oldValue: readNumber(actor, res.path)
+        });
       }
-      if (changedCustom.length > 0) {
-        customPayload = changedCustom;
-      }
-    } catch (e) {
-      console.error(`[${MOD_ID}] Failed to parse customTrackedResources:`, e);
+    }
+    if (changedCustom.length > 0) {
+      customPayload = changedCustom;
     }
   }
 
@@ -388,6 +411,11 @@ Hooks.on("updateActor", (actor, update, options, userId) => {
 async function processActorUpdate(actor, data) {
   const { hpPath, tempPath, tempMaxPath, damageSystem } = resolvePaths(actor);
   const link = getActorLink(actor);
+  const messagesToCreate = [];
+
+  const addMsg = (line, cls, kind, isMultiline = false, customColor = null) => {
+    messagesToCreate.push(buildMonitorMessageData(actor, line, cls, kind, isMultiline, customColor));
+  };
 
   // HP
   if (data.oldHP !== undefined && hpPath) {
@@ -405,7 +433,7 @@ async function processActorUpdate(actor, data) {
         : `${damageSystem ? "Damage" : "HP"}: ${data.oldHP} ${sign} ${abs} → ${newHP}`;
 
       const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
-      await postMonitorMessage(actor, line, cls, "hp");
+      addMsg(line, cls, "hp");
     }
   }
 
@@ -424,7 +452,7 @@ async function processActorUpdate(actor, data) {
         : `Temp: ${data.oldTHP} ${sign} ${abs} → ${newTHP}`;
 
       const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
-      await postMonitorMessage(actor, line, "tiny-monitor-temp", "temp");
+      addMsg(line, "tiny-monitor-temp", "temp");
     }
   }
 
@@ -443,7 +471,7 @@ async function processActorUpdate(actor, data) {
         : `Temp Max: ${data.oldTHPMax} ${sign} ${abs} → ${newTHPMax}`;
 
       const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
-      await postMonitorMessage(actor, line, "tiny-monitor-tempmax", "tempmax");
+      addMsg(line, "tiny-monitor-tempmax", "tempmax");
     }
   }
 
@@ -466,7 +494,7 @@ async function processActorUpdate(actor, data) {
 
         const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
         const cls = delta > 0 ? "tiny-monitor-currency-gain" : "tiny-monitor-currency-loss";
-        await postMonitorMessage(actor, line, cls, "currency");
+        addMsg(line, cls, "currency");
       }
     }
   } else if (data.currencyBase) {
@@ -487,14 +515,17 @@ async function processActorUpdate(actor, data) {
 
         const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
         const cls = delta > 0 ? "tiny-monitor-currency-gain" : "tiny-monitor-currency-loss";
-        await postMonitorMessage(actor, line, cls, "currency");
+        addMsg(line, cls, "currency");
       }
     }
   }
 
   // System Specific Processing
   if (Object.keys(data.system).length > 0) {
-    const context = { link, postMonitorMessage, readRaw, readNumber, getWorldBool };
+    const postAdapterMsg = async (act, line, cls, kind, isMultiline = false, customColor = null) => {
+      messagesToCreate.push(buildMonitorMessageData(act, line, cls, kind, isMultiline, customColor));
+    };
+    const context = { link, postMonitorMessage: postAdapterMsg, readRaw, readNumber, getWorldBool };
     await adapter.processActorUpdate(actor, data.system, context);
   }
 
@@ -522,9 +553,17 @@ async function processActorUpdate(actor, data) {
             : `<i class="${res.icon}"></i>`;
 
           const line = `${iconHtml} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
-          await postMonitorMessage(actor, line, "tiny-monitor-custom", "custom", false, res.color);
+          addMsg(line, "tiny-monitor-custom", "custom", false, res.color);
         }
       }
+    }
+  }
+
+  if (messagesToCreate.length > 0) {
+    if (messagesToCreate.length === 1) {
+      await ChatMessage.create(messagesToCreate[0]);
+    } else {
+      await ChatMessage.createDocuments(messagesToCreate);
     }
   }
 }
@@ -750,17 +789,10 @@ Hooks.on("deleteItem", async (item, options, userId) => {
 // -------------------------------
 
 function resolveEffectActor(effect) {
+  if (effect.actor instanceof Actor) return effect.actor;
   if (effect.parent instanceof Actor) return effect.parent;
-  if (effect.parent?.parent instanceof Actor) return effect.parent.parent;
   if (effect.parent?.actor instanceof Actor) return effect.parent.actor;
-  if (effect.parent) {
-    const itemId = effect.parent.id ?? effect.parent._id;
-    if (itemId) {
-      for (const actor of game.actors) {
-        if (actor.items.get(itemId)) return actor;
-      }
-    }
-  }
+  if (effect.parent?.parent instanceof Actor) return effect.parent.parent;
   return null;
 }
 
@@ -842,9 +874,6 @@ function applyMonitorStyling(message, html) {
 
   if (getWorldBool("compactMessages", true)) li.classList.add("tm-compact");
 }
-
-Hooks.on("renderChatMessage", applyMonitorStyling);      // V13 compat
-Hooks.on("renderChatMessageHTML", applyMonitorStyling);  // V14+
 
 // -------------------------------
 // Chat Message Deletions

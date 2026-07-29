@@ -1,5 +1,16 @@
 # Changelog
 
+## 14.10.0
+
+- **Performance Optimizations**:
+  - **Batch Message Creation**: Combined multi-attribute change notifications (e.g. HP, currency, spell slots) into single document batch operations (`ChatMessage.createDocuments`), reducing network and database overhead.
+  - **Custom Tracked Resources Cache**: Cached parsed custom tracked resources in memory, eliminating redundant JSON parsing on every actor update.
+  - **String Escaping & DOM Optimization**: Replaced DOM element creation in string escaping with native `foundry.utils.escapeHTML`.
+  - **Actor Name Resolution**: Streamlined actor link generation to avoid unnecessary spatial canvas token queries.
+  - **Active Effect Lookup**: Optimized active effect parent resolution to constant time ($O(1)$) using direct document properties instead of searching world actors.
+  - **System Adapter Early Guards**: Added property existence guards in system adapters (such as D&D 5e spell slot tracking) to skip unnecessary path evaluations.
+  - **CSS Containment & Render Hooks**: Added CSS layout containment (`contain: content`) to isolate chat message rendering and optimized render hook registration for Foundry V13/V14.
+
 ## 14.9.3
 
 - **D&D 5e**: Fixed tracking for spell slots, death saves, and XP payload keys following adapter refactoring (thanks to [@zxlit](https://github.com/zxlit) in [#10](https://github.com/nschoenwald/niks-tiny-changelogs/pull/10)!).

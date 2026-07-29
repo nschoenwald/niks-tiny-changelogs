@@ -1,3 +1,5 @@
+import { clearCustomResourcesCache } from "./niks-tiny-changelogs.mjs";
+
 export default class CustomTrackerConfig extends FormApplication {
   constructor(...args) {
     super(...args);
@@ -80,5 +82,6 @@ export default class CustomTrackerConfig extends FormApplication {
     const expanded = foundry.utils.expandObject(formData);
     const resources = expanded.resources ? Object.values(expanded.resources) : [];
     await game.settings.set("niks-tiny-changelogs", "customTrackedResources", JSON.stringify(resources));
+    clearCustomResourcesCache();
   }
 }
