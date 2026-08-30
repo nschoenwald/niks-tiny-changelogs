@@ -26,9 +26,14 @@ const ITEM_DEBOUNCE = new Map();
 // -------------------------------
 
 let cachedCustomResources = null;
+let cachedNameBlacklist = null;
 
 export function clearCustomResourcesCache() {
   cachedCustomResources = null;
+}
+
+export function clearNameBlacklistCache() {
+  cachedNameBlacklist = null;
 }
 
 function getCustomResources() {
@@ -45,6 +50,70 @@ function getCustomResources() {
     cachedCustomResources = [];
   }
   return cachedCustomResources;
+}
+
+function getNameBlacklist() {
+  if (cachedNameBlacklist !== null) return cachedNameBlacklist;
+  let raw = "";
+  try {
+    raw = game.settings.get(MOD_ID, "nameBlacklist") ?? "";
+  } catch {
+    raw = "";
+  }
+  if (!raw || typeof raw !== "string" || !raw.trim()) {
+    cachedNameBlacklist = [];
+    return cachedNameBlacklist;
+  }
+
+  const entries = raw
+    .split(/[\n,]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
+  cachedNameBlacklist = entries.map(entry => {
+    // Regex pattern: /.../flags
+    if (entry.startsWith("/") && entry.lastIndexOf("/") > 0) {
+      const lastSlash = entry.lastIndexOf("/");
+      const pattern = entry.slice(1, lastSlash);
+      const flags = entry.slice(lastSlash + 1);
+      try {
+        const re = new RegExp(pattern, flags);
+        return (name) => re.test(name);
+      } catch (e) {
+        console.warn(`[${MOD_ID}] Invalid regex in name blacklist: "${entry}"`, e);
+      }
+    }
+
+    // Wildcard pattern: contains * or ?
+    if (entry.includes("*") || entry.includes("?")) {
+      const escaped = entry
+        .replace(/[-\/\\^$+.()|[\]{}]/g, "\\$&")
+        .replace(/\*/g, ".*")
+        .replace(/\?/g, ".");
+      const re = new RegExp(`^${escaped}$`, "i");
+      return (name) => re.test(name);
+    }
+
+    // Exact string match (case-insensitive)
+    const lower = entry.toLowerCase();
+    return (name) => String(name ?? "").trim().toLowerCase() === lower;
+  });
+
+  return cachedNameBlacklist;
+}
+
+export function isNameBlacklisted(name) {
+  if (!name) return false;
+  const matchers = getNameBlacklist();
+  if (matchers.length === 0) return false;
+  const str = String(name).trim();
+  return matchers.some(matcher => {
+    try {
+      return matcher(str);
+    } catch {
+      return false;
+    }
+  });
 }
 
 function escapeHTML(str) {
@@ -221,6 +290,13 @@ Hooks.once("init", () => {
     scope: "world", config: true, type: Boolean, default: false
   });
 
+  game.settings.register(MOD_ID, "nameBlacklist", {
+    name: "Ignored Names / Blacklist",
+    hint: "Comma-separated list of item and Active Effect names to ignore from changelogs (case-insensitive, e.g. 'Aura of Protection, Torch'). Supports wildcards (*) and regex (/pattern/).",
+    scope: "world", config: true, type: String, default: "",
+    onChange: () => clearNameBlacklistCache()
+  });
+
   // Delegate system specific settings
   adapter.registerSettings();
 
@@ -310,7 +386,7 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
   }
 
   // System Specific
-  const context = { getWorldBool, willUpdatePath, readRaw, readNumber };
+  const context = { getWorldBool, willUpdatePath, readRaw, readNumber, isNameBlacklisted };
   const systemPayload = adapter.buildPreUpdatePayload(actor, update, context);
 
   // Custom Tracked Values
@@ -319,7 +395,7 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
   if (customResources.length > 0) {
     const changedCustom = [];
     for (const res of customResources) {
-      if (willUpdatePath(update, res.path)) {
+      if (!isNameBlacklisted(res.name) && willUpdatePath(update, res.path)) {
         changedCustom.push({
           ...res,
           oldValue: readNumber(actor, res.path)
@@ -531,13 +607,14 @@ async function processActorUpdate(actor, data) {
     const postAdapterMsg = async (act, line, cls, kind, isMultiline = false, customColor = null) => {
       messagesToCreate.push(buildMonitorMessageData(act, line, cls, kind, isMultiline, customColor));
     };
-    const context = { link, postMonitorMessage: postAdapterMsg, readRaw, readNumber, getWorldBool };
+    const context = { link, postMonitorMessage: postAdapterMsg, readRaw, readNumber, getWorldBool, isNameBlacklisted };
     await adapter.processActorUpdate(actor, data.system, context);
   }
 
   // Custom Tracked Resources
   if (data.custom && data.custom.length > 0) {
     for (const res of data.custom) {
+      if (isNameBlacklisted(res.name)) continue;
       if (res.oldValue !== undefined) {
         const newVal = readNumber(actor, res.path);
         const delta = newVal - res.oldValue;
@@ -581,6 +658,7 @@ async function processActorUpdate(actor, data) {
 Hooks.on("createItem", async (item, options, userId) => {
   if (userId !== game.userId || !getWorldBool("trackItemChanges")) return;
   if (!(item.parent instanceof Actor)) return;
+  if (isNameBlacklisted(item.name)) return;
 
   const qty = readNumber(item, "system.quantity") || 1;
   const link = getActorLink(item.parent);
@@ -607,7 +685,7 @@ Hooks.on("preUpdateItem", (item, change, options, userId) => {
   const willUses = trackItems && willUpdatePath(change, "system.uses.spent") && readNumber(item, "system.uses.max") > 0;
   const willEquip = getWorldBool("trackEquipUnequip") && willUpdatePath(change, "system.equipped");
 
-  const context = { getWorldBool, willUpdatePath, readRaw, readNumber };
+  const context = { getWorldBool, willUpdatePath, readRaw, readNumber, isNameBlacklisted };
   let systemStash = null;
   if (adapter && adapter.buildPreUpdateItemPayload) {
     systemStash = adapter.buildPreUpdateItemPayload(item, change, context);
@@ -656,7 +734,7 @@ Hooks.on("updateItem", (item, change, options, userId) => {
     pending.timer = setTimeout(async () => {
       let handled = false;
       if (adapter) {
-         const context = { getWorldBool, postMonitorMessage, readRaw, getActorLink, escapeHTML, oldItemData: pending };
+         const context = { getWorldBool, postMonitorMessage, readRaw, getActorLink, escapeHTML, oldItemData: pending, isNameBlacklisted };
          handled = await adapter.processItemChange(item, "update", context);
       }
       
@@ -673,11 +751,12 @@ Hooks.on("updateItem", (item, change, options, userId) => {
 async function processItemUpdate(item, data) {
   if (!item.parent) return;
 
+  const currentBlacklisted = isNameBlacklisted(item.name);
   const link = getActorLink(item.parent);
   const icon = `<i class="fa-solid fa-backpack"></i>`;
 
   // Quantity
-  if (data.oldQty !== undefined) {
+  if (data.oldQty !== undefined && !currentBlacklisted) {
     const oldQty = data.oldQty;
     const newQty = readNumber(item, "system.quantity") || 0;
 
@@ -707,7 +786,7 @@ async function processItemUpdate(item, data) {
   }
 
   // Limited Uses
-  if (data.oldUses !== undefined) {
+  if (data.oldUses !== undefined && !currentBlacklisted) {
     const max = readNumber(item, "system.uses.max");
     const newUses = max - readNumber(item, "system.uses.spent");
     const delta = newUses - data.oldUses;
@@ -729,12 +808,14 @@ async function processItemUpdate(item, data) {
 
   // Rename
   if (data.oldName !== undefined && item.name !== data.oldName) {
-    const line = `${icon} ${link} ${data.oldName} → ${item.name}`;
-    await postMonitorMessage(item.parent, line, "tiny-monitor-item", "item", true);
+    if (!isNameBlacklisted(data.oldName) && !currentBlacklisted) {
+      const line = `${icon} ${link} ${data.oldName} → ${item.name}`;
+      await postMonitorMessage(item.parent, line, "tiny-monitor-item", "item", true);
+    }
   }
 
   // Equip / Unequip
-  if (data.oldEquip !== undefined) {
+  if (data.oldEquip !== undefined && !currentBlacklisted) {
     const newEquip = Boolean(readRaw(item, "system.equipped"));
     if (newEquip !== data.oldEquip) {
       const safeItemName = escapeHTML(item.name);
@@ -754,6 +835,7 @@ async function processItemUpdate(item, data) {
 Hooks.on("preDeleteItem", (item, options, userId) => {
   if (!getWorldBool("trackItemChanges")) return;
   if (!(item.parent instanceof Actor)) return;
+  if (isNameBlacklisted(item.name)) return;
 
   ITEM_DELETE_STASH.set(item, {
     link: getActorLink(item.parent),
@@ -769,6 +851,7 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   const payload = ITEM_DELETE_STASH.get(item);
   ITEM_DELETE_STASH.delete(item);
   if (!payload) return;
+  if (isNameBlacklisted(payload.name)) return;
 
   const { hasQty, qty, link, whisper, name } = payload;
   const oldQty = Number(qty ?? 0);
@@ -804,11 +887,13 @@ function resolveEffectActor(effect) {
 
 Hooks.on("createActiveEffect", async (effect, options, userId) => {
   if (userId !== game.userId || !getWorldBool("trackActiveEffects")) return;
+  const effName = effect.name || effect.label || "Unknown Effect";
+  if (isNameBlacklisted(effName)) return;
   const actor = resolveEffectActor(effect);
   if (!actor) return;
 
   const link = getActorLink(actor);
-  const safeEffName = escapeHTML(effect.name || "Unknown Effect");
+  const safeEffName = escapeHTML(effName);
   const icon = `<i class="fa-solid fa-sparkles"></i>`;
   const line = `${icon} ${link} gained effect: ${safeEffName}`;
   await postMonitorMessage(actor, line, "tiny-monitor-effect-add", "effect", true);
@@ -816,13 +901,15 @@ Hooks.on("createActiveEffect", async (effect, options, userId) => {
 
 Hooks.on("preDeleteActiveEffect", (effect, options, userId) => {
   if (!getWorldBool("trackActiveEffects")) return;
+  const effName = effect.name || effect.label || "Unknown Effect";
+  if (isNameBlacklisted(effName)) return;
   const actor = resolveEffectActor(effect);
   if (!actor) return;
 
   EFFECT_DELETE_STASH.set(effect, {
     link: getActorLink(actor),
     whisper: buildRecipients(actor),
-    name: effect.name || "Unknown Effect",
+    name: effName,
     actor
   });
 });
@@ -832,6 +919,7 @@ Hooks.on("deleteActiveEffect", async (effect, options, userId) => {
   const payload = EFFECT_DELETE_STASH.get(effect);
   EFFECT_DELETE_STASH.delete(effect);
   if (!payload) return;
+  if (isNameBlacklisted(payload.name)) return;
 
   const safeEffName = escapeHTML(payload.name);
   const icon = `<i class="fa-solid fa-sparkles"></i>`;
@@ -848,13 +936,15 @@ Hooks.on("deleteActiveEffect", async (effect, options, userId) => {
 Hooks.on("updateActiveEffect", async (effect, change, options, userId) => {
   if (userId !== game.userId || !getWorldBool("trackActiveEffects")) return;
   if (!foundry.utils.hasProperty(change, "disabled")) return;
+  const effName = effect.name || effect.label || "Unknown Effect";
+  if (isNameBlacklisted(effName)) return;
 
   const actor = resolveEffectActor(effect);
   if (!actor) return;
 
   const newDisabled = Boolean(effect.disabled);
   const link = getActorLink(actor);
-  const safeEffName = escapeHTML(effect.name || "Unknown Effect");
+  const safeEffName = escapeHTML(effName);
   const icon = `<i class="fa-solid fa-sparkles"></i>`;
   const action = newDisabled ? "disabled" : "enabled";
   const cls = newDisabled ? "tiny-monitor-effect-disable" : "tiny-monitor-effect-enable";

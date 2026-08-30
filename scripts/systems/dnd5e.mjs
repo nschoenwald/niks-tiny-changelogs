@@ -214,6 +214,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
   buildPreUpdateItemPayload(item, update, context) {
     const payload = {};
     const willPrep = context.getWorldBool("trackDnd5eSpellPrep") && item.type === "spell" && 
+      (!context.isNameBlacklisted || !context.isNameBlacklisted(item.name)) &&
       (context.willUpdatePath(update, "system.prepared") || context.willUpdatePath(update, "system.preparation.prepared") || context.willUpdatePath(update, "system.method") || context.willUpdatePath(update, "system.preparation.mode"));
 
     const willHD = context.getWorldBool("trackDnd5eHitDice", true) && item.type === "class" &&
@@ -232,7 +233,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
   }
 
   async processItemChange(item, action, context) {
-    const { getWorldBool, postMonitorMessage, readRaw, getActorLink, escapeHTML, oldItemData } = context;
+    const { getWorldBool, postMonitorMessage, readRaw, getActorLink, escapeHTML, oldItemData, isNameBlacklisted } = context;
     if (action !== "update" || !oldItemData?.system) return false;
 
     // Check hit dice changes
@@ -259,6 +260,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
 
     // Spell Preparation
     if (item.type === "spell" && getWorldBool("trackDnd5eSpellPrep", true) && oldItemData.system.oldPrep !== undefined) {
+      if (isNameBlacklisted && isNameBlacklisted(item.name)) return true;
       const isPreparedBefore = oldItemData.system.oldPrep;
       // Because we evaluate this *after* the update, we can just check the new state
       const isPreparedAfter = this.dnd5eIsSpellPreparedLike(item, readRaw);

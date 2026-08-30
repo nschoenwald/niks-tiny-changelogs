@@ -88,6 +88,10 @@ The module includes integration with the Mörk Borg system:
 You can customize the module's behavior in the settings to perfectly match your table's needs:
 
 - **Simplified Output**: Toggle between full transition logs (e.g., `10 + 5 → 15`) or simplified math logs (`+5`).
+- **Ignored Names / Blacklist**: A flexible, free-text blacklist to prevent specific items, Active Effects, or custom resources from being reported (e.g., spammy paladin auras or utility items).
+  - Supports comma-separated or newline-separated names (case-insensitive, e.g. `Aura of Protection, Torch`).
+  - Supports wildcards (e.g. `Aura of *` to catch *Aura of Protection*, *Aura of Courage*, etc., or `*Aura*`).
+  - Supports regular expressions (e.g. `/^aura of/i` or `/(torch|candle|lantern)/i`).
 - **NPC Message Audience**: Control who sees changes to NPC stats. Options include:
   - *GM Only* (Private)
   - *GM + Owners* (Default)

@@ -1,5 +1,13 @@
 # Changelog
 
+## 14.12.0
+
+- Added **Ignored Names / Blacklist** world setting to filter out specific items, Active Effects, and custom resources from being reported in changelogs.
+  - Supports comma-separated or newline-separated lists of names (case-insensitive, e.g. `Aura of Protection, Torch`).
+  - Supports wildcards (`*` and `?`, e.g. `Aura of *` to ignore all paladin auras).
+  - Supports regular expressions (e.g. `/^aura of/i`).
+  - Evaluates changes across item additions, deletions, updates, equip/unequip, Active Effects, D&D 5e spell preparation, and custom tracked resources.
+
 ## 14.11.0
 
 - Added **Message Visibility** world setting to control who sees changelog messages globally: **GM only** (whispered exclusively to GMs), **Player and GM** (public message, default), or **Player only** (whispered to all non-GM players; GMs will not see it in their chat). The existing *Whisper Target* and *NPC Message Audience* settings now act as refinements that only apply when Visibility is set to *Player and GM*.
