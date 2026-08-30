@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.11.0
+
+- Added **Message Visibility** world setting to control who sees changelog messages globally: **GM only** (whispered exclusively to GMs), **Player and GM** (public message, default), or **Player only** (whispered to all non-GM players; GMs will not see it in their chat). The existing *Whisper Target* and *NPC Message Audience* settings now act as refinements that only apply when Visibility is set to *Player and GM*.
+
 ## 14.10.0
 
 - **Performance Optimizations**:

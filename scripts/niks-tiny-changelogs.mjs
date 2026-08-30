@@ -101,32 +101,38 @@ function willUpdatePath(update, path) {
 
 function buildRecipients(actor) {
   const gmUsers = game.users.filter(u => u.isGM);
+  const nonGmUsers = game.users.filter(u => !u.isGM);
   const owners = actor.testUserPermission
     ? game.users.filter(u => actor.testUserPermission(u, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER))
     : [];
 
   const uniq = (...lists) => [...new Map(lists.flat().map(u => [u.id, u])).values()];
 
-  // NPC-specific audience
+  const visibility = game.settings.get(MOD_ID, "messageVisibility") ?? "gm-player";
+
+  if (visibility === "gm") {
+    // GM only: whispered exclusively to GMs
+    return gmUsers.map(u => u.id);
+  }
+
+  if (visibility === "player") {
+    // Player only: whispered to all non-GM players; GMs won't see it
+    return nonGmUsers.length > 0 ? nonGmUsers.map(u => u.id) : gmUsers.map(u => u.id);
+  }
+
+  // "gm-player" (Player and GM): public message visible to everyone.
+  // For NPCs, the NPC Message Audience setting further refines the audience.
   if (actor.type === "npc") {
     const npcMode = game.settings.get(MOD_ID, "npcAudience") ?? "gm-owners";
     if (npcMode === "gm") return gmUsers.map(u => u.id);
-    if (npcMode === "gm-players") return uniq(gmUsers, game.users.filter(u => !u.isGM)).map(u => u.id);
+    if (npcMode === "gm-players") return uniq(gmUsers, nonGmUsers).map(u => u.id);
+    // gm-owners: GM + owning players
+    const recipients = uniq(gmUsers, owners).map(u => u.id);
+    return recipients.length > 0 ? recipients : gmUsers.map(u => u.id);
   }
 
-  // General whisper target setting
-  const target = game.settings.get(MOD_ID, "whisperTarget") ?? "gm-player";
-
-  if (target === "everyone") return [];  // empty array → public message
-  if (target === "gm") return gmUsers.map(u => u.id);
-  if (target === "player") {
-    const playerOwners = owners.filter(u => !u.isGM);
-    return playerOwners.length > 0 ? playerOwners.map(u => u.id) : gmUsers.map(u => u.id);
-  }
-
-  // Default: "gm-player" — GM + owners
-  const recipients = uniq(gmUsers, owners).map(u => u.id);
-  return recipients.length > 0 ? recipients : gmUsers.map(u => u.id);
+  // PC actors in "gm-player" mode: public message (empty whisper = everyone sees it)
+  return [];
 }
 
 function buildMonitorMessageData(actor, line, cls, kind, isMultiline = false, customColor = null) {
@@ -169,17 +175,17 @@ Hooks.once("init", () => {
     scope: "world", config: true, type: Boolean, default: false
   });
 
-  game.settings.register(MOD_ID, "whisperTarget", {
-    name: "Whisper Target",
-    hint: "Determines who receives the changelog whisper messages for PC actors.",
+  game.settings.register(MOD_ID, "messageVisibility", {
+    name: "Message Visibility",
+    hint: "Controls who can see changelog messages. 'GM only' whispers exclusively to GMs. 'Player and GM' posts a public message visible to everyone (default). 'Player only' whispers to all non-GM players — GMs will not see it in their chat.",
     scope: "world", config: true, type: String,
-    choices: { "gm-player": "GM + Player (default)", "player": "Player only", "gm": "GM only", "everyone": "Everyone" },
+    choices: { "gm": "GM only", "gm-player": "Player and GM (default)", "player": "Player only" },
     default: "gm-player"
   });
 
   game.settings.register(MOD_ID, "npcAudience", {
     name: "NPC Message Audience",
-    hint: "Determines which users receive chat messages for changes to NPC actors.",
+    hint: "When Message Visibility is set to 'Player and GM', this further refines who receives NPC changelog messages. Has no effect when Visibility is set to 'GM only' or 'Player only'.",
     scope: "world", config: true, type: String,
     choices: { "gm": "GM only", "gm-players": "GM + all players", "gm-owners": "GM + owners (default)" },
     default: "gm-owners"
