@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.12.1
+
+- **Message Visibility Fix**: Fixed an issue where player clients would still see changelog messages in their chat log for actions they performed even when **Message Visibility** was set to **GM only** (caused by Foundry's default behavior of showing outgoing whispers to their author). Unauthorized whisper recipients are now fully suppressed from chat rendering.
+
 ## 14.12.0
 
 - Added **Ignored Names / Blacklist** world setting to filter out specific items, Active Effects, and custom resources from being reported in changelogs.

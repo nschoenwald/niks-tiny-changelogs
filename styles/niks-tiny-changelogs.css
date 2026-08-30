@@ -318,6 +318,12 @@ li.chat-message.tiny-monitor-msg.tm-compact:hover .message-content .tiny-monitor
   text-overflow: unset;
 }
 
+/* Hidden Messages (e.g. GM-only whispers hidden from player authors) */
+li.chat-message.tiny-monitor-msg.tm-hidden,
+li.chat-message.tm-hidden {
+  display: none !important;
+}
+
 /* Accessibility Support */
 @media (prefers-contrast: more) {
   li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line {

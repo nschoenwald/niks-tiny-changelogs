@@ -92,7 +92,11 @@ You can customize the module's behavior in the settings to perfectly match your 
   - Supports comma-separated or newline-separated names (case-insensitive, e.g. `Aura of Protection, Torch`).
   - Supports wildcards (e.g. `Aura of *` to catch *Aura of Protection*, *Aura of Courage*, etc., or `*Aura*`).
   - Supports regular expressions (e.g. `/^aura of/i` or `/(torch|candle|lantern)/i`).
-- **NPC Message Audience**: Control who sees changes to NPC stats. Options include:
+- **Message Visibility**: Control who can see changelog messages globally:
+  - *Player and GM* (Default public messages)
+  - *GM only* (Private whispers exclusively to GMs; player clients will not see logs even for actions they perform)
+  - *Player only* (Whispered exclusively to non-GM players; hidden from GMs)
+- **NPC Message Audience**: When Message Visibility is set to 'Player and GM', this further refines who receives NPC changelog messages:
   - *GM Only* (Private)
   - *GM + Owners* (Default)
   - *GM + All Players* (Public)

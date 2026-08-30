@@ -952,12 +952,34 @@ Hooks.on("updateActiveEffect", async (effect, change, options, userId) => {
   await postMonitorMessage(actor, line, cls, "effect", true);
 });
 
+function shouldHideMessage(message) {
+  if (!message.getFlag(MOD_ID, "isMonitorMsg")) return false;
+  const whisper = message.whisper ?? [];
+
+  if (whisper.length > 0 && !whisper.includes(game.user.id)) {
+    // Non-GMs who are not in the whisper list should never see the message (e.g. GM only visibility)
+    if (!game.user.isGM) return true;
+
+    // GMs shouldn't see it if visibility is strictly "Player only"
+    const visibility = game.settings.get(MOD_ID, "messageVisibility") ?? "gm-player";
+    if (visibility === "player") return true;
+  }
+
+  return false;
+}
+
 function applyMonitorStyling(message, html) {
   if (!message.getFlag(MOD_ID, "isMonitorMsg")) return;
   const li = html instanceof HTMLElement
     ? html.closest(".chat-message") ?? html
     : (html[0]?.closest?.(".chat-message") ?? html);
   if (!li?.classList) return;
+
+  if (shouldHideMessage(message)) {
+    li.classList.add("tm-hidden");
+    li.style.setProperty("display", "none", "important");
+    return;
+  }
 
   li.classList.add("tiny-monitor-msg");
   const cls = message.getFlag(MOD_ID, "cls");
