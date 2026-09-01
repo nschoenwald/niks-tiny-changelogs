@@ -3,6 +3,7 @@
 
 import SystemManager from "./systems/index.mjs";
 import CustomTrackerConfig from "./custom-tracker-config.mjs";
+import SettingsImportExportApp from "./settings-import-export.mjs";
 
 const MOD_ID = "niks-tiny-changelogs";
 const MAX_NAME_CHARS = 25;
@@ -317,6 +318,15 @@ Hooks.once("init", () => {
     type: String,
     default: "[]",
     onChange: () => clearCustomResourcesCache()
+  });
+
+  game.settings.registerMenu(MOD_ID, "importExportMenu", {
+    name: "Import / Export Settings",
+    label: "Import / Export",
+    hint: "Export all module settings and custom tracker configurations to a JSON file, or import settings from a previously exported file.",
+    icon: "fas fa-file-import",
+    type: SettingsImportExportApp,
+    restricted: true
   });
 
   game.settings.register(MOD_ID, "autoDetectPaths", {

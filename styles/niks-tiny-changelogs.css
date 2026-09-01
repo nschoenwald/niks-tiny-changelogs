@@ -330,3 +330,136 @@ li.chat-message.tm-hidden {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
   }
 }
+
+/* -------------------------------
+   Settings Import / Export App
+   ------------------------------- */
+.niks-tiny-changelogs-import-export .window-content {
+  padding: 12px 16px 16px;
+}
+
+.niks-tiny-changelogs-import-export .import-export-section {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border-light-2, rgba(0, 0, 0, 0.15));
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.niks-tiny-changelogs-import-export .section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.niks-tiny-changelogs-import-export .section-header h3 {
+  margin: 0;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.niks-tiny-changelogs-import-export .section-header i {
+  color: var(--color-text-secondary, #777);
+  font-size: 14px;
+}
+
+.niks-tiny-changelogs-import-export .section-desc {
+  font-size: 12px;
+  color: var(--color-text-subtle, #555);
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+}
+
+.niks-tiny-changelogs-import-export .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.niks-tiny-changelogs-import-export .stat-pill {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--color-border-light-2, rgba(0, 0, 0, 0.1));
+  border-radius: 4px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.niks-tiny-changelogs-import-export .stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-subtle, #777);
+  font-weight: 600;
+}
+
+.niks-tiny-changelogs-import-export .stat-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary, #111);
+}
+
+.niks-tiny-changelogs-import-export .tracker-mode-group {
+  margin-bottom: 12px;
+}
+
+.niks-tiny-changelogs-import-export .tracker-mode-group .mode-title {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.niks-tiny-changelogs-import-export .mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.niks-tiny-changelogs-import-export .radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.niks-tiny-changelogs-import-export .radio-label input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.niks-tiny-changelogs-import-export .action-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.niks-tiny-changelogs-import-export .btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.niks-tiny-changelogs-import-export .section-divider {
+  border: none;
+  border-top: 1px solid var(--color-border-light-2, rgba(0, 0, 0, 0.15));
+  margin: 12px 0;
+}
+
+/* Custom Tracker Footer Buttons */
+.niks-tiny-changelogs-config .tracker-footer-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+}

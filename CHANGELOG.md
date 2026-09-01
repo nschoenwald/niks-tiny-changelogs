@@ -1,5 +1,14 @@
 # Changelog
 
+## 14.13.0
+
+- Added **Settings Import / Export** functionality:
+  - Export all module settings and custom tracked resource configurations into a clean, portable JSON file for easy backup or transfer across worlds.
+  - Dedicated **Import / Export Settings** configuration menu in Foundry's Module Settings tab.
+  - Supports importing settings with a preview confirmation dialog detailing found module settings and custom tracker configurations.
+  - Flexible **Custom Trackers Handling** during import: choose to **Replace** all existing custom trackers or **Merge** them with existing definitions (avoiding duplicate paths).
+  - Added dedicated **Export Trackers** and **Import Trackers** actions directly inside the **Custom Tracked Values** dialog for fast, localized management of custom tracker presets.
+
 ## 14.12.1
 
 - **Message Visibility Fix**: Fixed an issue where player clients would still see changelog messages in their chat log for actions they performed even when **Message Visibility** was set to **GM only** (caused by Foundry's default behavior of showing outgoing whispers to their author). Unauthorized whisper recipients are now fully suppressed from chat rendering.

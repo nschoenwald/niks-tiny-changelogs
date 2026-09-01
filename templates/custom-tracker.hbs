@@ -45,8 +45,17 @@
       </tbody>
     </table>
   </div>
-  <footer class="sheet-footer flexrow" style="margin-top: 15px;">
-    <button type="submit" name="submit">
+  <input type="file" class="tracker-import-file-input" accept=".json" style="display: none;" />
+  <footer class="sheet-footer flexrow tracker-footer" style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+    <div class="tracker-footer-actions" style="display: flex; gap: 8px;">
+      <button type="button" class="tracker-export-btn" title="Export custom trackers to a JSON file">
+        <i class="fas fa-file-export"></i> Export Trackers
+      </button>
+      <button type="button" class="tracker-import-btn" title="Import custom trackers from a JSON file">
+        <i class="fas fa-file-import"></i> Import Trackers
+      </button>
+    </div>
+    <button type="submit" name="submit" class="tracker-save-btn" style="flex: 0 0 auto; min-width: 150px;">
       <i class="fas fa-save"></i> Save Changes
     </button>
   </footer>

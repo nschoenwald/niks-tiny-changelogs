@@ -58,6 +58,8 @@ Have a homebrew mechanic or playing a system that isn't fully supported out of t
    - **Color**: Select a custom background color for the chat message using the color picker.
 4. Click **Save Changes**.
 
+You can also use the **Export Trackers** and **Import Trackers** buttons at the bottom of the window to export or import your custom tracker configurations directly without affecting other module settings.
+
 **Formatting Placeholders:**
 Your gain and loss messages can use the following placeholders to make them dynamic:
 - `{name}` - The name you gave the resource.
@@ -87,6 +89,10 @@ The module includes integration with the Mörk Borg system:
 
 You can customize the module's behavior in the settings to perfectly match your table's needs:
 
+- **Import / Export Settings**: Back up or transfer your entire module configuration (including all feature toggles, visibility options, blacklist rules, system trackers, and custom tracker definitions) using portable JSON files.
+  - Access via the **Import / Export** button in the Module Settings menu.
+  - When importing, choose whether to **Replace** or **Merge** custom tracker definitions.
+  - Provides a confirmation preview dialog detailing found settings before applying changes.
 - **Simplified Output**: Toggle between full transition logs (e.g., `10 + 5 → 15`) or simplified math logs (`+5`).
 - **Ignored Names / Blacklist**: A flexible, free-text blacklist to prevent specific items, Active Effects, or custom resources from being reported (e.g., spammy paladin auras or utility items).
   - Supports comma-separated or newline-separated names (case-insensitive, e.g. `Aura of Protection, Torch`).

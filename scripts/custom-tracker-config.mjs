@@ -1,4 +1,63 @@
 import { clearCustomResourcesCache } from "./niks-tiny-changelogs.mjs";
+import { exportCustomTrackers, readJsonFile } from "./settings-import-export.mjs";
+
+function escapeHTML(str) {
+  return foundry.utils?.escapeHTML ? foundry.utils.escapeHTML(String(str ?? "")) : String(str ?? "");
+}
+
+async function promptImportMode(trackerCount, filename) {
+  if (foundry.applications?.api?.DialogV2?.wait) {
+    return await foundry.applications.api.DialogV2.wait({
+      window: { title: "Import Custom Trackers" },
+      content: `<p>Found <strong>${trackerCount}</strong> custom tracker(s) in <em>${escapeHTML(filename)}</em>.</p><p>How would you like to apply them to your current list?</p>`,
+      buttons: [
+        {
+          action: "append",
+          label: '<i class="fas fa-plus"></i> Append / Merge',
+          default: true,
+          callback: () => "append"
+        },
+        {
+          action: "replace",
+          label: '<i class="fas fa-sync"></i> Replace All',
+          callback: () => "replace"
+        },
+        {
+          action: "cancel",
+          label: '<i class="fas fa-times"></i> Cancel',
+          callback: () => null
+        }
+      ],
+      modal: true
+    });
+  }
+
+  return new Promise(resolve => {
+    new Dialog({
+      title: "Import Custom Trackers",
+      content: `<p>Found <strong>${trackerCount}</strong> custom tracker(s) in <em>${escapeHTML(filename)}</em>.</p><p>How would you like to apply them to your current list?</p>`,
+      buttons: {
+        append: {
+          icon: '<i class="fas fa-plus"></i>',
+          label: "Append / Merge",
+          callback: () => resolve("append")
+        },
+        replace: {
+          icon: '<i class="fas fa-sync"></i>',
+          label: "Replace All",
+          callback: () => resolve("replace")
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancel",
+          callback: () => resolve(null)
+        }
+      },
+      default: "append",
+      close: () => resolve(null)
+    }).render(true);
+  });
+}
 
 export default class CustomTrackerConfig extends FormApplication {
   constructor(...args) {
@@ -47,6 +106,73 @@ export default class CustomTrackerConfig extends FormApplication {
           input.val(path);
         }
       }).browse();
+    });
+
+    // Tracker Export button
+    html.find('button.tracker-export-btn').click((ev) => {
+      ev.preventDefault();
+      this._updateLocalResourcesFromForm();
+      exportCustomTrackers(this.localResources);
+    });
+
+    // Tracker Import button & hidden input
+    const fileInput = html.find('input.tracker-import-file-input');
+    html.find('button.tracker-import-btn').click((ev) => {
+      ev.preventDefault();
+      fileInput.val("");
+      fileInput.click();
+    });
+
+    fileInput.change(async (ev) => {
+      const file = ev.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const data = await readJsonFile(file);
+        let incomingTrackers = [];
+
+        if (Array.isArray(data.customTrackers)) {
+          incomingTrackers = data.customTrackers;
+        } else if (data.settings?.customTrackedResources) {
+          try {
+            incomingTrackers = typeof data.settings.customTrackedResources === "string"
+              ? JSON.parse(data.settings.customTrackedResources)
+              : data.settings.customTrackedResources;
+          } catch {
+            incomingTrackers = [];
+          }
+        } else if (Array.isArray(data)) {
+          incomingTrackers = data;
+        }
+
+        if (!Array.isArray(incomingTrackers) || incomingTrackers.length === 0) {
+          ui.notifications.warn("No custom tracker configurations found in the selected file.");
+          return;
+        }
+
+        const mode = await promptImportMode(incomingTrackers.length, file.name);
+        if (!mode) return;
+
+        this._updateLocalResourcesFromForm();
+
+        if (mode === "replace") {
+          this.localResources = incomingTrackers;
+        } else if (mode === "append") {
+          const existingPaths = new Set(this.localResources.map(r => r.path));
+          for (const item of incomingTrackers) {
+            if (!existingPaths.has(item.path)) {
+              this.localResources.push(item);
+              existingPaths.add(item.path);
+            }
+          }
+        }
+
+        this.render();
+        ui.notifications.info(`Imported ${incomingTrackers.length} custom tracker(s). Click "Save Changes" to save.`);
+      } catch (err) {
+        console.error("[niks-tiny-changelogs] Failed to import custom trackers:", err);
+        ui.notifications.error(`Failed to import custom trackers: ${err.message}`);
+      }
     });
   }
 

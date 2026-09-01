@@ -1,0 +1,76 @@
+<form autocomplete="off" class="import-export-form">
+  <p class="notes" style="margin-bottom: 16px;">
+    Export your <strong>Nik's Tiny Change Logs</strong> configuration to a portable JSON file for backup or transfer between worlds, or import an existing configuration.
+  </p>
+
+  <!-- EXPORT SECTION -->
+  <div class="import-export-section export-box">
+    <div class="section-header">
+      <i class="fas fa-file-export fa-fw"></i>
+      <h3>Export Configuration</h3>
+    </div>
+    <p class="section-desc">
+      Exports all module settings (visibility, feature toggles, blacklist, and system trackers) and all custom tracked resource definitions.
+    </p>
+
+    <div class="stats-grid">
+      <div class="stat-pill">
+        <span class="stat-label">Version</span>
+        <span class="stat-value">v{{moduleVersion}}</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Active System</span>
+        <span class="stat-value">{{systemTitle}}</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Settings</span>
+        <span class="stat-value">{{settingsCount}} registered</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Custom Trackers</span>
+        <span class="stat-value">{{customTrackerCount}} defined</span>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button type="button" class="btn-action btn-export" data-action="export-all">
+        <i class="fas fa-file-export"></i> Export Settings to JSON
+      </button>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- IMPORT SECTION -->
+  <div class="import-export-section import-box">
+    <div class="section-header">
+      <i class="fas fa-file-import fa-fw"></i>
+      <h3>Import Configuration</h3>
+    </div>
+    <p class="section-desc">
+      Upload a <code>.json</code> file exported from Nik's Tiny Change Logs. You will be prompted with a preview of found settings before changes are applied.
+    </p>
+
+    <div class="form-group tracker-mode-group">
+      <label class="mode-title"><strong>Custom Trackers Handling:</strong></label>
+      <div class="mode-options">
+        <label class="radio-label">
+          <input type="radio" name="trackerMode" value="replace" checked />
+          <span><strong>Replace</strong> &mdash; Overwrite all existing custom trackers</span>
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="trackerMode" value="merge" />
+          <span><strong>Merge</strong> &mdash; Keep existing custom trackers and append new ones</span>
+        </label>
+      </div>
+    </div>
+
+    <input type="file" class="import-file-input" accept=".json" style="display: none;" />
+
+    <div class="action-row">
+      <button type="button" class="btn-action btn-import" data-action="select-file">
+        <i class="fas fa-upload"></i> Select JSON File to Import
+      </button>
+    </div>
+  </div>
+</form>
