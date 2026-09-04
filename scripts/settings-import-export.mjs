@@ -257,62 +257,33 @@ function escapeHTML(str) {
 }
 
 function refreshOpenConfigWindows() {
-  if (!ui.windows) return;
-
-  let hadSettingsConfig = false;
-
-  for (const win of Object.values(ui.windows)) {
-    const name = win?.constructor?.name;
-    if (win instanceof SettingsConfig || name === "SettingsConfig") {
-      // Close the built-in settings UI — it must be fully re-opened to
-      // reflect newly-written setting values (re-render alone is not enough).
-      try {
-        win.close();
-        hadSettingsConfig = true;
-      } catch (e) {
-        console.debug(`[${MOD_ID}] Failed to close SettingsConfig:`, e);
-      }
-    } else if (name === "SettingsImportExportApp") {
-      // Close this dialog — it lives inside the settings flow.
-      try { win.close(); } catch (e) {
-        console.debug(`[${MOD_ID}] Failed to close SettingsImportExportApp:`, e);
-      }
-    } else if (name === "CustomTrackerConfig") {
-      // Re-render the custom tracker config if it's open.
-      try { win.render(false); } catch (e) {
-        console.debug(`[${MOD_ID}] Failed to re-render CustomTrackerConfig:`, e);
+  // --- Legacy Application V1 windows (ui.windows) ---
+  if (ui.windows) {
+    for (const win of Object.values(ui.windows)) {
+      const name = win?.constructor?.name;
+      if (win instanceof SettingsConfig || name === "SettingsConfig") {
+        try { win.close(); } catch (e) {
+          console.debug(`[${MOD_ID}] Failed to close V1 SettingsConfig:`, e);
+        }
+      } else if (name === "CustomTrackerConfig") {
+        try { win.render(false); } catch (e) {
+          console.debug(`[${MOD_ID}] Failed to re-render CustomTrackerConfig:`, e);
+        }
       }
     }
   }
 
-  // Re-open the Foundry settings app so the user sees updated values,
-  // then scroll directly to this module's section.
-  if (hadSettingsConfig) {
-    try {
-      const cfg = new SettingsConfig();
-      cfg.render(true);
-      // Wait for the DOM to paint before scrolling.
-      setTimeout(() => {
-        try {
-          const root = cfg.element?.[0];
-          if (!root) return;
-          // Try several selectors that cover V13 and V14 DOM structures.
-          const target =
-            // V14: section or header with a data-module attribute
-            root.querySelector(`[data-module="${MOD_ID}"]`) ??
-            // V13: h2 inside the settings list whose text matches the module title
-            Array.from(root.querySelectorAll("h2.module-header, h2")).find(
-              h => h.textContent?.includes("Nik's Tiny Change Logs")
-            ) ??
-            // Fallback: first setting row belonging to this module
-            root.querySelector(`[data-setting-id^="${MOD_ID}."]`);
-          target?.scrollIntoView({ behavior: "smooth", block: "start" });
-        } catch (e) {
-          console.debug(`[${MOD_ID}] Failed to scroll to module settings:`, e);
+  // --- ApplicationV2 windows (Foundry V13+) ---
+  // In V13+, SettingsConfig extends ApplicationV2 and registers in
+  // foundry.applications.instances, NOT in ui.windows.
+  if (foundry.applications?.instances) {
+    for (const [, app] of foundry.applications.instances) {
+      const name = app?.constructor?.name;
+      if (name === "SettingsConfig" || name === "Settings") {
+        try { app.close(); } catch (e) {
+          console.debug(`[${MOD_ID}] Failed to close V2 SettingsConfig:`, e);
         }
-      }, 150);
-    } catch (e) {
-      console.debug(`[${MOD_ID}] Failed to re-open SettingsConfig:`, e);
+      }
     }
   }
 }
@@ -390,7 +361,7 @@ export default class SettingsImportExportApp extends FormApplication {
         const trackerMode = html.find('input[name="trackerMode"]:checked').val() || "replace";
         const result = await applyImportedData(data, file.name, { trackerMode });
         if (result.applied) {
-          this.render(false);
+          this.close();
         }
       } catch (err) {
         console.error(`[${MOD_ID}] Failed to import settings file:`, err);
