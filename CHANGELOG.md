@@ -1,8 +1,9 @@
 # Changelog
 
-## 14.13.3
+## 14.13.5
 
-- **Settings Import Fix**: After a successful settings import, the Foundry settings window and the import/export dialog are now properly closed so that stale values are no longer displayed. Previously, the settings window was not being found because Foundry V13+ uses `ApplicationV2` (registered in `foundry.applications.instances`) rather than the legacy `Application` V1 (`ui.windows`).
+- **Settings Import Fix**: After a successful settings import, the Foundry settings window and the import/export dialog are now properly closed so that stale values are no longer displayed.
+- **Sidebar Crash Fix**: Fixed a crash that emptied the settings sidebar, caused by an unsafe `instanceof SettingsConfig` check that throws in Foundry V13+ (where `SettingsConfig` is an `ApplicationV2` class, not a global). Now uses safe constructor-name string checks and snapshots app collections before iterating to avoid mutation-during-iteration issues.
 
 ## 14.13.0
 

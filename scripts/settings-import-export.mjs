@@ -92,7 +92,7 @@ export function exportAllSettings() {
   const exportPayload = {
     module: MOD_ID,
     title: "Nik's Tiny Change Logs Settings Export",
-    version: game.modules.get(MOD_ID)?.version || "14.13.1",
+    version: game.modules.get(MOD_ID)?.version || "14.13.4",
     system: game.system.id,
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
@@ -115,7 +115,7 @@ export function exportCustomTrackers(trackers) {
     module: MOD_ID,
     type: "custom-trackers",
     title: "Nik's Tiny Change Logs Custom Trackers",
-    version: game.modules.get(MOD_ID)?.version || "14.13.1",
+    version: game.modules.get(MOD_ID)?.version || "14.13.4",
     system: game.system.id,
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
@@ -257,11 +257,18 @@ function escapeHTML(str) {
 }
 
 function refreshOpenConfigWindows() {
+  // Close open settings windows so Foundry re-reads setting values on next open.
+  // We rely solely on constructor-name checks (no `instanceof`) to avoid
+  // ReferenceErrors when a class lives behind a namespace or doesn't exist as a
+  // global.  We also snapshot each collection before iterating so that closing
+  // an app (which mutates the registry) doesn't corrupt the iteration.
+
   // --- Legacy Application V1 windows (ui.windows) ---
   if (ui.windows) {
-    for (const win of Object.values(ui.windows)) {
+    const wins = Object.values(ui.windows);
+    for (const win of wins) {
       const name = win?.constructor?.name;
-      if (win instanceof SettingsConfig || name === "SettingsConfig") {
+      if (name === "SettingsConfig") {
         try { win.close(); } catch (e) {
           console.debug(`[${MOD_ID}] Failed to close V1 SettingsConfig:`, e);
         }
@@ -276,15 +283,21 @@ function refreshOpenConfigWindows() {
   // --- ApplicationV2 windows (Foundry V13+) ---
   // In V13+, SettingsConfig extends ApplicationV2 and registers in
   // foundry.applications.instances, NOT in ui.windows.
-  if (foundry.applications?.instances) {
-    for (const [, app] of foundry.applications.instances) {
-      const name = app?.constructor?.name;
-      if (name === "SettingsConfig" || name === "Settings") {
-        try { app.close(); } catch (e) {
-          console.debug(`[${MOD_ID}] Failed to close V2 SettingsConfig:`, e);
+  try {
+    const instances = foundry.applications?.instances;
+    if (instances && typeof instances[Symbol.iterator] === "function") {
+      const apps = [...instances];
+      for (const [, app] of apps) {
+        const name = app?.constructor?.name;
+        if (name === "SettingsConfig" || name === "CategoryBrowser") {
+          try { app.close(); } catch (e) {
+            console.debug(`[${MOD_ID}] Failed to close V2 SettingsConfig:`, e);
+          }
         }
       }
     }
+  } catch (e) {
+    console.debug(`[${MOD_ID}] Failed to iterate ApplicationV2 instances:`, e);
   }
 }
 
@@ -321,7 +334,7 @@ export default class SettingsImportExportApp extends FormApplication {
     }
 
     return {
-      moduleVersion: game.modules.get(MOD_ID)?.version || "14.13.1",
+      moduleVersion: game.modules.get(MOD_ID)?.version || "14.13.4",
       systemId: game.system.id,
       systemTitle: game.system.title || game.system.id,
       settingsCount: registeredKeys.length,
