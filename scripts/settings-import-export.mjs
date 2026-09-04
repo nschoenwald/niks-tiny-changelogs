@@ -92,7 +92,7 @@ export function exportAllSettings() {
   const exportPayload = {
     module: MOD_ID,
     title: "Nik's Tiny Change Logs Settings Export",
-    version: game.modules.get(MOD_ID)?.version || "14.13.0",
+    version: game.modules.get(MOD_ID)?.version || "14.13.1",
     system: game.system.id,
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
@@ -115,7 +115,7 @@ export function exportCustomTrackers(trackers) {
     module: MOD_ID,
     type: "custom-trackers",
     title: "Nik's Tiny Change Logs Custom Trackers",
-    version: game.modules.get(MOD_ID)?.version || "14.13.0",
+    version: game.modules.get(MOD_ID)?.version || "14.13.1",
     system: game.system.id,
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
@@ -258,18 +258,61 @@ function escapeHTML(str) {
 
 function refreshOpenConfigWindows() {
   if (!ui.windows) return;
+
+  let hadSettingsConfig = false;
+
   for (const win of Object.values(ui.windows)) {
-    if (
-      win instanceof SettingsConfig ||
-      win?.constructor?.name === "SettingsConfig" ||
-      win?.constructor?.name === "CustomTrackerConfig" ||
-      win?.constructor?.name === "SettingsImportExportApp"
-    ) {
+    const name = win?.constructor?.name;
+    if (win instanceof SettingsConfig || name === "SettingsConfig") {
+      // Close the built-in settings UI — it must be fully re-opened to
+      // reflect newly-written setting values (re-render alone is not enough).
       try {
-        win.render(false);
+        win.close();
+        hadSettingsConfig = true;
       } catch (e) {
-        console.debug(`[${MOD_ID}] Failed to re-render window:`, e);
+        console.debug(`[${MOD_ID}] Failed to close SettingsConfig:`, e);
       }
+    } else if (name === "SettingsImportExportApp") {
+      // Close this dialog — it lives inside the settings flow.
+      try { win.close(); } catch (e) {
+        console.debug(`[${MOD_ID}] Failed to close SettingsImportExportApp:`, e);
+      }
+    } else if (name === "CustomTrackerConfig") {
+      // Re-render the custom tracker config if it's open.
+      try { win.render(false); } catch (e) {
+        console.debug(`[${MOD_ID}] Failed to re-render CustomTrackerConfig:`, e);
+      }
+    }
+  }
+
+  // Re-open the Foundry settings app so the user sees updated values,
+  // then scroll directly to this module's section.
+  if (hadSettingsConfig) {
+    try {
+      const cfg = new SettingsConfig();
+      cfg.render(true);
+      // Wait for the DOM to paint before scrolling.
+      setTimeout(() => {
+        try {
+          const root = cfg.element?.[0];
+          if (!root) return;
+          // Try several selectors that cover V13 and V14 DOM structures.
+          const target =
+            // V14: section or header with a data-module attribute
+            root.querySelector(`[data-module="${MOD_ID}"]`) ??
+            // V13: h2 inside the settings list whose text matches the module title
+            Array.from(root.querySelectorAll("h2.module-header, h2")).find(
+              h => h.textContent?.includes("Nik's Tiny Change Logs")
+            ) ??
+            // Fallback: first setting row belonging to this module
+            root.querySelector(`[data-setting-id^="${MOD_ID}."]`);
+          target?.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (e) {
+          console.debug(`[${MOD_ID}] Failed to scroll to module settings:`, e);
+        }
+      }, 150);
+    } catch (e) {
+      console.debug(`[${MOD_ID}] Failed to re-open SettingsConfig:`, e);
     }
   }
 }
@@ -307,7 +350,7 @@ export default class SettingsImportExportApp extends FormApplication {
     }
 
     return {
-      moduleVersion: game.modules.get(MOD_ID)?.version || "14.13.0",
+      moduleVersion: game.modules.get(MOD_ID)?.version || "14.13.1",
       systemId: game.system.id,
       systemTitle: game.system.title || game.system.id,
       settingsCount: registeredKeys.length,

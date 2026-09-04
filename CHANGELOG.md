@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.13.1
+
+- **Settings Import Fix**: After a successful settings import, the Foundry settings window is now closed and re-opened so that all newly applied values are displayed correctly (previously the stale in-memory UI could show outdated values). The settings menu also scrolls directly to the **Nik's Tiny Change Logs** section automatically.
+
 ## 14.13.0
 
 - Added **Settings Import / Export** functionality:
