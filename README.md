@@ -99,13 +99,14 @@ You can customize the module's behavior in the settings to perfectly match your 
   - Supports wildcards (e.g. `Aura of *` to catch *Aura of Protection*, *Aura of Courage*, etc., or `*Aura*`).
   - Supports regular expressions (e.g. `/^aura of/i` or `/(torch|candle|lantern)/i`).
 - **Message Visibility**: Control who can see changelog messages globally:
-  - *Player and GM* (Default public messages)
+  - *GM + Owners* (Whispered strictly to GMs and the owning player(s) of the character, default)
+  - *Everyone* (Public chat messages visible to all players and GMs)
   - *GM only* (Private whispers exclusively to GMs; player clients will not see logs even for actions they perform)
   - *Player only* (Whispered exclusively to non-GM players; hidden from GMs)
-- **NPC Message Audience**: When Message Visibility is set to 'Player and GM', this further refines who receives NPC changelog messages:
-  - *GM Only* (Private)
-  - *GM + Owners* (Default)
-  - *GM + All Players* (Public)
+- **NPC Message Audience**: When Message Visibility is set to 'GM + Owners' or 'Everyone', this further refines who receives NPC changelog messages:
+  - *GM + Owners* (Whispered to GMs and any owning player(s) of the NPC, default)
+  - *GM only* (Private whispers exclusively to GMs)
+  - *Everyone* (Public chat messages visible to all players and GMs)
 - **Feature Toggles**: You can individually enable or disable Currency Tracking, Item Changes, Deleted Message Tracking, Equip/Unequip Tracking, Active Effect Tracking, and all DnD5e-specific trackers.
 
 ### Advanced Data Paths

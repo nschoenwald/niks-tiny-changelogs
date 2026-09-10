@@ -1,5 +1,15 @@
 # Changelog
 
+## 14.13.6
+
+- **Message Visibility Default Behavior**:
+  - The default **GM + Owners** (`gm-player`) setting for **Message Visibility** now whispers changelog messages strictly to the GM and the player(s) owning the character, ensuring other players do not see changes to characters they do not control.
+  - Added an **Everyone** (`everyone`) option with the previous public broadcast behavior, allowing changelog messages to be posted as open chat messages visible to all players and GMs.
+- **Unified Visibility Settings & Options**:
+  - Unified the naming of options (*GM only*, *GM + Owners*, *Everyone*, *Player only*) across both **Message Visibility** and **NPC Message Audience**.
+  - Harmonized tooltips and descriptions across both settings to clearly explain delivery targets and how NPC audience filtering interacts with global visibility.
+  - Added automatic migration for legacy NPC audience configurations (`gm-players` → `everyone`).
+
 ## 14.13.5
 
 - **Settings Import Fix**: After a successful settings import, the Foundry settings window and the import/export dialog are now properly closed so that stale values are no longer displayed.

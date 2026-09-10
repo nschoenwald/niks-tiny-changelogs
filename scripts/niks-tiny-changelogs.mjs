@@ -190,19 +190,25 @@ function buildRecipients(actor) {
     return nonGmUsers.length > 0 ? nonGmUsers.map(u => u.id) : gmUsers.map(u => u.id);
   }
 
-  // "gm-player" (Player and GM): public message visible to everyone.
   // For NPCs, the NPC Message Audience setting further refines the audience.
   if (actor.type === "npc") {
     const npcMode = game.settings.get(MOD_ID, "npcAudience") ?? "gm-owners";
     if (npcMode === "gm") return gmUsers.map(u => u.id);
-    if (npcMode === "gm-players") return uniq(gmUsers, nonGmUsers).map(u => u.id);
+    if (npcMode === "everyone" || npcMode === "gm-players") return [];
     // gm-owners: GM + owning players
     const recipients = uniq(gmUsers, owners).map(u => u.id);
     return recipients.length > 0 ? recipients : gmUsers.map(u => u.id);
   }
 
-  // PC actors in "gm-player" mode: public message (empty whisper = everyone sees it)
-  return [];
+  // PC actors:
+  // "everyone": public message visible to all players and GMs
+  if (visibility === "everyone") {
+    return [];
+  }
+
+  // "gm-player" (GM + Owners, default): whisper to GM and the player(s) owning the PC actor
+  const recipients = uniq(gmUsers, owners).map(u => u.id);
+  return recipients.length > 0 ? recipients : gmUsers.map(u => u.id);
 }
 
 function buildMonitorMessageData(actor, line, cls, kind, isMultiline = false, customColor = null) {
@@ -247,17 +253,26 @@ Hooks.once("init", () => {
 
   game.settings.register(MOD_ID, "messageVisibility", {
     name: "Message Visibility",
-    hint: "Controls who can see changelog messages. 'GM only' whispers exclusively to GMs. 'Player and GM' posts a public message visible to everyone (default). 'Player only' whispers to all non-GM players — GMs will not see it in their chat.",
+    hint: "Controls who can see changelog messages. 'GM only' whispers exclusively to GMs. 'GM + Owners' whispers to GMs and the owning player(s) (default). 'Everyone' posts a public message visible to all players and GMs. 'Player only' whispers to all non-GM players. For NPCs, the audience is further refined by the NPC Message Audience setting unless Visibility is set to 'GM only' or 'Player only'.",
     scope: "world", config: true, type: String,
-    choices: { "gm": "GM only", "gm-player": "Player and GM (default)", "player": "Player only" },
+    choices: {
+      "gm": "GM only",
+      "gm-player": "GM + Owners (default)",
+      "everyone": "Everyone",
+      "player": "Player only"
+    },
     default: "gm-player"
   });
 
   game.settings.register(MOD_ID, "npcAudience", {
     name: "NPC Message Audience",
-    hint: "When Message Visibility is set to 'Player and GM', this further refines who receives NPC changelog messages. Has no effect when Visibility is set to 'GM only' or 'Player only'.",
+    hint: "Controls who can see changelog messages for NPC actors. 'GM only' whispers exclusively to GMs. 'GM + Owners' whispers to GMs and the owning player(s) (default). 'Everyone' posts a public message visible to all players and GMs. Only applies when Message Visibility is set to 'GM + Owners' or 'Everyone'.",
     scope: "world", config: true, type: String,
-    choices: { "gm": "GM only", "gm-players": "GM + all players", "gm-owners": "GM + owners (default)" },
+    choices: {
+      "gm": "GM only",
+      "gm-owners": "GM + Owners (default)",
+      "everyone": "Everyone"
+    },
     default: "gm-owners"
   });
 
@@ -366,6 +381,11 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
+  if (game.user.isGM) {
+    if (game.settings.get(MOD_ID, "npcAudience") === "gm-players") {
+      game.settings.set(MOD_ID, "npcAudience", "everyone");
+    }
+  }
   const sample = game.actors?.contents?.[0];
   if (sample) resolvePaths(sample);
 });
