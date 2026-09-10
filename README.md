@@ -70,12 +70,12 @@ Your gain and loss messages can use the following placeholders to make them dyna
 *Note: The module evaluates changes numerically. If you track a boolean property (true/false), it will be treated as `1` (true) or `0` (false). A change from false to true triggers a gain of +1.*
 
 ### 🐉 DnD5e Specific Features
-The module includes integration with the DnD5e system (5.2+):
+The module includes deep integration with the DnD5e system (compatible with 5.2+ and 6.0+):
 - **Heroic Inspiration**: Logs when a player gains or spends Inspiration.
 - **Death Saves**: Separately tracks successes and failures during tense death saving throws.
-- **Spell Preparation**: Logs when a spell is prepared or unprepared from a character's spell list.
-- **Spell Slots**: Tracks the expenditure and regaining of spell slots across all levels.
-- **Hit Dice**: Logs when Hit Dice are expended or regained.
+- **Spell Preparation**: Logs when a spell is prepared or unprepared from a character's spell list (supporting both legacy modes and modern 5.x/6.0 preparation states).
+- **Spell Slots**: Tracks the expenditure and regaining of spell slots across all spell levels (1–9) and Warlock Pact Magic.
+- **Hit Dice**: Logs when Hit Dice are expended or regained, displaying specific dice denominations (e.g. `d8`).
 - **Experience Points**: Logs when a character gains or loses XP.
 
 ### 💀 Mörk Borg Specific Features

@@ -909,6 +909,7 @@ Hooks.on("deleteItem", async (item, options, userId) => {
 
 function resolveEffectActor(effect) {
   if (effect.actor instanceof Actor) return effect.actor;
+  if (effect.target instanceof Actor) return effect.target;
   if (effect.parent instanceof Actor) return effect.parent;
   if (effect.parent?.actor instanceof Actor) return effect.parent.actor;
   if (effect.parent?.parent instanceof Actor) return effect.parent.parent;
@@ -1053,11 +1054,7 @@ Hooks.on("deleteChatMessage", async (message, options, userId) => {
   foundry.utils.setProperty(messageData, `flags.${MOD_ID}.cls`, "tiny-monitor-item-dec");
 
   const prefix = `<div style="color: var(--color-text-dark-primary); margin-bottom: 0.5rem; font-size: 1.1em;"><strong>${userName} deleted:</strong></div>`;
-  if (messageData.flavor) {
-    messageData.flavor = prefix + messageData.flavor;
-  } else {
-    messageData.content = prefix + (messageData.content || "");
-  }
+  messageData.flavor = prefix + (messageData.flavor || "");
 
   await ChatMessage.create(messageData);
 });

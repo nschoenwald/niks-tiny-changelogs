@@ -92,7 +92,7 @@ export function exportAllSettings() {
   const exportPayload = {
     module: MOD_ID,
     title: "Nik's Tiny Change Logs Settings Export",
-    version: game.modules.get(MOD_ID)?.version || "14.13.6",
+    version: game.modules.get(MOD_ID)?.version || "14.14.0",
     system: game.system.id,
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
@@ -115,7 +115,7 @@ export function exportCustomTrackers(trackers) {
     module: MOD_ID,
     type: "custom-trackers",
     title: "Nik's Tiny Change Logs Custom Trackers",
-    version: game.modules.get(MOD_ID)?.version || "14.13.6",
+    version: game.modules.get(MOD_ID)?.version || "14.14.0",
     system: game.system.id,
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
@@ -334,7 +334,7 @@ export default class SettingsImportExportApp extends FormApplication {
     }
 
     return {
-      moduleVersion: game.modules.get(MOD_ID)?.version || "14.13.6",
+      moduleVersion: game.modules.get(MOD_ID)?.version || "14.14.0",
       systemId: game.system.id,
       systemTitle: game.system.title || game.system.id,
       settingsCount: registeredKeys.length,

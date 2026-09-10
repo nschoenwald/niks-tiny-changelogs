@@ -1,5 +1,14 @@
 # Changelog
 
+## 14.14.0
+
+- **DnD5e 6.0 Compatibility & Enhancements**:
+  - **Modern Spell Preparation Tracking**: Updated spell preparation tracking to evaluate modern numeric preparation states (`system.prepared`) used in DnD5e 5.x and 6.0 (`0` = unprepared, `1` = prepared, `2` = always prepared), while preserving backwards compatibility for legacy preparation modes.
+  - **Hit Dice Denomination Support**: Updated Hit Dice tracking to read `system.hd.denomination` introduced in recent DnD5e versions, accurately reporting specific die sizes (e.g., `d8`, `d10`) instead of generic labels.
+  - **Pact Magic Spell Slots**: Added tracking for Warlock Pact Magic spell slots (`system.spells.pact.value`), reporting expenditure and recovery alongside standard level 1–9 slots.
+  - **Dynamic Chat Message Deletion Tracking**: Hardened deleted message tracking for DnD5e 6.0's dynamic chat cards (`type: "usage"`, `"attack"`, etc.) by storing deletion notices in the message flavor header so that dynamic card template re-rendering does not overwrite the deletion notice.
+  - **ActiveEffect v2 Resolution**: Added support for checking `effect.target` when resolving effect actors, ensuring seamless compatibility with Foundry V14 and DnD5e 6.0 ActiveEffect v2 models.
+
 ## 14.13.6
 
 - **Message Visibility Default Behavior**:

@@ -82,14 +82,17 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
       }
     }
 
-    // Spell Slots
+    // Spell Slots (Levels 1-9 and Pact Magic)
     if (context.getWorldBool("trackDnd5eSpellSlots", true) && foundry.utils.hasProperty(update, "system.spells")) {
-      const levels = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-      const slotPaths = levels.map(lvl => ({ level: lvl, path: `system.spells.spell${lvl}.value` }));
+      const slotKeys = [1, 2, 3, 4, 5, 6, 7, 8, 9, "pact"];
+      const slotPaths = slotKeys.map(k => ({
+        key: k,
+        path: k === "pact" ? "system.spells.pact.value" : `system.spells.spell${k}.value`
+      }));
       const changedSlots = slotPaths.filter(s => context.willUpdatePath(update, s.path) && foundry.utils.hasProperty(actor, s.path));
       if (changedSlots.length > 0) {
         payload.spellSlotsOld = Object.fromEntries(
-          changedSlots.map(s => [s.level, { level: s.level, path: s.path, oldValue: context.readNumber(actor, s.path) }])
+          changedSlots.map(s => [s.key, { key: s.key, path: s.path, oldValue: context.readNumber(actor, s.path) }])
         );
       }
     }
@@ -157,9 +160,13 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
 
     // Spell Slots
     if (payload.spellSlotsOld && Object.keys(payload.spellSlotsOld).length > 0) {
-      const sortedLevels = Object.keys(payload.spellSlotsOld).sort((a, b) => Number(a) - Number(b));
-      for (const level of sortedLevels) {
-        const slotData = payload.spellSlotsOld[level];
+      const sortedKeys = Object.keys(payload.spellSlotsOld).sort((a, b) => {
+        if (a === "pact") return 1;
+        if (b === "pact") return -1;
+        return Number(a) - Number(b);
+      });
+      for (const key of sortedKeys) {
+        const slotData = payload.spellSlotsOld[key];
         const newVal = readNumber(actor, slotData.path);
         const oldVal = slotData.oldValue;
         const delta = newVal - oldVal;
@@ -171,7 +178,8 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
           const absDelta = Math.abs(delta);
           const slotWord = absDelta === 1 ? "slot" : "slots";
           const quantityStr = absDelta > 1 ? `${absDelta} ` : "";
-          const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${action} ${quantityStr}level ${level} ${slotWord}</span>`;
+          const slotLabel = key === "pact" ? "Pact Magic" : `level ${key}`;
+          const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${action} ${quantityStr}${slotLabel} ${slotWord}</span>`;
           await postMonitorMessage(actor, line, cls, "spellslot");
         }
       }
@@ -200,14 +208,24 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
 
   // Helper for DnD5e Spell Prep
   dnd5eIsSpellPreparedLike(item, readRaw) {
-    const methodVal = readRaw(item, "system.preparation.mode") ?? readRaw(item, "system.method");
-    const method = String(methodVal ?? "");
-    const preparedVal = readRaw(item, "system.preparation.prepared") ?? readRaw(item, "system.prepared");
-    const prepared = typeof preparedVal === "boolean" ? preparedVal : Boolean(preparedVal);
+    const prepMode = readRaw(item, "system.preparation.mode");
+    const legacyPrep = readRaw(item, "system.preparation.prepared");
+    if (prepMode !== undefined || legacyPrep !== undefined) {
+      // Legacy DnD5e (< 5.0)
+      if (prepMode === "always") return true;
+      if (prepMode === "prepared") return Boolean(legacyPrep);
+      if (!prepMode && legacyPrep !== undefined) return Boolean(legacyPrep);
+      return false;
+    }
 
-    if (method === "prepared") return prepared;
-    if (method === "always") return true;
-    if (!method && typeof preparedVal !== "undefined") return prepared;
+    // Modern DnD5e (5.0+, 6.0+)
+    const preparedVal = readRaw(item, "system.prepared");
+    if (typeof preparedVal === "number") {
+      return preparedVal >= 1; // 1 = prepared, 2 = always (CONFIG.DND5E.spellPreparationStates)
+    }
+    if (typeof preparedVal === "boolean") {
+      return preparedVal;
+    }
     return false;
   }
 
@@ -247,7 +265,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
         const actionStr = delta > 0 ? "expended" : "regained";
         const absDelta = Math.abs(delta);
         const icon = `<i class="fa-solid fa-heart-pulse"></i>`;
-        const dieName = readRaw(item, "system.hitDice") || "Hit Dice";
+        const dieName = readRaw(item, "system.hd.denomination") || readRaw(item, "system.hitDice") || "Hit Dice";
         const word = absDelta === 1 ? dieName : `Hit Dice (${dieName})`;
 
         const link = getActorLink(item.parent);
