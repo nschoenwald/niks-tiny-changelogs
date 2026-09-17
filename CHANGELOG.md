@@ -1,5 +1,11 @@
 # Changelog
 
+## 14.14.1
+
+- **Actor Name Tooltip Fix (Foundry V14 / DnD5e 6.x)**:
+  - Fixed an issue where hovering over actor names in changelog messages displayed a blank/black tooltip box.
+  - In DnD5e 6.x and Foundry V14, `.theme-light` was applied to `#tooltip` upon hovering content links, which caused standard document links lacking rich tooltip styling (such as actors) to render dark text on a dark background. Added a CSS rule ensuring non-rich tooltips (`#tooltip:not(.dnd5e-tooltip)`) always retain high-contrast light text.
+
 ## 14.14.0
 
 - **DnD5e 6.0 Compatibility & Enhancements**:

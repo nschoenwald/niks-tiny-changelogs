@@ -118,7 +118,7 @@ If the module fails to detect your system's data structure automatically, disabl
 
 ## Compatibility
 - **Foundry VTT**: Verified for V13 and V14.
-- **Systems**: Fully supports `dnd5e`, `pf2e`, `shadowdark`, `demonlord`, and `morkborg` out of the box. Other systems are supported dynamically or via manual configuration.
+- **Systems**: Fully supports `dnd5e` (5.2+ and 6.0+), `pf2e`, `shadowdark`, `demonlord`, and `morkborg` out of the box. Other systems are supported dynamically or via manual configuration.
 
 ---
 

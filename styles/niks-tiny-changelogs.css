@@ -163,6 +163,14 @@ li.chat-message.tiny-monitor-msg .tiny-monitor-line .content-link i {
 }
 
 /* -------------------------------
+   Tooltip Readability Fix (Foundry V14 / DnD5e 6.x)
+   ------------------------------- */
+/* Prevent standard document tooltips (e.g. Actor links) from rendering dark text on a dark background when .theme-light is attached without .dnd5e-tooltip */
+#tooltip:not(.dnd5e-tooltip) {
+  color: var(--color-light-1, #ffffff) !important;
+}
+
+/* -------------------------------
    Multiline Support
    ------------------------------- */
 li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line.tm-multiline {
