@@ -294,6 +294,12 @@ Hooks.once("init", () => {
     scope: "world", config: true, type: Boolean, default: true
   });
 
+  game.settings.register(MOD_ID, "protectChangelogMessages", {
+    name: "Protect Changelog Messages",
+    hint: "If enabled, players cannot delete changelog messages, so changes (e.g. HP gains) cannot be hidden from the GM. GMs can still delete them.",
+    scope: "world", config: true, type: Boolean, default: true
+  });
+
   game.settings.register(MOD_ID, "trackEquipUnequip", {
     name: "Track Equip / Unequip",
     hint: "If enabled, the module will log when items are equipped or unequipped on an actor.",
@@ -1000,6 +1006,13 @@ function shouldHideMessage(message) {
 }
 
 function applyMonitorStyling(message, html) {
+  if (message.getFlag(MOD_ID, "kind") === "chat-delete") {
+    const delLi = html instanceof HTMLElement
+      ? html.closest(".chat-message") ?? html
+      : (html[0]?.closest?.(".chat-message") ?? html);
+    delLi?.classList?.add("tm-deleted");
+    return;
+  }
   if (!message.getFlag(MOD_ID, "isMonitorMsg")) return;
   const li = html instanceof HTMLElement
     ? html.closest(".chat-message") ?? html
@@ -1028,6 +1041,26 @@ function applyMonitorStyling(message, html) {
 // Chat Message Deletions
 // -------------------------------
 
+/** Describe the kind of a deleted message for the summary line. */
+function describeDeletedMessage(message) {
+  if ((message.whisper ?? []).length > 0) return "whisper";
+  if ((message.rolls ?? []).length > 0) return "roll";
+  if (message.type && message.type !== "base" && message.type !== "other") return "card";
+  return "message";
+}
+
+/** Get the original message body HTML, preferring a full re-render (handles dynamic system cards). */
+async function getDeletedMessageBody(message) {
+  try {
+    const el = await message.renderHTML?.({ canDelete: false, canClose: false });
+    const body = el?.querySelector?.(".message-content");
+    if (body?.innerHTML?.trim()) return body.innerHTML;
+  } catch (err) {
+    console.warn(`[${MOD_ID}] Could not re-render deleted message`, err);
+  }
+  return `${message.flavor ?? ""}${message.content ?? ""}`;
+}
+
 Hooks.on("deleteChatMessage", async (message, options, userId) => {
   const primaryGM = game.users.primaryGM ?? game.users.activeGM;
   if (!game.user.isGM || primaryGM?.id !== game.user.id) return;
@@ -1037,24 +1070,51 @@ Hooks.on("deleteChatMessage", async (message, options, userId) => {
 
   if (!getWorldBool("trackDeletedMessages", true)) return;
 
+  // Skip chat log flushes and our own deletion notices.
+  // Deleted changelog entries are intentionally still reported so players can't hide changes.
+  if (options?.deleteAll) return;
+  if (message.getFlag(MOD_ID, "kind") === "chat-delete") return;
+  const isMonitor = Boolean(message.getFlag(MOD_ID, "isMonitorMsg"));
+
   const gmUsers = game.users.filter(u => u.isGM).map(u => u.id);
   if (gmUsers.length === 0) return;
 
   const userName = escapeHTML(deletingUser.name || "Unknown Player");
-  const messageData = message.toObject();
-  
-  delete messageData._id;
+  const alias = escapeHTML(message.alias || message.speaker?.alias || message.author?.name || "Unknown");
+  const label = isMonitor ? "changelog entry" : describeDeletedMessage(message);
+  let entryText = "";
+  if (isMonitor) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = message.content ?? "";
+    entryText = escapeHTML((tmp.textContent ?? "").trim());
+  }
+  const whisperNames = (message.whisper ?? [])
+    .map(id => escapeHTML(game.users.get(id)?.name ?? "?")).join(", ");
+  const audience = whisperNames ? `whispered to ${whisperNames}` : "public";
+  const time = new Date(message.timestamp ?? Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const body = await getDeletedMessageBody(message);
 
-  messageData.author = game.user.id;
-  messageData.user = game.user.id;
-  messageData.whisper = gmUsers;
-  
-  foundry.utils.setProperty(messageData, `flags.${MOD_ID}.isMonitorMsg`, true);
-  foundry.utils.setProperty(messageData, `flags.${MOD_ID}.kind`, "chat-delete");
-  foundry.utils.setProperty(messageData, `flags.${MOD_ID}.cls`, "tiny-monitor-item-dec");
+  const content = `<details class="tm-deleted-details">`
+    + `<summary class="tm-deleted-summary"><i class="fa-solid fa-trash"></i> `
+    + `<span class="tm-deleted-text"><strong>${userName}</strong> deleted a ${label}${isMonitor ? `: ${entryText}` : ` from <strong>${alias}</strong>`}</span>`
+    + `<span class="tm-deleted-time">${escapeHTML(time)}</span></summary>`
+    + `<div class="tm-deleted-meta">${alias} · ${audience} · ${escapeHTML(time)}</div>`
+    + `<div class="tm-deleted-body">${body}</div></details>`;
 
-  const prefix = `<div style="color: var(--color-text-dark-primary); margin-bottom: 0.5rem; font-size: 1.1em;"><strong>${userName} deleted:</strong></div>`;
-  messageData.flavor = prefix + (messageData.flavor || "");
+  await ChatMessage.create({
+    author: game.user.id,
+    speaker: ChatMessage.getSpeaker({ user: game.user }),
+    whisper: gmUsers,
+    content,
+    flags: { [MOD_ID]: { kind: "chat-delete" } }
+  });
+});
 
-  await ChatMessage.create(messageData);
+// Prevent non-GMs from deleting changelog entries to hide changes
+Hooks.on("preDeleteChatMessage", (message, options, userId) => {
+  if (game.user.isGM || userId !== game.user.id) return;
+  if (!getWorldBool("protectChangelogMessages", true)) return;
+  if (!message.getFlag(MOD_ID, "isMonitorMsg")) return;
+  ui.notifications.warn("Changelog messages can only be deleted by a GM.");
+  return false;
 });

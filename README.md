@@ -35,7 +35,9 @@ Keep an eye on what your players pick up or consume!
 - **Renaming**: Logs when an item's name is changed.
 
 ### 🗑️ Chat Moderation
-When a player deletes a chat message, the module can automatically clone the original message and whisper it to the GM(s). This is perfect for keeping an eye on accidentally (or purposely) deleted rolls!
+When a player deletes a chat message, the module whispers a compact one-line summary to the GM(s) (who deleted what, from whom). Click it to expand the original speaker, audience, time and full content. This is perfect for keeping an eye on accidentally (or purposely) deleted rolls!
+
+With **Protect Changelog Messages** (enabled by default), players additionally cannot delete changelog entries at all, so they can't hide things like HP gains. GMs can still delete them.
 
 ### 👕 Equip / Unequip Tracking *(disabled by default)*
 Optionally logs when an item is equipped or unequipped on an actor. Enable this via the **Track Equip / Unequip** setting.

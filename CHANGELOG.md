@@ -1,5 +1,13 @@
 # Changelog
 
+## 14.14.2
+
+- **Deleted Message Notices Redesign**:
+  - Messages deleted by players are now whispered to the GM(s) as a compact one-line summary (who deleted what, from whom) with an expander revealing the original speaker, audience, time and full content.
+  - Notices are fresh base messages instead of monitor-styled clones, fixing clipped/unreadable cards, hidden speaker info, and dynamic DnD5e cards overwriting the notice.
+  - Chat log flushes and deletion notices no longer produce notices. Deleted changelog entries are still reported (with their text in the summary) so players can't hide changes by deleting them.
+- **Protect Changelog Messages (new world setting, enabled by default)**: Players can no longer delete changelog messages (e.g. to hide HP gains from the GM). GMs can still delete them.
+
 ## 14.14.1
 
 - **Actor Name Tooltip Fix (Foundry V14 / DnD5e 6.x)**:

@@ -332,6 +332,89 @@ li.chat-message.tm-hidden {
   display: none !important;
 }
 
+/* -------------------------------
+   Deleted Message Notices
+   ------------------------------- */
+li.chat-message.tm-deleted {
+  padding: 2px 6px;
+  margin: 1px 0;
+  border-left: 3px solid #a02a3a;
+  border-radius: 4px;
+}
+
+li.chat-message.tm-deleted .message-header,
+li.chat-message.tm-deleted .message-portrait,
+li.chat-message.tm-deleted .message-avatar {
+  display: none !important;
+}
+
+li.chat-message.tm-deleted .message-content {
+  padding: 0;
+  margin: 0;
+}
+
+.tm-deleted-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.4;
+  list-style: none;
+  opacity: 0.85;
+}
+
+.tm-deleted-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tm-deleted-summary::after {
+  content: "\25B8";
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+
+.tm-deleted-details[open] > .tm-deleted-summary::after {
+  transform: rotate(90deg);
+}
+
+.tm-deleted-summary:hover {
+  opacity: 1;
+}
+
+.tm-deleted-summary > i {
+  color: #a02a3a;
+}
+
+.tm-deleted-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tm-deleted-time {
+  flex: 0 0 auto;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.tm-deleted-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.tm-deleted-body {
+  margin-top: 4px;
+  padding: 4px 6px;
+  max-height: 400px;
+  overflow: auto;
+  border: 1px dashed currentColor;
+  border-radius: 4px;
+}
+
 /* Accessibility Support */
 @media (prefers-contrast: more) {
   li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line {
