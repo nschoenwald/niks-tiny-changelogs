@@ -278,7 +278,7 @@ Hooks.once("init", () => {
 
   game.settings.register(MOD_ID, "trackCurrency", {
     name: "Track Currency",
-    hint: "If enabled, the module will monitor and log changes to actor currency.",
+    hint: "If enabled, the module will monitor and log changes to actor and container currency.",
     scope: "world", config: true, type: Boolean, default: true
   });
 
@@ -598,7 +598,7 @@ async function processActorUpdate(actor, data) {
     for (const coinPath of data.currencyCoins) {
       const oldVal = data.currencyOld[coinPath] ?? 0;
       const newVal = readNumber(actor, coinPath);
-      const delta = newVal - oldVal;
+      const delta = Math.round((newVal - oldVal) * 10000) / 10000;
       if (delta !== 0) {
         const icon = `<i class="fa-solid fa-coins"></i>`;
         const sign = delta > 0 ? "+" : "-";
@@ -615,11 +615,11 @@ async function processActorUpdate(actor, data) {
         addMsg(line, cls, "currency");
       }
     }
-  } else if (data.currencyBase) {
+  } else if (data.currencyBase && data.currencyCoins) {
     for (const k of data.currencyCoins) {
       const oldVal = data.currencyOld[k] ?? 0;
       const newVal = readNumber(actor, `${data.currencyBase}.${k}`);
-      const delta = newVal - oldVal;
+      const delta = Math.round((newVal - oldVal) * 10000) / 10000;
       if (delta !== 0) {
         const icon = `<i class="fa-solid fa-coins"></i>`;
         const sign = delta > 0 ? "+" : "-";
@@ -721,18 +721,40 @@ Hooks.on("preUpdateItem", (item, change, options, userId) => {
   const willUses = trackItems && willUpdatePath(change, "system.uses.spent") && readNumber(item, "system.uses.max") > 0;
   const willEquip = getWorldBool("trackEquipUnequip") && willUpdatePath(change, "system.equipped");
 
+  let currencyPayload = null;
+  if (getWorldBool("trackCurrency", true) && !isNameBlacklisted(item.name)) {
+    const currencyInfo = adapter.getItemCurrencyInfo
+      ? adapter.getItemCurrencyInfo(item, getWorldPath("currencyBasePath"))
+      : adapter.getCurrencyInfo(item, getWorldPath("currencyBasePath"));
+    if (currencyInfo?.isFlatCurrency) {
+      if (currencyInfo.coins.some(p => willUpdatePath(change, p))) {
+        currencyPayload = { ...currencyInfo };
+      }
+    } else if (currencyInfo?.basePath && currencyInfo.coins.length) {
+      if (willUpdatePath(change, currencyInfo.basePath) || currencyInfo.coins.some(k => willUpdatePath(change, `${currencyInfo.basePath}.${k}`))) {
+        currencyPayload = { ...currencyInfo };
+      }
+    }
+  }
+
   const context = { getWorldBool, willUpdatePath, readRaw, readNumber, isNameBlacklisted };
   let systemStash = null;
   if (adapter && adapter.buildPreUpdateItemPayload) {
     systemStash = adapter.buildPreUpdateItemPayload(item, change, context);
   }
 
-  if (willQty || willName || willUses || willEquip || systemStash) {
+  if (willQty || willName || willUses || willEquip || currencyPayload || systemStash) {
     ITEM_UPDATE_STASH.set(item, {
       oldQty: willQty ? (readNumber(item, "system.quantity") || 0) : undefined,
       oldName: willName ? String(item.name ?? "") : undefined,
       oldUses: willUses ? readNumber(item, "system.uses.max") - readNumber(item, "system.uses.spent") : undefined,
       oldEquip: willEquip ? Boolean(readRaw(item, "system.equipped")) : undefined,
+      currency: currencyPayload ? {
+        ...currencyPayload,
+        old: currencyPayload.isFlatCurrency
+          ? Object.fromEntries(currencyPayload.coins.map(p => [p, readNumber(item, p)]))
+          : Object.fromEntries(currencyPayload.coins.map(k => [k, readNumber(item, `${currencyPayload.basePath}.${k}`)]))
+      } : undefined,
       system: systemStash
     });
   }
@@ -744,9 +766,17 @@ Hooks.on("updateItem", (item, change, options, userId) => {
   const stash = ITEM_UPDATE_STASH.get(item);
   ITEM_UPDATE_STASH.delete(item);
 
-  if (stash || adapter) {
+  if (stash || ITEM_DEBOUNCE.has(item.uuid)) {
     const uuid = item.uuid;
-    const pending = ITEM_DEBOUNCE.get(uuid) ?? { oldQty: undefined, oldName: undefined, oldUses: undefined, oldEquip: undefined, system: {}, timer: null };
+    const pending = ITEM_DEBOUNCE.get(uuid) ?? {
+      oldQty: undefined,
+      oldName: undefined,
+      oldUses: undefined,
+      oldEquip: undefined,
+      currencyOld: {},
+      system: {},
+      timer: null
+    };
 
     if (pending.timer) clearTimeout(pending.timer);
 
@@ -755,7 +785,18 @@ Hooks.on("updateItem", (item, change, options, userId) => {
       if (pending.oldName === undefined && stash.oldName !== undefined) pending.oldName = stash.oldName;
       if (pending.oldUses === undefined && stash.oldUses !== undefined) pending.oldUses = stash.oldUses;
       if (pending.oldEquip === undefined && stash.oldEquip !== undefined) pending.oldEquip = stash.oldEquip;
-      
+
+      if (stash.currency) {
+        pending.currencyBase = stash.currency.basePath;
+        pending.currencyCoins = stash.currency.coins;
+        pending.isFlatCurrency = stash.currency.isFlatCurrency ?? false;
+        for (const k of stash.currency.coins) {
+          if (pending.currencyOld[k] === undefined && stash.currency.old[k] !== undefined) {
+            pending.currencyOld[k] = stash.currency.old[k];
+          }
+        }
+      }
+
       if (stash.system) {
         for (const [k, v] of Object.entries(stash.system)) {
           if (pending.system[k] === undefined) {
@@ -790,6 +831,12 @@ async function processItemUpdate(item, data) {
   const currentBlacklisted = isNameBlacklisted(item.name);
   const link = getActorLink(item.parent);
   const icon = `<i class="fa-solid fa-backpack"></i>`;
+  const safeItemName = escapeHTML(item.name || "Container");
+  const messagesToCreate = [];
+
+  const addMsg = (line, cls, kind, isMultiline = false, customColor = null) => {
+    messagesToCreate.push(buildMonitorMessageData(item.parent, line, cls, kind, isMultiline, customColor));
+  };
 
   // Quantity
   if (data.oldQty !== undefined && !currentBlacklisted) {
@@ -797,18 +844,16 @@ async function processItemUpdate(item, data) {
     const newQty = readNumber(item, "system.quantity") || 0;
 
     if (newQty !== oldQty) {
-      const safeItemName = escapeHTML(item.name);
-
       const delta = newQty - oldQty;
       const sign = delta > 0 ? "+" : "-";
       const abs = Math.abs(delta);
       const isSimple = getWorldBool("simpleOutput");
 
       if (oldQty === 0 && newQty === 1) {
-        await postMonitorMessage(item.parent, `${icon} ${link} added ${safeItemName}`, "tiny-monitor-item-inc", "item", true);
+        addMsg(`${icon} ${link} added ${safeItemName}`, "tiny-monitor-item-inc", "item", true);
       }
       else if (oldQty === 1 && newQty === 0) {
-        await postMonitorMessage(item.parent, `${icon} ${link} deleted ${safeItemName}`, "tiny-monitor-item-dec", "item", true);
+        addMsg(`${icon} ${link} deleted ${safeItemName}`, "tiny-monitor-item-dec", "item", true);
       }
       else {
         const text = isSimple
@@ -816,7 +861,7 @@ async function processItemUpdate(item, data) {
           : `${oldQty} ${sign} ${abs} → ${newQty}`;
 
         const line = `${icon} ${link} ${safeItemName}: ${text}`;
-        await postMonitorMessage(item.parent, line, delta > 0 ? "tiny-monitor-item-inc" : "tiny-monitor-item-dec", "item", true);
+        addMsg(line, delta > 0 ? "tiny-monitor-item-inc" : "tiny-monitor-item-dec", "item", true);
       }
     }
   }
@@ -829,7 +874,6 @@ async function processItemUpdate(item, data) {
 
     if (delta !== 0 && max > 0) {
       const usesIcon = `<i class="fa-solid fa-battery-half"></i>`;
-      const safeItemName = escapeHTML(item.name);
       const sign = delta > 0 ? "+" : "-";
       const abs = Math.abs(delta);
       const isSimple = getWorldBool("simpleOutput");
@@ -838,15 +882,16 @@ async function processItemUpdate(item, data) {
         : `Uses: ${data.oldUses} ${sign} ${abs} → ${newUses} / ${max}`;
       const cls = delta > 0 ? "tiny-monitor-item-inc" : "tiny-monitor-item-dec";
       const line = `${usesIcon} ${link} ${safeItemName}: ${text}`;
-      await postMonitorMessage(item.parent, line, cls, "item-uses", true);
+      addMsg(line, cls, "item-uses", true);
     }
   }
 
   // Rename
   if (data.oldName !== undefined && item.name !== data.oldName) {
     if (!isNameBlacklisted(data.oldName) && !currentBlacklisted) {
-      const line = `${icon} ${link} ${data.oldName} → ${item.name}`;
-      await postMonitorMessage(item.parent, line, "tiny-monitor-item", "item", true);
+      const safeOldName = escapeHTML(data.oldName);
+      const line = `${icon} ${link} ${safeOldName} → ${safeItemName}`;
+      addMsg(line, "tiny-monitor-item", "item", true);
     }
   }
 
@@ -854,12 +899,66 @@ async function processItemUpdate(item, data) {
   if (data.oldEquip !== undefined && !currentBlacklisted) {
     const newEquip = Boolean(readRaw(item, "system.equipped"));
     if (newEquip !== data.oldEquip) {
-      const safeItemName = escapeHTML(item.name);
       const equipIcon = `<i class="fa-solid fa-shirt"></i>`;
       const action = newEquip ? "equipped" : "unequipped";
       const cls = newEquip ? "tiny-monitor-equip" : "tiny-monitor-unequip";
       const line = `${equipIcon} ${link} ${action} ${safeItemName}`;
-      await postMonitorMessage(item.parent, line, cls, "equip", true);
+      addMsg(line, cls, "equip", true);
+    }
+  }
+
+  // Container Currency
+  if (!currentBlacklisted) {
+    if (data.isFlatCurrency && data.currencyCoins) {
+      for (const coinPath of data.currencyCoins) {
+        const oldVal = data.currencyOld[coinPath] ?? 0;
+        const newVal = readNumber(item, coinPath);
+        const delta = Math.round((newVal - oldVal) * 10000) / 10000;
+        if (delta !== 0) {
+          const coinIcon = `<i class="fa-solid fa-coins"></i>`;
+          const sign = delta > 0 ? "+" : "-";
+          const abs = Math.abs(delta);
+          const name = adapter.getCoinLabel(coinPath);
+          const isSimple = getWorldBool("simpleOutput");
+
+          const text = isSimple
+            ? `${name}: ${sign} ${abs}`
+            : `${name}: ${oldVal} ${sign} ${abs} → ${newVal}`;
+
+          const line = `${coinIcon} <span class="tm-actor">${link} (${safeItemName})</span> <span class="tm-text">${text}</span>`;
+          const cls = delta > 0 ? "tiny-monitor-currency-gain" : "tiny-monitor-currency-loss";
+          addMsg(line, cls, "currency");
+        }
+      }
+    } else if (data.currencyBase && data.currencyCoins) {
+      for (const k of data.currencyCoins) {
+        const oldVal = data.currencyOld[k] ?? 0;
+        const newVal = readNumber(item, `${data.currencyBase}.${k}`);
+        const delta = Math.round((newVal - oldVal) * 10000) / 10000;
+        if (delta !== 0) {
+          const coinIcon = `<i class="fa-solid fa-coins"></i>`;
+          const sign = delta > 0 ? "+" : "-";
+          const abs = Math.abs(delta);
+          const name = adapter.getCoinLabel(k);
+          const isSimple = getWorldBool("simpleOutput");
+
+          const text = isSimple
+            ? `${name}: ${sign} ${abs}`
+            : `${name}: ${oldVal} ${sign} ${abs} → ${newVal}`;
+
+          const line = `${coinIcon} <span class="tm-actor">${link} (${safeItemName})</span> <span class="tm-text">${text}</span>`;
+          const cls = delta > 0 ? "tiny-monitor-currency-gain" : "tiny-monitor-currency-loss";
+          addMsg(line, cls, "currency");
+        }
+      }
+    }
+  }
+
+  if (messagesToCreate.length > 0) {
+    if (messagesToCreate.length === 1) {
+      await ChatMessage.create(messagesToCreate[0]);
+    } else {
+      await ChatMessage.createDocuments(messagesToCreate);
     }
   }
 }

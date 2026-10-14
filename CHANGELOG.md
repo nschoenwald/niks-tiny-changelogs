@@ -1,5 +1,16 @@
 # Changelog
 
+## 14.14.3
+
+- **Container Currency Tracking**:
+  - Changing currency within containers (such as backpacks, pouches, chests, or bags of holding) now produces changelog messages just like character currency.
+  - Supports direct container sheet edits, conversions via Currency Manager, and transfers between characters and containers.
+  - Clearly identifies both the character and container (e.g. `Gimli (Backpack) Gold: 0 + 50 → 50`), styled with standard currency gain and loss color badges.
+  - Fully governed by the **Track Currency** setting and respects the **Ignored Names / Blacklist** filter.
+- **Currency & Item Tracking Refinements**:
+  - **Localized Currency Labels**: Currency denominations in DnD5e now automatically prioritize the active language's localized labels (e.g., in non-English games or custom translations).
+  - **Decimal Precision & Performance**: Cleaned up fractional currency calculations to avoid floating-point display artifacts, eliminated idle timeouts on untracked item modifications, and hardened rename logs with full HTML escaping.
+
 ## 14.14.2
 
 - **Deleted Message Notices Redesign**:

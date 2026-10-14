@@ -25,7 +25,7 @@ Automatically monitors and logs changes to:
 The module features **Auto-Detection** for health data paths, working out of the box with major systems like `dnd5e`, `pf2e`, `shadowdark`, `demonlord`, and `morkborg`. It also uses a heuristic probe for unsupported systems, but allows you to manually specify the data paths in the settings if automatic detection fails.
 
 ### 💰 Currency Tracking
-Logs whenever an actor gains or loses currency (e.g., Gold, Silver, Copper). It automatically detects the correct currency paths for `dnd5e` and `pf2e`, but can be manually configured for other systems.
+Logs whenever an actor or container gains or loses currency (e.g., Gold, Silver, Copper). It tracks character wallet changes as well as container currency (backpacks, chests, pouches, bags of holding), including direct sheet edits, conversions, and transfers. It automatically detects the correct currency paths for `dnd5e` and `pf2e`, but can be manually configured for other systems.
 
 ### 🎒 Item & Inventory Tracking
 Keep an eye on what your players pick up or consume!

@@ -49,10 +49,48 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
   }
 
   getCurrencyInfo(actor, manualBase) {
-    return super.getCurrencyInfo(actor, manualBase); // Uses standard "system.currency"
+    const info = super.getCurrencyInfo(actor, manualBase);
+    if (info.basePath && typeof CONFIG !== "undefined" && CONFIG.DND5E?.currencies) {
+      const obj = foundry.utils.getProperty(actor, info.basePath);
+      if (obj && typeof obj === "object") {
+        const all = Object.keys(CONFIG.DND5E.currencies);
+        const coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
+        if (coins.length > 0) return { ...info, coins };
+      }
+    }
+    return info;
+  }
+
+  getItemCurrencyInfo(item, manualBase) {
+    const candidates = manualBase ? [manualBase, "system.currency"] : ["system.currency"];
+
+    let basePath = null, obj = null;
+    for (const p of candidates) {
+      const o = foundry.utils.getProperty(item, p);
+      if (o && typeof o === "object") { basePath = p; obj = o; break; }
+    }
+    if (!basePath) return { basePath: null, coins: [], isFlatCurrency: false };
+
+    const all = (typeof CONFIG !== "undefined" && CONFIG.DND5E?.currencies)
+      ? Object.keys(CONFIG.DND5E.currencies)
+      : ["pp", "gp", "ep", "sp", "cp"];
+    let coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
+    if (coins.length === 0) {
+      coins = Object.keys(obj).filter(k => {
+        const val = obj[k];
+        return typeof val === "number" || Number.isFinite(Number(val));
+      });
+    }
+    return { basePath, coins, isFlatCurrency: false };
   }
 
   getCoinLabel(denom) {
+    const rawLabel = typeof CONFIG !== "undefined" ? CONFIG.DND5E?.currencies?.[denom]?.label : null;
+    if (rawLabel) {
+      const localized = game.i18n?.localize ? game.i18n.localize(rawLabel) : rawLabel;
+      if (localized && localized !== rawLabel) return localized;
+      if (localized && !rawLabel.startsWith("DND5E.")) return localized;
+    }
     const labels = { pp: "Platinum", gp: "Gold", ep: "Electrum", sp: "Silver", cp: "Copper" };
     return labels[denom] ?? super.getCoinLabel(denom);
   }

@@ -47,6 +47,33 @@ export default class BaseSystemAdapter {
   }
 
   /**
+   * Determine the currency paths and coins array for an item (e.g. container).
+   * @param {Item} item 
+   * @param {string|null} manualBase 
+   * @returns {{basePath: string|null, coins: string[], isFlatCurrency: boolean}}
+   */
+  getItemCurrencyInfo(item, manualBase) {
+    const candidates = manualBase ? [manualBase, "system.currency", "system.currencies"] : ["system.currency", "system.currencies"];
+
+    let basePath = null, obj = null;
+    for (const p of candidates) {
+      const o = foundry.utils.getProperty(item, p);
+      if (o && typeof o === "object") { basePath = p; obj = o; break; }
+    }
+    if (!basePath) return { basePath: null, coins: [], isFlatCurrency: false };
+
+    const all = ["pp", "gp", "ep", "sp", "cp"];
+    let coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
+    if (coins.length === 0) {
+      coins = Object.keys(obj).filter(k => {
+        const val = obj[k];
+        return typeof val === "number" || Number.isFinite(Number(val));
+      });
+    }
+    return { basePath, coins, isFlatCurrency: false };
+  }
+
+  /**
    * Determine the display label for a given currency denominator.
    * @param {string} denom 
    * @returns {string}
