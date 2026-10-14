@@ -1,6 +1,6 @@
 # Changelog
 
-## 14.14.3
+## 14.14.2
 
 - **Container Currency Tracking**:
   - Changing currency within containers (such as backpacks, pouches, chests, or bags of holding) now produces changelog messages just like character currency.
@@ -10,9 +10,6 @@
 - **Currency & Item Tracking Refinements**:
   - **Localized Currency Labels**: Currency denominations in DnD5e now automatically prioritize the active language's localized labels (e.g., in non-English games or custom translations).
   - **Decimal Precision & Performance**: Cleaned up fractional currency calculations to avoid floating-point display artifacts, eliminated idle timeouts on untracked item modifications, and hardened rename logs with full HTML escaping.
-
-## 14.14.2
-
 - **Deleted Message Notices Redesign**:
   - Messages deleted by players are now whispered to the GM(s) as a compact one-line summary (who deleted what, from whom) with an expander revealing the original speaker, audience, time and full content.
   - Notices are fresh base messages instead of monitor-styled clones, fixing clipped/unreadable cards, hidden speaker info, and dynamic DnD5e cards overwriting the notice.
