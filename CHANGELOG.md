@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.14.3
+
+- **Chat No Longer Jumps to the Bottom**: When you scroll up in chat to apply damage (or otherwise change an actor) from an older chat card, the resulting changelog message no longer yanks the chat log back down to the bottom. If you're already at the bottom, new changelog messages still scroll into view as before.
+
 ## 14.14.2
 
 - **Container Currency Tracking**:

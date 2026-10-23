@@ -383,6 +383,19 @@ Hooks.once("init", () => {
   const renderHook = game.release.generation >= 14 ? "renderChatMessageHTML" : "renderChatMessage";
   Hooks.on(renderHook, applyMonitorStyling);
 
+  // Core always scrolls to the bottom for messages authored by the current user, which yanks the chat down
+  // when someone scrolled up to click a damage button. For our messages, only scroll if already at the bottom.
+  const ChatLog = foundry.applications?.sidebar?.tabs?.ChatLog;
+  const originalPostOne = ChatLog?.prototype?.postOne;
+  if (originalPostOne) {
+    ChatLog.prototype.postOne = function (message, options = {}) {
+      if (options.scroll === undefined && message?.flags?.[MOD_ID] && !this.isAtBottom) {
+        options = { ...options, scroll: false };
+      }
+      return originalPostOne.call(this, message, options);
+    };
+  }
+
   console.log(`[${MOD_ID}] Initialized.`);
 });
 
