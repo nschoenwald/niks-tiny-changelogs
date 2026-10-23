@@ -1,9 +1,11 @@
-// Tiny HP Monitor for Foundry VTT
+// Nik's Tiny Change Logs for Foundry VTT
+// Posts one-line chat messages for actor, item and effect changes.
 // Multi-system (auto-detect + configurable paths) with System Adapters.
 
 import SystemManager from "./systems/index.mjs";
 import CustomTrackerConfig from "./custom-tracker-config.mjs";
 import SettingsImportExportApp from "./settings-import-export.mjs";
+import { parseCustomResources } from "./custom-resources.mjs";
 
 const MOD_ID = "niks-tiny-changelogs";
 const MAX_NAME_CHARS = 25;
@@ -41,27 +43,14 @@ let cachedActiveCustomResources = null;
 let cachedNameBlacklist = null;
 let cachedWatchedActorRoots = null;
 
-export function clearCustomResourcesCache() {
-  cachedCustomResources = null;
-  cachedActiveCustomResources = null;
-  cachedWatchedActorRoots = null;
-}
-
-export function clearNameBlacklistCache() {
-  cachedNameBlacklist = null;
-  cachedActiveCustomResources = null;
-}
-
-function clearSettingsCache() {
-  SETTINGS_CACHE.clear();
-  cachedWatchedActorRoots = null;
-}
-
+/** Clear the settings cache and every cache derived from setting values. */
 function onSettingDocumentChange(setting) {
   if (!setting?.key?.startsWith(`${MOD_ID}.`)) return;
-  clearSettingsCache();
-  clearCustomResourcesCache();
-  clearNameBlacklistCache();
+  SETTINGS_CACHE.clear();
+  cachedCustomResources = null;
+  cachedActiveCustomResources = null;
+  cachedNameBlacklist = null;
+  cachedWatchedActorRoots = null;
 }
 
 Hooks.on("createSetting", onSettingDocumentChange);
@@ -80,30 +69,18 @@ function getSetting(key, def) {
 }
 
 function getCustomResources() {
-  if (cachedCustomResources !== null) return cachedCustomResources;
-  const customSetting = getSetting("customTrackedResources", "[]");
-  if (customSetting) {
-    try {
-      cachedCustomResources = JSON.parse(customSetting);
-    } catch (e) {
-      console.error(`[${MOD_ID}] Failed to parse customTrackedResources:`, e);
-      cachedCustomResources = [];
-    }
-  } else {
-    cachedCustomResources = [];
-  }
+  cachedCustomResources ??= parseCustomResources(getSetting("customTrackedResources", "[]"));
   return cachedCustomResources;
 }
 
 /** Custom resources with a valid path whose name is not blacklisted. */
 function getActiveCustomResources() {
-  if (cachedActiveCustomResources !== null) return cachedActiveCustomResources;
-  const resources = getCustomResources();
-  cachedActiveCustomResources = Array.isArray(resources)
-    ? resources.filter(res => res?.path && !isNameBlacklisted(res.name))
-    : [];
+  cachedActiveCustomResources ??= getCustomResources().filter(res => res.path && !isNameBlacklisted(res.name));
   return cachedActiveCustomResources;
 }
+
+// One blacklist entry: a /regex/flags token (which may contain commas) or plain text up to the next separator
+const BLACKLIST_TOKEN = /\s*(\/(?:\\.|[^/\\\n])+\/[a-z]*)(?=\s*(?:[,\n]|$))|[^,\n]+/g;
 
 function getNameBlacklist() {
   if (cachedNameBlacklist !== null) return cachedNameBlacklist;
@@ -112,9 +89,8 @@ function getNameBlacklist() {
   const raw = getSetting("nameBlacklist", "");
   if (!raw || typeof raw !== "string" || !raw.trim()) return cachedNameBlacklist;
 
-  const entries = raw
-    .split(/[\n,]+/)
-    .map(s => s.trim())
+  const entries = [...raw.matchAll(BLACKLIST_TOKEN)]
+    .map(m => (m[1] ?? m[0]).trim())
     .filter(s => s.length > 0);
 
   for (const entry of entries) {
@@ -169,7 +145,7 @@ function getWatchedActorRoots() {
     getWorldPath("tempHpPath"),
     getWorldPath("tempHpMaxPath"),
     getWorldPath("currencyBasePath"),
-    ...getCustomResources().map(res => res?.path)
+    ...getCustomResources().map(res => res.path)
   ];
   cachedWatchedActorRoots = new Set(["system"]);
   for (const path of paths) {
@@ -198,7 +174,8 @@ function clipName(name) {
 
 function getActorLink(actor) {
   const rawName = actor?.token?.name ?? actor?.name ?? "";
-  const label = clipName(rawName);
+  // Braces would end the @UUID label early; HTML in names must stay text
+  const label = escapeHTML(clipName(rawName).replace(/{/g, "(").replace(/}/g, ")"));
   return `@UUID[${actor?.uuid ?? ""}]{${label}}`;
 }
 
@@ -408,8 +385,7 @@ Hooks.once("init", () => {
   game.settings.register(MOD_ID, "nameBlacklist", {
     name: "Ignored Names / Blacklist",
     hint: "Comma-separated list of item and Active Effect names to ignore from changelogs (case-insensitive, e.g. 'Aura of Protection, Torch'). Supports wildcards (*) and regex (/pattern/).",
-    scope: "world", config: true, type: String, default: "",
-    onChange: () => clearNameBlacklistCache()
+    scope: "world", config: true, type: String, default: ""
   });
 
   // Delegate system specific settings
@@ -430,8 +406,7 @@ Hooks.once("init", () => {
     scope: "world",
     config: false,
     type: String,
-    default: "[]",
-    onChange: () => clearCustomResourcesCache()
+    default: "[]"
   });
 
   game.settings.registerMenu(MOD_ID, "importExportMenu", {
@@ -473,8 +448,7 @@ Hooks.once("init", () => {
     scope: "world", config: true, type: String, default: ""
   });
 
-  const renderHook = game.release.generation >= 14 ? "renderChatMessageHTML" : "renderChatMessage";
-  Hooks.on(renderHook, applyMonitorStyling);
+  Hooks.on("renderChatMessageHTML", applyMonitorStyling);
 
   // Core always scrolls to the bottom for messages authored by the current user, which yanks the chat down
   // when someone scrolled up to click a damage button. For our messages, only scroll if already at the bottom.
@@ -629,15 +603,17 @@ Hooks.on("updateActor", (actor, update, options, userId) => {
   }
 
   pending.timer = setTimeout(() => {
-    processActorUpdate(actor, pending);
     ACTOR_DEBOUNCE.delete(uuid);
+    processActorUpdate(actor, pending).catch(err => {
+      console.error(`[${MOD_ID}] Failed to process actor update:`, err);
+    });
   }, DEBOUNCE_MS);
 
   ACTOR_DEBOUNCE.set(uuid, pending);
 });
 
 async function processActorUpdate(actor, data) {
-  const { hpPath, tempPath, tempMaxPath, damageSystem } = resolvePaths(actor);
+  const { hpPath, tempPath, tempMaxPath, damageSystem, tempMaxLabel = "Temp Max" } = resolvePaths(actor);
   const link = getActorLink(actor);
   const messagesToCreate = [];
   let whisper = null;
@@ -697,8 +673,8 @@ async function processActorUpdate(actor, data) {
       const isSimple = getWorldBool("simpleOutput");
 
       const text = isSimple
-        ? `Temp Max: ${sign} ${abs}`
-        : `Temp Max: ${data.oldTHPMax} ${sign} ${abs} → ${newTHPMax}`;
+        ? `${tempMaxLabel}: ${sign} ${abs}`
+        : `${tempMaxLabel}: ${data.oldTHPMax} ${sign} ${abs} → ${newTHPMax}`;
 
       const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
       addMsg(line, "tiny-monitor-tempmax", "tempmax");
@@ -773,16 +749,21 @@ async function processActorUpdate(actor, data) {
           const abs = Math.abs(delta);
           const isSimple = getWorldBool("simpleOutput");
           
-          let actionMsg = isGain ? res.msgGain : res.msgLoss;
-          actionMsg = actionMsg.replace(/{name}/g, res.name).replace(/{old}/g, res.oldValue).replace(/{new}/g, newVal).replace(/{diff}/g, String(abs));
-          
-          const text = isSimple
-            ? `${res.name}: ${sign} ${abs}`
-            : `${actionMsg} (${res.oldValue} ${sign} ${abs} → ${newVal})`;
+          // Replacer functions, so "$" sequences in names are not treated as replacement patterns
+          const actionMsg = (isGain ? res.msgGain : res.msgLoss)
+            .replace(/{name}/g, () => res.name)
+            .replace(/{old}/g, () => String(res.oldValue))
+            .replace(/{new}/g, () => String(newVal))
+            .replace(/{diff}/g, () => String(abs));
+          const safeName = escapeHTML(res.name);
 
-          const iconHtml = (res.icon.includes('/') || res.icon.includes('.')) 
-            ? `<img src="${res.icon}" style="width: 14px; height: 14px; border: none; align-self: center;" />`
-            : `<i class="${res.icon}"></i>`;
+          const text = isSimple
+            ? `${safeName}: ${sign} ${abs}`
+            : `${escapeHTML(actionMsg)} (${res.oldValue} ${sign} ${abs} → ${newVal})`;
+
+          const iconHtml = (res.icon.includes('/') || res.icon.includes('.'))
+            ? `<img src="${escapeHTML(res.icon)}" style="width: 14px; height: 14px; border: none; align-self: center;" />`
+            : `<i class="${escapeHTML(res.icon)}"></i>`;
 
           const line = `${iconHtml} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
           addMsg(line, "tiny-monitor-custom", "custom", false, res.color);
@@ -834,9 +815,7 @@ Hooks.on("preUpdateItem", (item, change, options, userId) => {
   const currencyBasePath = getWorldPath("currencyBasePath");
   if (getWorldBool("trackCurrency", true) && adapter.updateTouchesCurrency(change, currencyBasePath)
     && !isNameBlacklisted(item.name)) {
-    const currencyInfo = adapter.getItemCurrencyInfo
-      ? adapter.getItemCurrencyInfo(item, currencyBasePath)
-      : adapter.getCurrencyInfo(item, currencyBasePath);
+    const currencyInfo = adapter.getItemCurrencyInfo(item, currencyBasePath);
     if (currencyInfo?.isFlatCurrency) {
       if (currencyInfo.coins.some(p => willUpdatePath(change, p))) {
         currencyPayload = { ...currencyInfo };
@@ -849,10 +828,7 @@ Hooks.on("preUpdateItem", (item, change, options, userId) => {
   }
 
   const context = { getWorldBool, willUpdatePath, readRaw, readNumber, isNameBlacklisted };
-  let systemStash = null;
-  if (adapter && adapter.buildPreUpdateItemPayload) {
-    systemStash = adapter.buildPreUpdateItemPayload(item, change, context);
-  }
+  const systemStash = adapter.buildPreUpdateItemPayload(item, change, context);
 
   if (willQty || willName || willUses || willEquip || currencyPayload || systemStash) {
     // Stored on the operation options (keyed by item ID, since one operation can update many items)
@@ -922,16 +898,15 @@ Hooks.on("updateItem", (item, change, options, userId) => {
     }
 
     pending.timer = setTimeout(async () => {
-      let handled = false;
-      if (adapter) {
-         const context = { getWorldBool, postMonitorMessage, readRaw, getActorLink, escapeHTML, oldItemData: pending, isNameBlacklisted };
-         handled = await adapter.processItemChange(item, "update", context);
-      }
-      
-      if (!handled) {
-         await processItemUpdate(item, pending);
-      }
+      // Remove first, so an error below cannot leave stale old values behind for later updates
       ITEM_DEBOUNCE.delete(uuid);
+      try {
+        const context = { getWorldBool, postMonitorMessage, readRaw, getActorLink, escapeHTML, oldItemData: pending, isNameBlacklisted };
+        await adapter.processItemChange(item, "update", context);
+        await processItemUpdate(item, pending);
+      } catch (err) {
+        console.error(`[${MOD_ID}] Failed to process item update:`, err);
+      }
     }, DEBOUNCE_MS);
 
     ITEM_DEBOUNCE.set(uuid, pending);
@@ -1117,18 +1092,19 @@ Hooks.on("deleteItem", async (item, options, userId) => {
 // Active Effect Tracking
 // -------------------------------
 
+/**
+ * The actor an effect applies to. ActiveEffect#target is the parent actor, or the owning actor for
+ * transferred item effects; non-transfer item effects (e.g. spell effects meant for targets, enchantments)
+ * target their item and are ignored.
+ */
 function resolveEffectActor(effect) {
-  if (effect.actor instanceof Actor) return effect.actor;
-  if (effect.target instanceof Actor) return effect.target;
-  if (effect.parent instanceof Actor) return effect.parent;
-  if (effect.parent?.actor instanceof Actor) return effect.parent.actor;
-  if (effect.parent?.parent instanceof Actor) return effect.parent.parent;
-  return null;
+  const target = effect.target;
+  return target instanceof Actor ? target : null;
 }
 
 Hooks.on("createActiveEffect", async (effect, options, userId) => {
   if (userId !== game.userId || !getWorldBool("trackActiveEffects")) return;
-  const effName = effect.name || effect.label || "Unknown Effect";
+  const effName = effect.name || "Unknown Effect";
   if (isNameBlacklisted(effName)) return;
   const actor = resolveEffectActor(effect);
   if (!actor) return;
@@ -1142,7 +1118,7 @@ Hooks.on("createActiveEffect", async (effect, options, userId) => {
 
 Hooks.on("preDeleteActiveEffect", (effect, options, userId) => {
   if (!getWorldBool("trackActiveEffects")) return;
-  const effName = effect.name || effect.label || "Unknown Effect";
+  const effName = effect.name || "Unknown Effect";
   if (isNameBlacklisted(effName)) return;
   const actor = resolveEffectActor(effect);
   if (!actor) return;
@@ -1150,8 +1126,7 @@ Hooks.on("preDeleteActiveEffect", (effect, options, userId) => {
   EFFECT_DELETE_STASH.set(effect, {
     link: getActorLink(actor),
     whisper: buildRecipients(actor),
-    name: effName,
-    actor
+    name: effName
   });
 });
 
@@ -1172,7 +1147,7 @@ Hooks.on("deleteActiveEffect", async (effect, options, userId) => {
 Hooks.on("updateActiveEffect", async (effect, change, options, userId) => {
   if (userId !== game.userId || !getWorldBool("trackActiveEffects")) return;
   if (!foundry.utils.hasProperty(change, "disabled")) return;
-  const effName = effect.name || effect.label || "Unknown Effect";
+  const effName = effect.name || "Unknown Effect";
   if (isNameBlacklisted(effName)) return;
 
   const actor = resolveEffectActor(effect);
@@ -1189,7 +1164,6 @@ Hooks.on("updateActiveEffect", async (effect, change, options, userId) => {
 });
 
 function shouldHideMessage(message) {
-  if (!message.getFlag(MOD_ID, "isMonitorMsg")) return false;
   const whisper = message.whisper ?? [];
 
   if (whisper.length > 0 && !whisper.includes(game.user.id)) {
@@ -1205,29 +1179,22 @@ function shouldHideMessage(message) {
 }
 
 function applyMonitorStyling(message, html) {
+  const li = html.closest(".chat-message") ?? html;
   if (message.getFlag(MOD_ID, "kind") === "chat-delete") {
-    const delLi = html instanceof HTMLElement
-      ? html.closest(".chat-message") ?? html
-      : (html[0]?.closest?.(".chat-message") ?? html);
-    delLi?.classList?.add("tm-deleted");
+    li.classList.add("tm-deleted");
     return;
   }
   if (!message.getFlag(MOD_ID, "isMonitorMsg")) return;
-  const li = html instanceof HTMLElement
-    ? html.closest(".chat-message") ?? html
-    : (html[0]?.closest?.(".chat-message") ?? html);
-  if (!li?.classList) return;
 
   if (shouldHideMessage(message)) {
     li.classList.add("tm-hidden");
-    li.style.setProperty("display", "none", "important");
     return;
   }
 
   li.classList.add("tiny-monitor-msg");
   const cls = message.getFlag(MOD_ID, "cls");
   if (cls) li.classList.add(cls);
-  
+
   const customColor = message.getFlag(MOD_ID, "customColor");
   if (customColor) {
     li.style.backgroundColor = customColor;
@@ -1261,8 +1228,7 @@ async function getDeletedMessageBody(message) {
 }
 
 Hooks.on("deleteChatMessage", async (message, options, userId) => {
-  const primaryGM = game.users.primaryGM ?? game.users.activeGM;
-  if (!game.user.isGM || primaryGM?.id !== game.user.id) return;
+  if (!game.user.isGM || game.users.activeGM?.id !== game.user.id) return;
 
   const deletingUser = game.users.get(userId);
   if (!deletingUser || deletingUser.isGM) return;

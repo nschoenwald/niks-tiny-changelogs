@@ -1,11 +1,11 @@
 {
   "id": "niks-tiny-changelogs",
   "title": "Nik's Tiny Change Logs",
-  "description": "<p>Posts a tiny one-line chat message whenever a token's HP, Temp HP, or Temp Max HP changes.</p>",
+  "description": "<p>Posts tiny one-line chat messages whenever an actor's HP, currency, items, Active Effects or other tracked values change, and reports chat messages deleted by players to the GM.</p>",
   "url": "https://github.com/nschoenwald/niks-tiny-changelogs",
   "manifest": "https://github.com/nschoenwald/niks-tiny-changelogs/releases/latest/download/module.json",
   "download": "https://github.com/nschoenwald/niks-tiny-changelogs/releases/latest/download/module.zip",
-  "version": "14.15.0",
+  "version": "14.15.1",
   "authors": [
     {
       "name": "nikolai.sw",

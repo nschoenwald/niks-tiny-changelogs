@@ -70,6 +70,18 @@ li.chat-message.tiny-monitor-msg {
   --tm-xp-loss: #6d4c41;
   /* Brown */
 
+  /* Abilities (Mörk Borg) */
+  --tm-ability-gain: #00695c;
+  /* Dark Teal Green */
+  --tm-ability-loss: #880e4f;
+  /* Dark Raspberry */
+
+  /* Omens (Mörk Borg) */
+  --tm-omens-gain: #827717;
+  /* Olive */
+  --tm-omens-loss: #4e342e;
+  /* Dark Brown */
+
   /* Foundry V14 Grid Reset */
   display: grid !important;
   grid-template-columns: 1fr !important;
@@ -294,6 +306,24 @@ li.chat-message.tiny-monitor-msg.tiny-monitor-xp-loss {
   background-color: var(--tm-xp-loss);
 }
 
+/* Abilities (Mörk Borg) */
+li.chat-message.tiny-monitor-msg.tiny-monitor-ability-gain {
+  background-color: var(--tm-ability-gain);
+}
+
+li.chat-message.tiny-monitor-msg.tiny-monitor-ability-loss {
+  background-color: var(--tm-ability-loss);
+}
+
+/* Omens (Mörk Borg) */
+li.chat-message.tiny-monitor-msg.tiny-monitor-omens-gain {
+  background-color: var(--tm-omens-gain);
+}
+
+li.chat-message.tiny-monitor-msg.tiny-monitor-omens-loss {
+  background-color: var(--tm-omens-loss);
+}
+
 /* -------------------------------
    Compact Mode (expand on hover)
    ------------------------------- */
@@ -327,7 +357,6 @@ li.chat-message.tiny-monitor-msg.tm-compact:hover .message-content .tiny-monitor
 }
 
 /* Hidden Messages (e.g. GM-only whispers hidden from player authors) */
-li.chat-message.tiny-monitor-msg.tm-hidden,
 li.chat-message.tm-hidden {
   display: none !important;
 }

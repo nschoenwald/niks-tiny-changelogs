@@ -18,8 +18,9 @@ export default class BaseSystemAdapter {
 
   /**
    * Determine the health data paths for the given actor.
-   * @param {Actor} actor 
-   * @returns {{hpPath: string|null, tempPath: string|null, tempMaxPath: string|null, damageSystem: boolean}}
+   * An optional `tempMaxLabel` overrides the "Temp Max" label used for changes at `tempMaxPath`.
+   * @param {Actor} actor
+   * @returns {{hpPath: string|null, tempPath: string|null, tempMaxPath: string|null, damageSystem: boolean, tempMaxLabel?: string}}
    */
   getHealthPaths(actor) {
     return { hpPath: null, tempPath: null, tempMaxPath: null, damageSystem: false };
@@ -142,14 +143,11 @@ export default class BaseSystemAdapter {
   }
 
   /**
-   * Optionally handle item updates. For most generic systems, returning false
-   * delegates to the standard logic.
+   * Post system-specific messages for a debounced item update. Runs before the generic
+   * item processing (quantity, uses, rename, equip, currency), which always runs as well.
    * @param {Item} item
    * @param {string} action
-   * @param {object} context
-   * @returns {boolean} True if handled completely
+   * @param {object} context (includes oldItemData with the merged `system` payload)
    */
-  async processItemChange(item, action, context) {
-    return false;
-  }
+  async processItemChange(item, action, context) {}
 }

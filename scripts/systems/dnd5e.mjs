@@ -50,7 +50,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
 
   getCurrencyInfo(actor, manualBase) {
     const info = super.getCurrencyInfo(actor, manualBase);
-    if (info.basePath && typeof CONFIG !== "undefined" && CONFIG.DND5E?.currencies) {
+    if (info.basePath && CONFIG.DND5E?.currencies) {
       const obj = foundry.utils.getProperty(actor, info.basePath);
       if (obj && typeof obj === "object") {
         const all = Object.keys(CONFIG.DND5E.currencies);
@@ -71,7 +71,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
     }
     if (!basePath) return { basePath: null, coins: [], isFlatCurrency: false };
 
-    const all = (typeof CONFIG !== "undefined" && CONFIG.DND5E?.currencies)
+    const all = CONFIG.DND5E?.currencies
       ? Object.keys(CONFIG.DND5E.currencies)
       : ["pp", "gp", "ep", "sp", "cp"];
     let coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
@@ -85,9 +85,9 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
   }
 
   getCoinLabel(denom) {
-    const rawLabel = typeof CONFIG !== "undefined" ? CONFIG.DND5E?.currencies?.[denom]?.label : null;
+    const rawLabel = CONFIG.DND5E?.currencies?.[denom]?.label;
     if (rawLabel) {
-      const localized = game.i18n?.localize ? game.i18n.localize(rawLabel) : rawLabel;
+      const localized = game.i18n.localize(rawLabel);
       if (localized && localized !== rawLabel) return localized;
       if (localized && !rawLabel.startsWith("DND5E.")) return localized;
     }
@@ -97,7 +97,6 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
 
   buildPreUpdatePayload(actor, update, context) {
     const payload = {};
-    const sys = "dnd5e";
 
     // Inspiration
     if (context.getWorldBool("trackDnd5eInspiration")) {
@@ -244,45 +243,26 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
     }
   }
 
-  // Helper for DnD5e Spell Prep
+  /** Whether a spell counts as prepared (dnd5e 5.x+: 0 = unprepared, 1 = prepared, 2 = always prepared). */
   dnd5eIsSpellPreparedLike(item, readRaw) {
-    const prepMode = readRaw(item, "system.preparation.mode");
-    const legacyPrep = readRaw(item, "system.preparation.prepared");
-    if (prepMode !== undefined || legacyPrep !== undefined) {
-      // Legacy DnD5e (< 5.0)
-      if (prepMode === "always") return true;
-      if (prepMode === "prepared") return Boolean(legacyPrep);
-      if (!prepMode && legacyPrep !== undefined) return Boolean(legacyPrep);
-      return false;
-    }
-
-    // Modern DnD5e (5.0+, 6.0+)
-    const preparedVal = readRaw(item, "system.prepared");
-    if (typeof preparedVal === "number") {
-      return preparedVal >= 1; // 1 = prepared, 2 = always (CONFIG.DND5E.spellPreparationStates)
-    }
-    if (typeof preparedVal === "boolean") {
-      return preparedVal;
-    }
-    return false;
+    return Number(readRaw(item, "system.prepared") ?? 0) >= 1;
   }
 
   buildPreUpdateItemPayload(item, update, context) {
     const payload = {};
-    const willPrep = context.getWorldBool("trackDnd5eSpellPrep") && item.type === "spell" && 
-      (!context.isNameBlacklisted || !context.isNameBlacklisted(item.name)) &&
-      (context.willUpdatePath(update, "system.prepared") || context.willUpdatePath(update, "system.preparation.prepared") || context.willUpdatePath(update, "system.method") || context.willUpdatePath(update, "system.preparation.mode"));
+    const willPrep = context.getWorldBool("trackDnd5eSpellPrep") && item.type === "spell"
+      && !context.isNameBlacklisted(item.name)
+      && (context.willUpdatePath(update, "system.prepared") || context.willUpdatePath(update, "system.method"));
 
-    const willHD = context.getWorldBool("trackDnd5eHitDice", true) && item.type === "class" &&
-      (context.willUpdatePath(update, "system.hitDiceUsed") || context.willUpdatePath(update, "system.hd.spent"));
+    const willHD = context.getWorldBool("trackDnd5eHitDice", true) && item.type === "class"
+      && context.willUpdatePath(update, "system.hd.spent");
 
     if (willPrep) {
       payload.oldPrep = this.dnd5eIsSpellPreparedLike(item, context.readRaw);
     }
-    
+
     if (willHD) {
-      let oldHDVal = context.readRaw(item, "system.hd.spent") ?? context.readRaw(item, "system.hitDiceUsed");
-      payload.oldHD = Number.isFinite(Number(oldHDVal)) ? Number(oldHDVal) : 0;
+      payload.oldHD = context.readNumber(item, "system.hd.spent");
     }
 
     return Object.keys(payload).length > 0 ? payload : null;
@@ -290,37 +270,34 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
 
   async processItemChange(item, action, context) {
     const { getWorldBool, postMonitorMessage, readRaw, getActorLink, escapeHTML, oldItemData, isNameBlacklisted } = context;
-    if (action !== "update" || !oldItemData?.system) return false;
+    if (action !== "update" || !oldItemData?.system) return;
 
-    // Check hit dice changes
+    // Hit Dice
     if (item.type === "class" && getWorldBool("trackDnd5eHitDice", true) && oldItemData.system.oldHD !== undefined) {
       const oldUses = oldItemData.system.oldHD;
-      let newUses = readRaw(item, "system.hd.spent") ?? readRaw(item, "system.hitDiceUsed");
-      newUses = Number.isFinite(Number(newUses)) ? Number(newUses) : 0;
-      
+      const newUses = Number(readRaw(item, "system.hd.spent")) || 0;
+
       if (oldUses !== newUses) {
         const delta = newUses - oldUses; // Positive delta = used
         const actionStr = delta > 0 ? "expended" : "regained";
         const absDelta = Math.abs(delta);
         const icon = `<i class="fa-solid fa-heart-pulse"></i>`;
-        const dieName = readRaw(item, "system.hd.denomination") || readRaw(item, "system.hitDice") || "Hit Dice";
+        const dieName = readRaw(item, "system.hd.denomination") || "Hit Dice";
         const word = absDelta === 1 ? dieName : `Hit Dice (${dieName})`;
 
         const link = getActorLink(item.parent);
-        const cls = delta > 0 ? "tiny-monitor-loss" : "tiny-monitor-gain";
+        const cls = delta > 0 ? "tiny-monitor-hitdice-expend" : "tiny-monitor-hitdice-regain";
         const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${actionStr} ${absDelta > 1 ? `${absDelta} ` : ""}${word}</span>`;
         await postMonitorMessage(item.parent, line, cls, "hitdice");
-        return true; // We handled it, don't log generic item qty changes for this
       }
     }
 
     // Spell Preparation
-    if (item.type === "spell" && getWorldBool("trackDnd5eSpellPrep", true) && oldItemData.system.oldPrep !== undefined) {
-      if (isNameBlacklisted && isNameBlacklisted(item.name)) return true;
+    if (item.type === "spell" && getWorldBool("trackDnd5eSpellPrep", true) && oldItemData.system.oldPrep !== undefined
+      && !isNameBlacklisted(item.name)) {
       const isPreparedBefore = oldItemData.system.oldPrep;
-      // Because we evaluate this *after* the update, we can just check the new state
       const isPreparedAfter = this.dnd5eIsSpellPreparedLike(item, readRaw);
-      
+
       if (isPreparedBefore !== isPreparedAfter) {
         const icon = `<i class="fa-solid fa-book-journal-whills"></i>`;
         const link = getActorLink(item.parent);
@@ -328,10 +305,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
         const actionStr = isPreparedAfter ? "prepared" : "unprepared";
         const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${actionStr} ${safeItemName}</span>`;
         await postMonitorMessage(item.parent, line, "tiny-monitor-spellprep", "spellprep");
-        return true;
       }
     }
-    
-    return false;
   }
 }

@@ -1,64 +1,25 @@
-import { clearCustomResourcesCache, clearNameBlacklistCache } from "./niks-tiny-changelogs.mjs";
+import { parseCustomResources } from "./custom-resources.mjs";
 
 const MOD_ID = "niks-tiny-changelogs";
-
-/**
- * Utility function to prompt for confirmation using DialogV2 or legacy Dialog
- */
-async function confirmDialog({ title, content }) {
-  if (foundry.applications?.api?.DialogV2?.confirm) {
-    return await foundry.applications.api.DialogV2.confirm({
-      window: { title },
-      content,
-      modal: true
-    });
-  }
-  return new Promise(resolve => {
-    Dialog.confirm({
-      title,
-      content,
-      yes: () => resolve(true),
-      no: () => resolve(false),
-      defaultYes: false
-    });
-  });
-}
+const TRACKER_CONFIG_ID = "niks-tiny-changelogs-custom-tracker-config";
+const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 
 /**
  * Utility function to download a JSON payload as a file
  */
 export function downloadJsonFile(filename, data) {
-  const jsonStr = JSON.stringify(data, null, 2);
-  const saveFn = foundry.utils?.saveDataToFile ?? globalThis.saveDataToFile;
-  if (typeof saveFn === "function") {
-    saveFn(jsonStr, "application/json", filename);
-  } else {
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
-  }
+  foundry.utils.saveDataToFile(JSON.stringify(data, null, 2), "application/json", filename);
 }
 
 /**
  * Utility function to read text from an uploaded File object and parse as JSON
  */
 export async function readJsonFile(file) {
-  const readFn = foundry.utils?.readTextFromFile ?? globalThis.readTextFromFile;
-  let raw;
-  if (typeof readFn === "function") {
-    raw = await readFn(file);
-  } else {
-    raw = await file.text();
-  }
-  return JSON.parse(raw);
+  return JSON.parse(await foundry.utils.readTextFromFile(file));
+}
+
+function getModuleVersion() {
+  return game.modules.get(MOD_ID)?.version;
 }
 
 /**
@@ -78,26 +39,15 @@ export function exportAllSettings() {
     }
   }
 
-  let customTrackers = [];
-  if (settingsData.customTrackedResources) {
-    try {
-      customTrackers = typeof settingsData.customTrackedResources === "string"
-        ? JSON.parse(settingsData.customTrackedResources)
-        : settingsData.customTrackedResources;
-    } catch {
-      customTrackers = [];
-    }
-  }
-
   const exportPayload = {
     module: MOD_ID,
     title: "Nik's Tiny Change Logs Settings Export",
-    version: game.modules.get(MOD_ID)?.version || "14.14.0",
+    version: getModuleVersion(),
     system: game.system.id,
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
     settings: settingsData,
-    customTrackers: Array.isArray(customTrackers) ? customTrackers : []
+    customTrackers: parseCustomResources(settingsData.customTrackedResources ?? [])
   };
 
   const filename = `niks-tiny-changelogs-settings-${new Date().toISOString().slice(0, 10)}.json`;
@@ -115,7 +65,7 @@ export function exportCustomTrackers(trackers) {
     module: MOD_ID,
     type: "custom-trackers",
     title: "Nik's Tiny Change Logs Custom Trackers",
-    version: game.modules.get(MOD_ID)?.version || "14.14.0",
+    version: getModuleVersion(),
     system: game.system.id,
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
@@ -146,17 +96,11 @@ export async function applyImportedData(data, filename = "file.json", options = 
   let incomingTrackers = null;
 
   if (Array.isArray(data.customTrackers)) {
-    incomingTrackers = data.customTrackers;
+    incomingTrackers = parseCustomResources(data.customTrackers);
   } else if (incomingSettings.customTrackedResources) {
-    try {
-      incomingTrackers = typeof incomingSettings.customTrackedResources === "string"
-        ? JSON.parse(incomingSettings.customTrackedResources)
-        : incomingSettings.customTrackedResources;
-    } catch {
-      incomingTrackers = [];
-    }
+    incomingTrackers = parseCustomResources(incomingSettings.customTrackedResources);
   } else if (Array.isArray(data)) {
-    incomingTrackers = data;
+    incomingTrackers = parseCustomResources(data);
   }
 
   // Determine applicable settings count
@@ -182,39 +126,39 @@ export async function applyImportedData(data, filename = "file.json", options = 
     desc.push(`<strong>${trackerCount}</strong> custom tracker config(s) (will <em>${modeLabel}</em> existing trackers)`);
   }
 
-  const confirmed = await confirmDialog({
-    title: "Import Nik's Tiny Change Logs Settings",
-    content: `<p>Found ${desc.join(" and ")} in <em>${escapeHTML(filename)}</em>.</p><p>Import and apply these configurations to your world now?</p>`
+  const confirmed = await DialogV2.confirm({
+    window: { title: "Import Nik's Tiny Change Logs Settings" },
+    content: `<p>Found ${desc.join(" and ")} in <em>${foundry.utils.escapeHTML(filename)}</em>.</p><p>Import and apply these configurations to your world now?</p>`,
+    rejectClose: false,
+    modal: true
   });
 
   if (!confirmed) return { applied: false };
 
   let appliedSettingsCount = 0;
+  const failedKeys = [];
 
-  // Apply general and system settings
+  // Apply general and system settings. A value that fails validation (e.g. a choice that no longer
+  // exists) is skipped instead of aborting the import halfway through.
   for (const key of matchingSettingKeys) {
     const value = incomingSettings[key];
-    const current = game.settings.get(MOD_ID, key);
-    if (current !== value) {
-      await game.settings.set(MOD_ID, key, value);
-      appliedSettingsCount++;
+    try {
+      if (game.settings.get(MOD_ID, key) !== value) {
+        await game.settings.set(MOD_ID, key, value);
+        appliedSettingsCount++;
+      }
+    } catch (err) {
+      console.warn(`[${MOD_ID}] Skipped invalid imported value for setting "${key}":`, err);
+      failedKeys.push(key);
     }
   }
 
   // Apply custom trackers if provided
   let finalTrackersCount = 0;
   if (hasTrackers) {
-    let finalTrackers = [];
+    let finalTrackers = incomingTrackers;
     if (options.trackerMode === "merge") {
-      let currentTrackers = [];
-      try {
-        const raw = game.settings.get(MOD_ID, "customTrackedResources");
-        currentTrackers = raw ? JSON.parse(raw) : [];
-      } catch {
-        currentTrackers = [];
-      }
-      if (!Array.isArray(currentTrackers)) currentTrackers = [];
-
+      const currentTrackers = parseCustomResources(game.settings.get(MOD_ID, "customTrackedResources"));
       const existingPaths = new Set(currentTrackers.map(t => t.path));
       finalTrackers = [...currentTrackers];
       for (const t of incomingTrackers) {
@@ -223,20 +167,12 @@ export async function applyImportedData(data, filename = "file.json", options = 
           existingPaths.add(t.path);
         }
       }
-    } else {
-      finalTrackers = incomingTrackers;
     }
 
     await game.settings.set(MOD_ID, "customTrackedResources", JSON.stringify(finalTrackers));
     finalTrackersCount = finalTrackers.length;
-    clearCustomResourcesCache();
   }
 
-  if (matchingSettingKeys.includes("nameBlacklist")) {
-    clearNameBlacklistCache();
-  }
-
-  // Refresh any open settings or tracker config windows
   refreshOpenConfigWindows();
 
   const successDetails = [];
@@ -245,6 +181,9 @@ export async function applyImportedData(data, filename = "file.json", options = 
   const detailStr = successDetails.length > 0 ? ` (${successDetails.join(", ")})` : "";
 
   ui.notifications.info(`[${MOD_ID}] Successfully imported configurations from ${filename}${detailStr}.`);
+  if (failedKeys.length) {
+    ui.notifications.warn(`[${MOD_ID}] Some settings had invalid values and were skipped: ${failedKeys.join(", ")}`);
+  }
   return {
     applied: true,
     appliedSettingsCount,
@@ -252,138 +191,95 @@ export async function applyImportedData(data, filename = "file.json", options = 
   };
 }
 
-function escapeHTML(str) {
-  return foundry.utils?.escapeHTML ? foundry.utils.escapeHTML(String(str ?? "")) : String(str ?? "");
-}
-
 function refreshOpenConfigWindows() {
   // Close open settings windows so Foundry re-reads setting values on next open.
-  // We rely solely on constructor-name checks (no `instanceof`) to avoid
-  // ReferenceErrors when a class lives behind a namespace or doesn't exist as a
-  // global.  We also snapshot each collection before iterating so that closing
-  // an app (which mutates the registry) doesn't corrupt the iteration.
-
-  // --- Legacy Application V1 windows (ui.windows) ---
-  if (ui.windows) {
-    const wins = Object.values(ui.windows);
-    for (const win of wins) {
-      const name = win?.constructor?.name;
-      if (name === "SettingsConfig") {
-        try { win.close(); } catch (e) {
-          console.debug(`[${MOD_ID}] Failed to close V1 SettingsConfig:`, e);
-        }
-      } else if (name === "CustomTrackerConfig") {
-        try { win.render(false); } catch (e) {
-          console.debug(`[${MOD_ID}] Failed to re-render CustomTrackerConfig:`, e);
-        }
-      }
+  // Snapshot the registry first, since closing an app mutates it.
+  for (const app of [...foundry.applications.instances.values()]) {
+    const name = app?.constructor?.name;
+    if (name === "SettingsConfig" || name === "CategoryBrowser") {
+      app.close().catch(e => console.debug(`[${MOD_ID}] Failed to close SettingsConfig:`, e));
     }
   }
 
-  // --- ApplicationV2 windows (Foundry V13+) ---
-  // In V13+, SettingsConfig extends ApplicationV2 and registers in
-  // foundry.applications.instances, NOT in ui.windows.
-  try {
-    const instances = foundry.applications?.instances;
-    if (instances && typeof instances[Symbol.iterator] === "function") {
-      const apps = [...instances];
-      for (const [, app] of apps) {
-        const name = app?.constructor?.name;
-        if (name === "SettingsConfig" || name === "CategoryBrowser") {
-          try { app.close(); } catch (e) {
-            console.debug(`[${MOD_ID}] Failed to close V2 SettingsConfig:`, e);
-          }
-        }
-      }
-    }
-  } catch (e) {
-    console.debug(`[${MOD_ID}] Failed to iterate ApplicationV2 instances:`, e);
+  // An open tracker window keeps its own unsaved list; replace it with the imported one,
+  // otherwise saving that window would overwrite the import.
+  const trackerApp = foundry.applications.instances.get(TRACKER_CONFIG_ID);
+  if (trackerApp) {
+    trackerApp.reloadFromSettings();
+    trackerApp.render();
   }
 }
 
 /**
- * FormApplication for importing and exporting module settings and custom tracker configurations
+ * Application for importing and exporting module settings and custom tracker configurations
  */
-export default class SettingsImportExportApp extends FormApplication {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "niks-tiny-changelogs-import-export",
-      title: "Nik's Tiny Change Logs: Import / Export Settings",
-      template: "modules/niks-tiny-changelogs/templates/import-export.hbs",
-      width: 560,
-      height: "auto",
-      closeOnSubmit: false,
-      submitOnChange: false,
-      classes: ["niks-tiny-changelogs-config", "niks-tiny-changelogs-import-export"]
-    });
-  }
+export default class SettingsImportExportApp extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "niks-tiny-changelogs-import-export",
+    classes: ["niks-tiny-changelogs-config", "niks-tiny-changelogs-import-export"],
+    window: { title: "Nik's Tiny Change Logs: Import / Export Settings", icon: "fas fa-file-import" },
+    position: { width: 560, height: "auto" },
+    actions: {
+      exportAll: SettingsImportExportApp.#onExportAll,
+      selectFile: SettingsImportExportApp.#onSelectFile
+    }
+  };
 
-  getData(options) {
+  static PARTS = {
+    main: { template: `modules/${MOD_ID}/templates/import-export.hbs` }
+  };
+
+  async _prepareContext(options) {
     const registeredKeys = Array.from(game.settings.settings.keys())
       .filter(k => k.startsWith(`${MOD_ID}.`))
       .map(k => k.slice(MOD_ID.length + 1))
       .filter(k => k !== "customTrackedResources");
 
-    let customTrackerCount = 0;
-    try {
-      const raw = game.settings.get(MOD_ID, "customTrackedResources");
-      const parsed = raw ? JSON.parse(raw) : [];
-      customTrackerCount = Array.isArray(parsed) ? parsed.length : 0;
-    } catch {
-      customTrackerCount = 0;
-    }
-
     return {
-      moduleVersion: game.modules.get(MOD_ID)?.version || "14.14.0",
+      moduleVersion: getModuleVersion(),
       systemId: game.system.id,
       systemTitle: game.system.title || game.system.id,
       settingsCount: registeredKeys.length,
-      customTrackerCount
+      customTrackerCount: parseCustomResources(game.settings.get(MOD_ID, "customTrackedResources")).length
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-
-    // Export button
-    html.find('[data-action="export-all"]').click((ev) => {
-      ev.preventDefault();
-      exportAllSettings();
-    });
-
-    // Import file button: trigger hidden file input
-    const fileInput = html.find('input.import-file-input');
-    html.find('[data-action="select-file"]').click((ev) => {
-      ev.preventDefault();
-      fileInput.val("");
-      fileInput.click();
-    });
-
-    // File selected handler
-    fileInput.change(async (ev) => {
-      const file = ev.target.files?.[0];
-      if (!file) return;
-
-      if (!game.user.can("SETTINGS_MODIFY") && !game.user.isGM) {
-        ui.notifications.error("You do not have permission to modify world settings.");
-        return;
-      }
-
-      try {
-        const data = await readJsonFile(file);
-        const trackerMode = html.find('input[name="trackerMode"]:checked').val() || "replace";
-        const result = await applyImportedData(data, file.name, { trackerMode });
-        if (result.applied) {
-          this.close();
-        }
-      } catch (err) {
-        console.error(`[${MOD_ID}] Failed to import settings file:`, err);
-        ui.notifications.error(`Import failed: ${err.message}`);
-      }
-    });
+  _onRender(context, options) {
+    super._onRender(context, options);
+    const fileInput = this.element.querySelector("input.import-file-input");
+    fileInput?.addEventListener("change", ev => this.#onFileSelected(ev));
   }
 
-  async _updateObject(event, formData) {
-    // FormApplication requirement; export/import actions handle their own state
+  static #onExportAll(event) {
+    event.preventDefault();
+    exportAllSettings();
+  }
+
+  static #onSelectFile(event) {
+    event.preventDefault();
+    const fileInput = this.element.querySelector("input.import-file-input");
+    if (!fileInput) return;
+    fileInput.value = "";
+    fileInput.click();
+  }
+
+  async #onFileSelected(ev) {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+
+    if (!game.user.can("SETTINGS_MODIFY") && !game.user.isGM) {
+      ui.notifications.error("You do not have permission to modify world settings.");
+      return;
+    }
+
+    try {
+      const data = await readJsonFile(file);
+      const trackerMode = this.element.querySelector('input[name="trackerMode"]:checked')?.value || "replace";
+      const result = await applyImportedData(data, file.name, { trackerMode });
+      if (result.applied) this.close();
+    } catch (err) {
+      console.error(`[${MOD_ID}] Failed to import settings file:`, err);
+      ui.notifications.error(`Import failed: ${err.message}`);
+    }
   }
 }

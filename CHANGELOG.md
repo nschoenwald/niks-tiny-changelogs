@@ -1,5 +1,23 @@
 # Changelog
 
+## 14.15.1
+
+- **Shadowdark**: HP and coin (gold, silver, copper) changes are now tracked. Previously the module looked in the wrong place and logged nothing.
+- **Mörk Borg**: Ability and Omen messages now have their own background colours instead of being hard to read.
+- **Demonlord**: Changes to maximum health are now labelled "Max Health" instead of "Temp Max".
+- **DnD5e Hit Dice**: Hit Dice messages now use their own orange colours, so they're easier to tell apart from HP changes.
+- **Active Effects**: Adding, removing, enabling or disabling an effect on an item (for example a spell's effect meant for its targets, or an enchantment) no longer shows up as the actor gaining or losing that effect.
+- **Item Changes**: A Hit Dice change or spell preparation change no longer hides other changes made to the same item at the same time (e.g. a rename).
+- **Custom Tracked Values**:
+  - Trackers imported with missing fields (icon, messages) no longer break changelog messages. Missing fields fall back to defaults.
+  - Importing settings while the Custom Tracked Values window is open now updates that window, so clicking Save there no longer undoes the import.
+  - Names and messages containing special characters (such as `<` or `$`) are now displayed correctly.
+- **Settings Import**: An invalid value in an imported file is now skipped with a warning instead of stopping the import halfway.
+- **Ignored Names / Blacklist**: Regular expressions containing commas (e.g. `/a{1,3}/`) now work.
+- **Actor Names**: Actor or token names containing `{`, `}` or HTML characters no longer break the actor link in messages.
+- **Foundry V13**: Removed a deprecation warning that appeared in the console on V13.
+- The Custom Tracked Values and Import / Export windows were updated to Foundry's current window framework. They look and work the same.
+
 ## 14.15.0
 
 - **Performance Improvements**:

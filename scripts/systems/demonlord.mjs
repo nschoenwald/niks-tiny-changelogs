@@ -6,6 +6,7 @@ export default class DemonlordAdapter extends BaseSystemAdapter {
       hpPath: "system.characteristics.health.value",
       tempPath: null,
       tempMaxPath: "system.characteristics.health.max",
+      tempMaxLabel: "Max Health",
       damageSystem: true
     };
   }

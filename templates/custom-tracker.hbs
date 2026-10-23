@@ -1,4 +1,4 @@
-<form autocomplete="off">
+<div class="custom-tracker-config">
   <div class="form-group" style="flex-direction: column; align-items: stretch;">
     <p class="notes" style="margin-bottom: 15px;">
       Define custom data paths to track on your actors. Paths must be valid properties on the Actor's data (e.g., <code>system.attributes.fatigue.value</code>).
@@ -18,7 +18,7 @@
           <th>Loss Msg (e.g. healed a wound)</th>
           <th>Icon (FA Class or Path)</th>
           <th>Color</th>
-          <th><a class="tracker-action" data-action="add" title="Add Resource"><i class="fa-solid fa-plus"></i></a></th>
+          <th><a class="tracker-action" data-action="addResource" title="Add Resource"><i class="fa-solid fa-plus"></i></a></th>
         </tr>
       </thead>
       <tbody>
@@ -31,13 +31,13 @@
           <td>
             <div style="display: flex; gap: 4px;">
               <input type="text" name="resources.{{@index}}.icon" value="{{this.icon}}" required placeholder="fa-solid fa-star or icon.svg" />
-              <button type="button" class="custom-file-picker" data-type="image" data-target="resources.{{@index}}.icon" title="Browse Files" tabindex="-1" style="flex: 0 0 24px; padding: 0;">
+              <button type="button" class="custom-file-picker" data-action="browseIcon" data-target="resources.{{@index}}.icon" title="Browse Files" tabindex="-1" style="flex: 0 0 24px; padding: 0;">
                 <i class="fas fa-file-import fa-fw"></i>
               </button>
             </div>
           </td>
           <td><input type="color" name="resources.{{@index}}.color" value="{{this.color}}" required /></td>
-          <td style="text-align: center;"><a class="tracker-action" data-action="delete" title="Delete Resource"><i class="fa-solid fa-trash"></i></a></td>
+          <td style="text-align: center;"><a class="tracker-action" data-action="deleteResource" title="Delete Resource"><i class="fa-solid fa-trash"></i></a></td>
         </tr>
         {{else}}
         <tr><td colspan="7" style="text-align: center; padding: 10px;">No custom tracked resources defined. Click the + icon to add one.</td></tr>
@@ -48,15 +48,15 @@
   <input type="file" class="tracker-import-file-input" accept=".json" style="display: none;" />
   <footer class="sheet-footer flexrow tracker-footer" style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
     <div class="tracker-footer-actions" style="display: flex; gap: 8px;">
-      <button type="button" class="tracker-export-btn" title="Export custom trackers to a JSON file">
+      <button type="button" class="tracker-export-btn" data-action="exportTrackers" title="Export custom trackers to a JSON file">
         <i class="fas fa-file-export"></i> Export Trackers
       </button>
-      <button type="button" class="tracker-import-btn" title="Import custom trackers from a JSON file">
+      <button type="button" class="tracker-import-btn" data-action="importTrackers" title="Import custom trackers from a JSON file">
         <i class="fas fa-file-import"></i> Import Trackers
       </button>
     </div>
-    <button type="submit" name="submit" class="tracker-save-btn" style="flex: 0 0 auto; min-width: 150px;">
+    <button type="submit" class="tracker-save-btn" style="flex: 0 0 auto; min-width: 150px;">
       <i class="fas fa-save"></i> Save Changes
     </button>
   </footer>
-</form>
+</div>

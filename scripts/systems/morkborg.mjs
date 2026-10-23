@@ -59,7 +59,7 @@ export default class MorkBorgAdapter extends BaseSystemAdapter {
       if (context.willUpdatePath(update, abilitiesPath)) {
         payload.oldAbilities = [];
         const currentAbilities = context.readRaw(actor, abilitiesPath);
-        for (const [abilityKey, abilityData] of Object.entries(currentAbilities)) {
+        for (const abilityKey of Object.keys(currentAbilities ?? {})) {
           const abilityPath = `${abilitiesPath}.${abilityKey}`;
           payload.oldAbilities.push({ key: abilityKey, value: context.readNumber(actor, `${abilityPath}.value`) });
         }

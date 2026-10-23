@@ -20,12 +20,12 @@ It keeps track of health changes, currency adjustments, item inventory updates, 
 Automatically monitors and logs changes to:
 - **HP (Health Points)**: Shows damage taken and healing received.
 - **Temporary HP**: Tracks gains and losses of temp health.
-- **Temp Max HP**: Logs adjustments to temporary maximum health.
+- **Temp Max HP**: Logs adjustments to temporary maximum health (shown as **Max Health** in Demonlord).
 
-The module features **Auto-Detection** for health data paths, working out of the box with major systems like `dnd5e`, `pf2e`, `shadowdark`, `demonlord`, and `morkborg`. It also uses a heuristic probe for unsupported systems, but allows you to manually specify the data paths in the settings if automatic detection fails.
+The module features **Auto-Detection** for health data paths, working out of the box with `dnd5e`, `pf2e`, `shadowdark`, `demonlord`, and `morkborg`. For other systems, disable auto-detection and specify the data paths manually in the settings.
 
 ### 💰 Currency Tracking
-Logs whenever an actor or container gains or loses currency (e.g., Gold, Silver, Copper). It tracks character wallet changes as well as container currency (backpacks, chests, pouches, bags of holding), including direct sheet edits, conversions, and transfers. It automatically detects the correct currency paths for `dnd5e` and `pf2e`, but can be manually configured for other systems.
+Logs whenever an actor or container gains or loses currency (e.g., Gold, Silver, Copper). It tracks character wallet changes as well as container currency (backpacks, chests, pouches, bags of holding), including direct sheet edits, conversions, and transfers. It automatically detects the correct currency paths for `dnd5e`, `pf2e`, `shadowdark` and `morkborg`, but can be manually configured for other systems.
 
 ### 🎒 Item & Inventory Tracking
 Keep an eye on what your players pick up or consume!
@@ -43,7 +43,7 @@ With **Protect Changelog Messages** (enabled by default), players additionally c
 Optionally logs when an item is equipped or unequipped on an actor. Enable this via the **Track Equip / Unequip** setting.
 
 ### ✨ Active Effect Tracking *(disabled by default)*
-Optionally logs when Active Effects are added, removed, enabled, or disabled on an actor. Enable this via the **Track Active Effects** setting.
+Optionally logs when Active Effects are added, removed, enabled, or disabled on an actor. Only effects that actually apply to the actor are reported, including effects transferred from its items; effects that live on an item for other purposes (e.g. a spell's effect meant for its targets, or enchantments) are ignored. Enable this via the **Track Active Effects** setting.
 
 ### 🛠️ Custom Tracked Values
 Have a homebrew mechanic or playing a system that isn't fully supported out of the box? You can now define **Custom Tracked Values** via a dedicated submenu in the module settings.
@@ -99,7 +99,7 @@ You can customize the module's behavior in the settings to perfectly match your 
 - **Ignored Names / Blacklist**: A flexible, free-text blacklist to prevent specific items, Active Effects, or custom resources from being reported (e.g., spammy paladin auras or utility items).
   - Supports comma-separated or newline-separated names (case-insensitive, e.g. `Aura of Protection, Torch`).
   - Supports wildcards (e.g. `Aura of *` to catch *Aura of Protection*, *Aura of Courage*, etc., or `*Aura*`).
-  - Supports regular expressions (e.g. `/^aura of/i` or `/(torch|candle|lantern)/i`).
+  - Supports regular expressions (e.g. `/^aura of/i` or `/(torch|candle|lantern)/i`). Regular expressions may contain commas (e.g. `/^a{1,3}/`).
 - **Message Visibility**: Control who can see changelog messages globally:
   - *GM + Owners* (Whispered strictly to GMs and the owning player(s) of the character, default)
   - *Everyone* (Public chat messages visible to all players and GMs)
