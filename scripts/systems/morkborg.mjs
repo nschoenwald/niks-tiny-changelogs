@@ -40,6 +40,10 @@ export default class MorkBorgAdapter extends BaseSystemAdapter {
     return { basePath: null, coins: [], isFlatCurrency: false };
   }
 
+  getCurrencyUpdatePaths(manualBase) {
+    return [...super.getCurrencyUpdatePaths(manualBase), "system.silver"];
+  }
+
   getCoinLabel(denom) {
     // Mörk Borg uses full paths as coin keys (e.g. "system.silver")
     if (denom === "system.silver") return "Silver";

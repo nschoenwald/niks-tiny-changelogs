@@ -1,5 +1,17 @@
 # Changelog
 
+## 14.15.0
+
+- **Performance Improvements**:
+  - Bulk changes such as level-ups, rests, deleting a class, or adding/removing many items or effects at once now post their changelog messages together in one batch, reducing network traffic and chat lag for everyone at the table.
+  - Updates that can't affect anything the module tracks (e.g. other modules saving their own data on an actor) are now ignored immediately.
+  - Module settings are now cached instead of being looked up on every change and every chat message.
+- **Fixes**:
+  - When several actors are updated in a single operation (e.g. by macros or other modules), each actor's changes are now reported with that actor's own previous values.
+  - An item edit that doesn't actually change anything can no longer cause a later change to that item to be reported with outdated values.
+  - Deleted item names are now displayed safely, like all other item names.
+  - Ignore-list regex patterns using the `g` flag no longer fail on every other check.
+
 ## 14.14.3
 
 - **Chat No Longer Jumps to the Bottom**: When you scroll up in chat to apply damage (or otherwise change an actor) from an older chat card, the resulting changelog message no longer yanks the chat log back down to the bottom. If you're already at the bottom, new changelog messages still scroll into view as before.

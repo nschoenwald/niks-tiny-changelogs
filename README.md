@@ -111,6 +111,12 @@ You can customize the module's behavior in the settings to perfectly match your 
   - *Everyone* (Public chat messages visible to all players and GMs)
 - **Feature Toggles**: You can individually enable or disable Currency Tracking, Item Changes, Deleted Message Tracking, Equip/Unequip Tracking, Active Effect Tracking, and all DnD5e-specific trackers.
 
+### Performance
+The module is built to stay out of the way during busy sessions:
+- Bulk changes (level-ups, rests, dragging in many items or applying several effects at once) are posted together in a single batch instead of one chat message request per change.
+- Updates that cannot affect anything tracked (for example flag-only updates written by other modules) are skipped right away.
+- Module settings are cached, so they aren't looked up again on every update or chat message.
+
 ### Advanced Data Paths
 If the module fails to detect your system's data structure automatically, disable **Auto-Detect HP Paths** and provide the exact system data paths for:
 - HP Value Path (ex: `system.attributes.hp.value`)

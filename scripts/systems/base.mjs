@@ -47,6 +47,26 @@ export default class BaseSystemAdapter {
   }
 
   /**
+   * Candidate data paths that can hold currency on actors or items.
+   * @param {string|null} manualBase
+   * @returns {string[]}
+   */
+  getCurrencyUpdatePaths(manualBase) {
+    const paths = ["system.currency", "system.currencies"];
+    return manualBase ? [manualBase, ...paths] : paths;
+  }
+
+  /**
+   * Cheap pre-check whether an update can change currency, before resolving full currency info.
+   * @param {object} update
+   * @param {string|null} manualBase
+   * @returns {boolean}
+   */
+  updateTouchesCurrency(update, manualBase) {
+    return this.getCurrencyUpdatePaths(manualBase).some(p => foundry.utils.hasProperty(update, p));
+  }
+
+  /**
    * Determine the currency paths and coins array for an item (e.g. container).
    * @param {Item} item 
    * @param {string|null} manualBase 

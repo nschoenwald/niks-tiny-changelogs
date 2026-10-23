@@ -8,38 +8,80 @@ import SettingsImportExportApp from "./settings-import-export.mjs";
 const MOD_ID = "niks-tiny-changelogs";
 const MAX_NAME_CHARS = 25;
 const DEBOUNCE_MS = 350;
+const MESSAGE_FLUSH_MS = 100;
 
 let adapter;
 
 // -------------------------------
 // State & Storage
 // -------------------------------
-const ITEM_UPDATE_STASH = new WeakMap();
 const ITEM_DELETE_STASH = new WeakMap();
+const ITEM_WATCHED_ROOTS = new Set(["system", "name"]);
 const EFFECT_DELETE_STASH = new WeakMap();
 
 // Debounce Maps: Key = Document UUID
 const ACTOR_DEBOUNCE = new Map();
 const ITEM_DEBOUNCE = new Map();
 
+// Outgoing chat messages, flushed in a single createDocuments call
+const MESSAGE_QUEUE = [];
+let messageFlushTimer = null;
+
 // -------------------------------
 // Utilities
 // -------------------------------
 
+// Cached world setting values. game.settings.get scans every world Setting document
+// (and constructs a new Setting when the value was never saved), so reads are cached
+// and invalidated through the Setting document hooks.
+const SETTINGS_CACHE = new Map();
+
 let cachedCustomResources = null;
+let cachedActiveCustomResources = null;
 let cachedNameBlacklist = null;
+let cachedWatchedActorRoots = null;
 
 export function clearCustomResourcesCache() {
   cachedCustomResources = null;
+  cachedActiveCustomResources = null;
+  cachedWatchedActorRoots = null;
 }
 
 export function clearNameBlacklistCache() {
   cachedNameBlacklist = null;
+  cachedActiveCustomResources = null;
+}
+
+function clearSettingsCache() {
+  SETTINGS_CACHE.clear();
+  cachedWatchedActorRoots = null;
+}
+
+function onSettingDocumentChange(setting) {
+  if (!setting?.key?.startsWith(`${MOD_ID}.`)) return;
+  clearSettingsCache();
+  clearCustomResourcesCache();
+  clearNameBlacklistCache();
+}
+
+Hooks.on("createSetting", onSettingDocumentChange);
+Hooks.on("updateSetting", onSettingDocumentChange);
+Hooks.on("deleteSetting", onSettingDocumentChange);
+
+function getSetting(key, def) {
+  if (SETTINGS_CACHE.has(key)) return SETTINGS_CACHE.get(key);
+  try {
+    const value = game.settings.get(MOD_ID, key);
+    SETTINGS_CACHE.set(key, value);
+    return value;
+  } catch {
+    return def;
+  }
 }
 
 function getCustomResources() {
   if (cachedCustomResources !== null) return cachedCustomResources;
-  const customSetting = game.settings.get(MOD_ID, "customTrackedResources");
+  const customSetting = getSetting("customTrackedResources", "[]");
   if (customSetting) {
     try {
       cachedCustomResources = JSON.parse(customSetting);
@@ -53,33 +95,37 @@ function getCustomResources() {
   return cachedCustomResources;
 }
 
+/** Custom resources with a valid path whose name is not blacklisted. */
+function getActiveCustomResources() {
+  if (cachedActiveCustomResources !== null) return cachedActiveCustomResources;
+  const resources = getCustomResources();
+  cachedActiveCustomResources = Array.isArray(resources)
+    ? resources.filter(res => res?.path && !isNameBlacklisted(res.name))
+    : [];
+  return cachedActiveCustomResources;
+}
+
 function getNameBlacklist() {
   if (cachedNameBlacklist !== null) return cachedNameBlacklist;
-  let raw = "";
-  try {
-    raw = game.settings.get(MOD_ID, "nameBlacklist") ?? "";
-  } catch {
-    raw = "";
-  }
-  if (!raw || typeof raw !== "string" || !raw.trim()) {
-    cachedNameBlacklist = [];
-    return cachedNameBlacklist;
-  }
+  cachedNameBlacklist = { exact: new Set(), patterns: [] };
+
+  const raw = getSetting("nameBlacklist", "");
+  if (!raw || typeof raw !== "string" || !raw.trim()) return cachedNameBlacklist;
 
   const entries = raw
     .split(/[\n,]+/)
     .map(s => s.trim())
     .filter(s => s.length > 0);
 
-  cachedNameBlacklist = entries.map(entry => {
+  for (const entry of entries) {
     // Regex pattern: /.../flags
     if (entry.startsWith("/") && entry.lastIndexOf("/") > 0) {
       const lastSlash = entry.lastIndexOf("/");
       const pattern = entry.slice(1, lastSlash);
       const flags = entry.slice(lastSlash + 1);
       try {
-        const re = new RegExp(pattern, flags);
-        return (name) => re.test(name);
+        cachedNameBlacklist.patterns.push(new RegExp(pattern, flags));
+        continue;
       } catch (e) {
         console.warn(`[${MOD_ID}] Invalid regex in name blacklist: "${entry}"`, e);
       }
@@ -91,30 +137,53 @@ function getNameBlacklist() {
         .replace(/[-\/\\^$+.()|[\]{}]/g, "\\$&")
         .replace(/\*/g, ".*")
         .replace(/\?/g, ".");
-      const re = new RegExp(`^${escaped}$`, "i");
-      return (name) => re.test(name);
+      cachedNameBlacklist.patterns.push(new RegExp(`^${escaped}$`, "i"));
+      continue;
     }
 
     // Exact string match (case-insensitive)
-    const lower = entry.toLowerCase();
-    return (name) => String(name ?? "").trim().toLowerCase() === lower;
-  });
+    cachedNameBlacklist.exact.add(entry.toLowerCase());
+  }
 
   return cachedNameBlacklist;
 }
 
 export function isNameBlacklisted(name) {
   if (!name) return false;
-  const matchers = getNameBlacklist();
-  if (matchers.length === 0) return false;
+  const { exact, patterns } = getNameBlacklist();
+  if (!exact.size && !patterns.length) return false;
   const str = String(name).trim();
-  return matchers.some(matcher => {
-    try {
-      return matcher(str);
-    } catch {
-      return false;
-    }
+  if (exact.has(str.toLowerCase())) return true;
+  return patterns.some(re => {
+    // Global/sticky regexes keep state between test() calls
+    re.lastIndex = 0;
+    return re.test(str);
   });
+}
+
+/** Top-level update keys that can affect anything tracked on an actor. */
+function getWatchedActorRoots() {
+  if (cachedWatchedActorRoots !== null) return cachedWatchedActorRoots;
+  const paths = [
+    getWorldPath("hpPath"),
+    getWorldPath("tempHpPath"),
+    getWorldPath("tempHpMaxPath"),
+    getWorldPath("currencyBasePath"),
+    ...getCustomResources().map(res => res?.path)
+  ];
+  cachedWatchedActorRoots = new Set(["system"]);
+  for (const path of paths) {
+    if (typeof path === "string" && path.trim()) cachedWatchedActorRoots.add(path.trim().split(".")[0]);
+  }
+  return cachedWatchedActorRoots;
+}
+
+function updateTouchesRoots(update, roots) {
+  for (const key of Object.keys(update ?? {})) {
+    // Tolerate legacy "-=" / "==" operator prefixes
+    if (roots.has(key.split(".")[0].replace(/^(-=|==)/, ""))) return true;
+  }
+  return false;
 }
 
 function escapeHTML(str) {
@@ -134,14 +203,12 @@ function getActorLink(actor) {
 }
 
 function getWorldBool(key, def = false) {
-  try { return Boolean(game.settings.get(MOD_ID, key)); } catch { return def; }
+  return Boolean(getSetting(key, def));
 }
 
 function getWorldPath(key) {
-  try {
-    const v = game.settings.get(MOD_ID, key);
-    return (typeof v === "string" && v.trim().length) ? v.trim() : null;
-  } catch { return null; }
+  const v = getSetting(key, null);
+  return (typeof v === "string" && v.trim().length) ? v.trim() : null;
 }
 
 function resolvePaths(actor) {
@@ -170,34 +237,37 @@ function willUpdatePath(update, path) {
 }
 
 function buildRecipients(actor) {
-  const gmUsers = game.users.filter(u => u.isGM);
-  const nonGmUsers = game.users.filter(u => !u.isGM);
-  const owners = actor.testUserPermission
-    ? game.users.filter(u => actor.testUserPermission(u, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER))
-    : [];
-
-  const uniq = (...lists) => [...new Map(lists.flat().map(u => [u.id, u])).values()];
-
-  const visibility = game.settings.get(MOD_ID, "messageVisibility") ?? "gm-player";
+  const gmIds = game.users.filter(u => u.isGM).map(u => u.id);
+  const visibility = getSetting("messageVisibility", "gm-player") ?? "gm-player";
 
   if (visibility === "gm") {
     // GM only: whispered exclusively to GMs
-    return gmUsers.map(u => u.id);
+    return gmIds;
   }
 
   if (visibility === "player") {
     // Player only: whispered to all non-GM players; GMs won't see it
-    return nonGmUsers.length > 0 ? nonGmUsers.map(u => u.id) : gmUsers.map(u => u.id);
+    const nonGmIds = game.users.filter(u => !u.isGM).map(u => u.id);
+    return nonGmIds.length > 0 ? nonGmIds : gmIds;
   }
+
+  // GM + owning players
+  const gmAndOwners = () => {
+    const ids = new Set(gmIds);
+    if (actor.testUserPermission) {
+      for (const u of game.users) {
+        if (!u.isGM && actor.testUserPermission(u, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)) ids.add(u.id);
+      }
+    }
+    return [...ids];
+  };
 
   // For NPCs, the NPC Message Audience setting further refines the audience.
   if (actor.type === "npc") {
-    const npcMode = game.settings.get(MOD_ID, "npcAudience") ?? "gm-owners";
-    if (npcMode === "gm") return gmUsers.map(u => u.id);
+    const npcMode = getSetting("npcAudience", "gm-owners") ?? "gm-owners";
+    if (npcMode === "gm") return gmIds;
     if (npcMode === "everyone" || npcMode === "gm-players") return [];
-    // gm-owners: GM + owning players
-    const recipients = uniq(gmUsers, owners).map(u => u.id);
-    return recipients.length > 0 ? recipients : gmUsers.map(u => u.id);
+    return gmAndOwners();
   }
 
   // PC actors:
@@ -207,12 +277,15 @@ function buildRecipients(actor) {
   }
 
   // "gm-player" (GM + Owners, default): whisper to GM and the player(s) owning the PC actor
-  const recipients = uniq(gmUsers, owners).map(u => u.id);
-  return recipients.length > 0 ? recipients : gmUsers.map(u => u.id);
+  return gmAndOwners();
 }
 
-function buildMonitorMessageData(actor, line, cls, kind, isMultiline = false, customColor = null) {
-  const whisper = buildRecipients(actor);
+/**
+ * Build chat message data for a changelog line.
+ * Pass a precomputed `whisper` list to avoid recomputing recipients for every message of a batch.
+ */
+function buildMonitorMessageData(actor, line, cls, kind, isMultiline = false, customColor = null, whisper = null) {
+  whisper ??= buildRecipients(actor);
   const cssLine = isMultiline ? "tiny-monitor-line tm-multiline" : "tiny-monitor-line";
 
   const flags = { isMonitorMsg: true, kind, cls };
@@ -226,9 +299,29 @@ function buildMonitorMessageData(actor, line, cls, kind, isMultiline = false, cu
   return msgData;
 }
 
+/**
+ * Queue chat message data. Messages queued within MESSAGE_FLUSH_MS of the first queued message
+ * are created in a single createDocuments call, so bulk changes (level-ups, rests, dragging in
+ * many items) cost one server round-trip instead of one per document.
+ */
+function queueMessages(...msgData) {
+  MESSAGE_QUEUE.push(...msgData);
+  messageFlushTimer ??= setTimeout(flushMessageQueue, MESSAGE_FLUSH_MS);
+}
+
+async function flushMessageQueue() {
+  messageFlushTimer = null;
+  if (!MESSAGE_QUEUE.length) return;
+  const batch = MESSAGE_QUEUE.splice(0, MESSAGE_QUEUE.length);
+  try {
+    await ChatMessage.createDocuments(batch);
+  } catch (err) {
+    console.error(`[${MOD_ID}] Failed to create changelog messages:`, err);
+  }
+}
+
 async function postMonitorMessage(actor, line, cls, kind, isMultiline = false, customColor = null) {
-  const msgData = buildMonitorMessageData(actor, line, cls, kind, isMultiline, customColor);
-  await ChatMessage.create(msgData);
+  queueMessages(buildMonitorMessageData(actor, line, cls, kind, isMultiline, customColor));
 }
 
 // -------------------------------
@@ -401,12 +494,10 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   if (game.user.isGM) {
-    if (game.settings.get(MOD_ID, "npcAudience") === "gm-players") {
+    if (getSetting("npcAudience") === "gm-players") {
       game.settings.set(MOD_ID, "npcAudience", "everyone");
     }
   }
-  const sample = game.actors?.contents?.[0];
-  if (sample) resolvePaths(sample);
 });
 
 // -------------------------------
@@ -414,6 +505,9 @@ Hooks.once("ready", () => {
 // -------------------------------
 
 Hooks.on("preUpdateActor", (actor, update, options, userId) => {
+  // Skip updates that cannot touch anything tracked (e.g. flag-only, name, image or ownership updates)
+  if (!updateTouchesRoots(update, getWatchedActorRoots())) return;
+
   const { hpPath, tempPath, tempMaxPath } = resolvePaths(actor);
 
   const willHP = willUpdatePath(update, hpPath);
@@ -421,8 +515,9 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
   const willTHPMax = willUpdatePath(update, tempMaxPath);
 
   let currencyPayload = null;
-  if (getWorldBool("trackCurrency", true)) {
-    const currencyInfo = adapter.getCurrencyInfo(actor, getWorldPath("currencyBasePath"));
+  const currencyBasePath = getWorldPath("currencyBasePath");
+  if (getWorldBool("trackCurrency", true) && adapter.updateTouchesCurrency(update, currencyBasePath)) {
+    const currencyInfo = adapter.getCurrencyInfo(actor, currencyBasePath);
     if (currencyInfo.isFlatCurrency) {
       if (currencyInfo.coins.some(p => willUpdatePath(update, p))) {
         currencyPayload = { ...currencyInfo };
@@ -440,11 +535,11 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
 
   // Custom Tracked Values
   let customPayload = null;
-  const customResources = getCustomResources();
+  const customResources = getActiveCustomResources();
   if (customResources.length > 0) {
     const changedCustom = [];
     for (const res of customResources) {
-      if (!isNameBlacklisted(res.name) && willUpdatePath(update, res.path)) {
+      if (willUpdatePath(update, res.path)) {
         changedCustom.push({
           ...res,
           oldValue: readNumber(actor, res.path)
@@ -458,7 +553,9 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
 
   if (!willHP && !willTHP && !willTHPMax && !currencyPayload && !systemPayload && !customPayload) return;
 
-  options[MOD_ID] = {
+  // Keyed by document ID: one operation can update several actors with shared options
+  options[MOD_ID] ??= {};
+  options[MOD_ID][actor.id] = {
     oldHP: willHP ? readNumber(actor, hpPath) : undefined,
     oldTHP: willTHP ? readNumber(actor, tempPath) : undefined,
     oldTHPMax: willTHPMax ? readNumber(actor, tempMaxPath) : undefined,
@@ -476,8 +573,8 @@ Hooks.on("preUpdateActor", (actor, update, options, userId) => {
 // -------------------------------
 
 Hooks.on("updateActor", (actor, update, options, userId) => {
-  if (userId !== game.userId || !options?.[MOD_ID]) return;
-  const payload = options[MOD_ID];
+  const payload = options?.[MOD_ID]?.[actor.id];
+  if (userId !== game.userId || !payload) return;
   const uuid = actor.uuid;
 
   const pending = ACTOR_DEBOUNCE.get(uuid) ?? {
@@ -543,9 +640,11 @@ async function processActorUpdate(actor, data) {
   const { hpPath, tempPath, tempMaxPath, damageSystem } = resolvePaths(actor);
   const link = getActorLink(actor);
   const messagesToCreate = [];
+  let whisper = null;
 
   const addMsg = (line, cls, kind, isMultiline = false, customColor = null) => {
-    messagesToCreate.push(buildMonitorMessageData(actor, line, cls, kind, isMultiline, customColor));
+    whisper ??= buildRecipients(actor);
+    messagesToCreate.push(buildMonitorMessageData(actor, line, cls, kind, isMultiline, customColor, whisper));
   };
 
   // HP
@@ -654,7 +753,8 @@ async function processActorUpdate(actor, data) {
   // System Specific Processing
   if (Object.keys(data.system).length > 0) {
     const postAdapterMsg = async (act, line, cls, kind, isMultiline = false, customColor = null) => {
-      messagesToCreate.push(buildMonitorMessageData(act, line, cls, kind, isMultiline, customColor));
+      if (act === actor) addMsg(line, cls, kind, isMultiline, customColor);
+      else messagesToCreate.push(buildMonitorMessageData(act, line, cls, kind, isMultiline, customColor));
     };
     const context = { link, postMonitorMessage: postAdapterMsg, readRaw, readNumber, getWorldBool, isNameBlacklisted };
     await adapter.processActorUpdate(actor, data.system, context);
@@ -691,13 +791,7 @@ async function processActorUpdate(actor, data) {
     }
   }
 
-  if (messagesToCreate.length > 0) {
-    if (messagesToCreate.length === 1) {
-      await ChatMessage.create(messagesToCreate[0]);
-    } else {
-      await ChatMessage.createDocuments(messagesToCreate);
-    }
-  }
+  if (messagesToCreate.length > 0) queueMessages(...messagesToCreate);
 }
 
 // -------------------------------
@@ -728,6 +822,8 @@ Hooks.on("createItem", async (item, options, userId) => {
 
 Hooks.on("preUpdateItem", (item, change, options, userId) => {
   if (!(item.parent instanceof Actor)) return;
+  // Everything tracked on items lives under `system` or is the name
+  if (!updateTouchesRoots(change, ITEM_WATCHED_ROOTS)) return;
   const trackItems = getWorldBool("trackItemChanges");
   const willQty = trackItems && willUpdatePath(change, "system.quantity");
   const willName = trackItems && willUpdatePath(change, "name");
@@ -735,10 +831,12 @@ Hooks.on("preUpdateItem", (item, change, options, userId) => {
   const willEquip = getWorldBool("trackEquipUnequip") && willUpdatePath(change, "system.equipped");
 
   let currencyPayload = null;
-  if (getWorldBool("trackCurrency", true) && !isNameBlacklisted(item.name)) {
+  const currencyBasePath = getWorldPath("currencyBasePath");
+  if (getWorldBool("trackCurrency", true) && adapter.updateTouchesCurrency(change, currencyBasePath)
+    && !isNameBlacklisted(item.name)) {
     const currencyInfo = adapter.getItemCurrencyInfo
-      ? adapter.getItemCurrencyInfo(item, getWorldPath("currencyBasePath"))
-      : adapter.getCurrencyInfo(item, getWorldPath("currencyBasePath"));
+      ? adapter.getItemCurrencyInfo(item, currencyBasePath)
+      : adapter.getCurrencyInfo(item, currencyBasePath);
     if (currencyInfo?.isFlatCurrency) {
       if (currencyInfo.coins.some(p => willUpdatePath(change, p))) {
         currencyPayload = { ...currencyInfo };
@@ -757,7 +855,10 @@ Hooks.on("preUpdateItem", (item, change, options, userId) => {
   }
 
   if (willQty || willName || willUses || willEquip || currencyPayload || systemStash) {
-    ITEM_UPDATE_STASH.set(item, {
+    // Stored on the operation options (keyed by item ID, since one operation can update many items)
+    // rather than a module-level map, so a no-op update cannot leave a stale stash behind.
+    options[MOD_ID] ??= {};
+    options[MOD_ID][item.id] = {
       oldQty: willQty ? (readNumber(item, "system.quantity") || 0) : undefined,
       oldName: willName ? String(item.name ?? "") : undefined,
       oldUses: willUses ? readNumber(item, "system.uses.max") - readNumber(item, "system.uses.spent") : undefined,
@@ -769,15 +870,14 @@ Hooks.on("preUpdateItem", (item, change, options, userId) => {
           : Object.fromEntries(currencyPayload.coins.map(k => [k, readNumber(item, `${currencyPayload.basePath}.${k}`)]))
       } : undefined,
       system: systemStash
-    });
+    };
   }
 });
 
 Hooks.on("updateItem", (item, change, options, userId) => {
   if (userId !== game.userId || !(item.parent instanceof Actor)) return;
 
-  const stash = ITEM_UPDATE_STASH.get(item);
-  ITEM_UPDATE_STASH.delete(item);
+  const stash = options?.[MOD_ID]?.[item.id];
 
   if (stash || ITEM_DEBOUNCE.has(item.uuid)) {
     const uuid = item.uuid;
@@ -846,9 +946,11 @@ async function processItemUpdate(item, data) {
   const icon = `<i class="fa-solid fa-backpack"></i>`;
   const safeItemName = escapeHTML(item.name || "Container");
   const messagesToCreate = [];
+  let whisper = null;
 
   const addMsg = (line, cls, kind, isMultiline = false, customColor = null) => {
-    messagesToCreate.push(buildMonitorMessageData(item.parent, line, cls, kind, isMultiline, customColor));
+    whisper ??= buildRecipients(item.parent);
+    messagesToCreate.push(buildMonitorMessageData(item.parent, line, cls, kind, isMultiline, customColor, whisper));
   };
 
   // Quantity
@@ -967,13 +1069,7 @@ async function processItemUpdate(item, data) {
     }
   }
 
-  if (messagesToCreate.length > 0) {
-    if (messagesToCreate.length === 1) {
-      await ChatMessage.create(messagesToCreate[0]);
-    } else {
-      await ChatMessage.createDocuments(messagesToCreate);
-    }
-  }
+  if (messagesToCreate.length > 0) queueMessages(...messagesToCreate);
 }
 
 // -------------------------------
@@ -1009,16 +1105,12 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   const treatAsSingleton = !hasQty || oldQty <= 1;
   const icon = `<i class="fa-solid fa-backpack"></i>`;
 
+  const safeName = escapeHTML(name);
   const line = (treatAsSingleton || getWorldBool("simpleOutput"))
-    ? `${icon} ${link} deleted ${name}`
-    : `${icon} ${link} ${name}: ${oldQty} - ${oldQty} → 0`;
+    ? `${icon} ${link} deleted ${safeName}`
+    : `${icon} ${link} ${safeName}: ${oldQty} - ${oldQty} → 0`;
 
-  const msgData = {
-    content: `<div class="tiny-monitor-line tm-multiline">${line}</div>`,
-    flags: { [MOD_ID]: { isMonitorMsg: true, kind: "item", cls: "tiny-monitor-item-dec" } }
-  };
-  if (whisper.length > 0) msgData.whisper = whisper;
-  await ChatMessage.create(msgData);
+  queueMessages(buildMonitorMessageData(null, line, "tiny-monitor-item-dec", "item", true, null, whisper));
 });
 
 // -------------------------------
@@ -1074,12 +1166,7 @@ Hooks.on("deleteActiveEffect", async (effect, options, userId) => {
   const icon = `<i class="fa-solid fa-sparkles"></i>`;
   const line = `${icon} ${payload.link} lost effect: ${safeEffName}`;
 
-  const effectMsgData = {
-    content: `<div class="tiny-monitor-line tm-multiline">${line}</div>`,
-    flags: { [MOD_ID]: { isMonitorMsg: true, kind: "effect", cls: "tiny-monitor-effect-remove" } }
-  };
-  if (payload.whisper.length > 0) effectMsgData.whisper = payload.whisper;
-  await ChatMessage.create(effectMsgData);
+  queueMessages(buildMonitorMessageData(null, line, "tiny-monitor-effect-remove", "effect", true, null, payload.whisper));
 });
 
 Hooks.on("updateActiveEffect", async (effect, change, options, userId) => {
@@ -1110,7 +1197,7 @@ function shouldHideMessage(message) {
     if (!game.user.isGM) return true;
 
     // GMs shouldn't see it if visibility is strictly "Player only"
-    const visibility = game.settings.get(MOD_ID, "messageVisibility") ?? "gm-player";
+    const visibility = getSetting("messageVisibility", "gm-player") ?? "gm-player";
     if (visibility === "player") return true;
   }
 
@@ -1196,9 +1283,10 @@ Hooks.on("deleteChatMessage", async (message, options, userId) => {
   const label = isMonitor ? "changelog entry" : describeDeletedMessage(message);
   let entryText = "";
   if (isMonitor) {
-    const tmp = document.createElement("div");
+    // <template> content is inert: parsing it does not fetch images (e.g. custom tracker icons)
+    const tmp = document.createElement("template");
     tmp.innerHTML = message.content ?? "";
-    entryText = escapeHTML((tmp.textContent ?? "").trim());
+    entryText = escapeHTML((tmp.content.textContent ?? "").trim());
   }
   const whisperNames = (message.whisper ?? [])
     .map(id => escapeHTML(game.users.get(id)?.name ?? "?")).join(", ");
