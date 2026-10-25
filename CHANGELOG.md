@@ -174,3 +174,71 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **Whisper Target**: Added world setting to control who receives changelog messages: GM + Player (default), Player only, GM only, or Everyone.
+
+## 14.5
+
+### Added
+- **Experience Points Tracking (DnD5e)**: Added the **Track Experience Points (DnD5e)** setting (`trackDnd5eXP`) to log when a character gains or loses XP (`system.details.xp.value`), styled with dedicated color badges.
+
+## 14.4
+
+### Added
+- **Equip / Unequip Tracking**: Added the **Track Equip / Unequip** setting (`trackEquip`) to log when items are equipped or unequipped on an actor.
+- **Active Effect Tracking**: Added the **Track Active Effects** setting (`trackActiveEffects`) to monitor and log when Active Effects are added, removed, enabled, or disabled on an actor (supporting both direct and transferred item effects).
+
+## 14.3.4
+
+### Improved
+- **Foundry V14 Chat Message Layout**: Applied a CSS grid reset (`display: grid !important`, `grid-template-columns: 1fr !important`) and hidden avatar elements to eliminate layout ghosting and empty column gaps on chat cards in Foundry V14.
+
+## 14.3.2
+
+### Added
+- **Limited Item Uses Tracking**: Added monitoring for item limited uses, logging when an item with limited uses spends or regains uses (`system.uses.spent` vs `system.uses.max`).
+
+## 14.3.1
+
+### Fixed
+- **DnD5e Spell Preparation Detection**: Updated spell preparation checks to read modern `system.preparation.mode` and `system.preparation.prepared` properties with fallbacks for legacy data structures.
+
+## 14.3
+
+### Added
+- **Hit Dice Tracking (DnD5e)**: Added the **Track Hit Dice (DnD5e)** setting (`trackDnd5eHitDice`) to log when characters expend or regain Hit Dice with custom orange badges, supporting both modern `system.hd.spent` and legacy `system.hitDiceUsed`.
+
+### Improved
+- **Item Rename Output**: Cleaned up item rename messages by removing the redundant `Item:` prefix.
+
+## 14.2
+
+### Improved
+- **Spell Preparation Debouncing**: Integrated DnD5e spell preparation updates into the item debounce pipeline, preventing duplicate or conflicting notifications during rapid toggles.
+- **Cross-Version GM Resolution**: Added fallback handling for `game.users.primaryGM` (V14) and `game.users.activeGM` (V13) when processing deleted chat messages.
+
+### Fixed
+- **Deleted Chat Message Author Compatibility**: Set both `author` (V14) and `user` (V13) on generated whisper messages to ensure cross-version permission and visibility compliance.
+
+## 14.1.1
+
+### Added
+- **Chat Message Deletion Monitoring**: Added the **Track Deleted Chat Messages** setting (`trackDeletedMessages`) to whisper deleted player chat messages to the GM(s), processed by the active GM to keep whispers private.
+
+### Improved
+- **Foundry V14 Hook Compatibility**: Added support for `renderChatMessageHTML` alongside the legacy `renderChatMessage` hook for chat message styling.
+- **Recipient Fallback**: Added a fallback ensuring messages are whispered to the GM if no actor owners can be resolved.
+
+### Fixed
+- **Item Name Escaping**: Added HTML escaping to item names in addition, removal, and update messages.
+- **DnD5e Spell Slot Property Safety**: Added checks to ensure spell slot properties exist on the actor before checking for updates.
+
+## 13.27
+
+### Added
+- **Initial Release**: Initial release of **Nik's Tiny Change Logs** (`niks-tiny-changelogs`).
+- **Core Health Tracking**: Automatic monitoring of HP, Temporary HP, and Temp Max HP changes with compact, color-coded one-line chat messages.
+- **System Auto-Detection**: Built-in data path detection for DnD5e, PF2e, and Shadow of the Demon Lord, with manual path configuration support for other game systems.
+- **Currency Tracking**: Optional tracking of currency changes (Platinum, Gold, Electrum, Silver, Copper) for DnD5e and PF2e.
+- **Item Inventory Tracking**: Optional tracking of item additions, deletions, quantity changes, and renaming.
+- **Heroic Inspiration Tracking**: Optional tracking of DnD5e Inspiration gains and expenditures.
+- **Smart Whisper Routing**: Automatic message routing whispering NPC changes to GMs and PC changes to GMs and actor owners.
+- **Simple Output Mode**: Compact formatting option displaying simple deltas instead of full change transitions.
