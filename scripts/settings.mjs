@@ -63,6 +63,17 @@ export function registerSettings(adapter) {
     scope: "world", config: true, type: Boolean, default: true
   });
 
+  game.settings.register(MOD_ID, "messageStyle", {
+    ...settingText("messageStyle"),
+    scope: "world", config: true, type: String,
+    choices: {
+      tinted: "NTCL.Settings.messageStyle.Tinted",
+      solid: "NTCL.Settings.messageStyle.Solid",
+      accent: "NTCL.Settings.messageStyle.Accent"
+    },
+    default: "tinted"
+  });
+
   game.settings.register(MOD_ID, "simpleOutput", {
     ...settingText("simpleOutput"),
     scope: "world", config: true, type: Boolean, default: false

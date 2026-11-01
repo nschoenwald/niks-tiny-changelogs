@@ -2,7 +2,8 @@
 
 import { adapter } from "./systems/index.mjs";
 import { getWorldBool, getWorldPath } from "./settings.mjs";
-import { formatChange, formatLine, getDelta, icon, readNumber, willUpdatePath } from "./utils.mjs";
+import { describeChange, formatLine, getActorLink, getDelta, getItemLink, readNumber, willUpdatePath } from "./utils.mjs";
+import { t } from "./i18n.mjs";
 
 /**
  * Old coin values of a document, if the update changes any of its coins.
@@ -21,17 +22,18 @@ export function stashCurrency(doc, change) {
 
 /**
  * Post one line per coin that changed.
- * @param {Actor|Item} doc
+ * @param {Actor|Item} doc   The actor, or a container item on an actor
  * @param {Record<string, {path: string, old: number}>} stash  From stashCurrency
- * @param {string} actorHtml                                     Actor (and container) shown in the line
  * @param {import("./messages.mjs").Emit} emit
  */
-export function reportCurrency(doc, stash, actorHtml, emit) {
+export function reportCurrency(doc, stash, emit) {
+  const actor = doc instanceof Item ? doc.parent : doc;
   for (const [key, { path, old }] of Object.entries(stash ?? {})) {
     const now = readNumber(doc, path);
-    const delta = getDelta(old, now);
-    if (delta === 0) continue;
-    const text = `${adapter.getCoinLabel(key)}: ${formatChange(old, now)}`;
-    emit(formatLine(icon("coins"), actorHtml, text), delta > 0 ? "tiny-monitor-currency-gain" : "tiny-monitor-currency-loss", "currency");
+    if (getDelta(old, now) === 0) continue;
+    const label = adapter.getCoinLabel(key);
+    // Coins in a container name the container: "Gold in Backpack"
+    const text = doc instanceof Item ? t("Line.CoinsIn", { coin: label, container: getItemLink(doc) }) : label;
+    emit(formatLine({ icon: "coins", actor: getActorLink(actor), text, ...describeChange(old, now) }), "currency", "currency");
   }
 }

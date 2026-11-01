@@ -1,83 +1,52 @@
 /* -------------------------------
    Variables & Configuration
-   Changelog lines use fixed dark backgrounds with white text, so they read the same in every theme.
    ------------------------------- */
 :root {
-  /* HP Changes */
-  --tm-hp-gain: #1b5e20; /* Green */
-  --tm-hp-loss: #8b1e1e; /* Red */
+  /* Tones: what a change means. The icon tells what kind of thing changed. */
+  --tm-tone-gain: #287a34;
+  --tm-tone-loss: #c4372c;
+  --tm-tone-spend: #7b4bc4;
+  --tm-tone-currency: #8d6700;
+  --tm-tone-neutral: #5b7083;
 
-  /* Temp HP */
-  --tm-temp-hp: #0d47a1; /* Blue */
-  --tm-temp-max-hp: #006064; /* Dark Teal */
+  /* Message Style "Tinted": how strongly the tone tints the chat card */
+  --tm-tint: 14%;
 
-  /* Currency */
-  --tm-currency-gain: #c87f1f; /* Gold */
-  --tm-currency-loss: #a02a3a; /* Dark Red/Crimson */
-
-  /* Spell Slots */
-  --tm-spellslot-expend: #4a148c; /* Deep Purple */
-  --tm-spellslot-regain: #7b1fa2; /* Lighter Purple */
-
-  /* Spell Preparation */
-  --tm-spellprep: #283593; /* Indigo */
-
-  /* Inspiration */
-  --tm-inspiration: #ff8f00; /* Amber */
-
-  /* Hit Dice */
-  --tm-hitdice-expend: #d84315; /* Deep Orange */
-  --tm-hitdice-regain: #f57c00; /* Orange */
-
-  /* Items */
-  --tm-item-add: #0a6b4a; /* Emerald */
-  --tm-item-remove: #a02a3a; /* Crimson */
-  --tm-item-rename: #37474f; /* Slate */
-
-  /* Equip / Unequip */
-  --tm-equip: #1565c0; /* Blue */
-  --tm-unequip: #5d4037; /* Brown */
-
-  /* Active Effects */
-  --tm-effect-add: #2e7d32; /* Forest Green */
-  --tm-effect-remove: #b71c1c; /* Deep Red */
-  --tm-effect-enable: #00838f; /* Teal */
-  --tm-effect-disable: #616161; /* Grey */
-
-  /* Experience Points */
-  --tm-xp-gain: #9e7c1a; /* Dark Gold */
-  --tm-xp-loss: #6d4c41; /* Brown */
-
-  /* Abilities (Mörk Borg) */
-  --tm-ability-gain: #00695c; /* Dark Teal Green */
-  --tm-ability-loss: #880e4f; /* Dark Raspberry */
-
-  /* Omens (Mörk Borg) */
-  --tm-omens-gain: #827717; /* Olive */
-  --tm-omens-loss: #4e342e; /* Dark Brown */
+  /* How far tone-coloured text leans towards the tone; the rest is the card's own text colour, so it stays readable
+     on light and dark cards alike */
+  --tm-ink: 72%;
 
   /* Deleted message notices */
   --tm-deleted-accent: #a02a3a;
 }
 
+/* -------------------------------
+   Changelog Messages
+   ------------------------------- */
 li.chat-message.tiny-monitor-msg {
-  /* Foundry V14 Grid Reset */
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 0 !important;
-  padding: 0 !important;
+  /* Set per message from its tone (data-tone), or inline for custom tracked values */
+  --tm-tone: var(--tm-tone-neutral);
+  --tm-ink-tone: color-mix(in oklab, var(--tm-tone) var(--tm-ink), currentColor);
 
-  /* Component Styling */
-  /* Each message class only sets --tm-line-bg. The background must win over core's parchment image and
-     dnd5e's chat card background (an ID selector), so it is set once here with !important. */
-  background: var(--tm-line-bg, var(--tm-item-rename)) !important;
+  /* The system's chat card stays (its background, text colour and font); only its frame is replaced */
+  display: block !important;
+  position: relative;
   contain: content;
+  margin-block: 1px;
+  padding: 0 !important;
   border: none !important;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  margin-top: 1px;
-  margin-bottom: 1px;
-  background-clip: padding-box;
+  border-radius: 3px;
+  box-shadow: none !important;
+}
+
+li.chat-message.tiny-monitor-msg[data-tone="gain"] { --tm-tone: var(--tm-tone-gain); }
+li.chat-message.tiny-monitor-msg[data-tone="loss"] { --tm-tone: var(--tm-tone-loss); }
+li.chat-message.tiny-monitor-msg[data-tone="spend"] { --tm-tone: var(--tm-tone-spend); }
+li.chat-message.tiny-monitor-msg[data-tone="currency"] { --tm-tone: var(--tm-tone-currency); }
+
+li.chat-message.tiny-monitor-msg:focus-visible {
+  outline: 2px solid var(--tm-tone);
+  outline-offset: -2px;
 }
 
 /* Hide header and any avatar elements to prevent layout ghosting */
@@ -87,257 +56,203 @@ li.chat-message.tiny-monitor-msg .message-avatar {
   display: none !important;
 }
 
-/* -------------------------------
-   Content Layout
-   ------------------------------- */
 li.chat-message.tiny-monitor-msg .message-content {
-  grid-column: 1 / -1;
-  padding: 3px 6px;
+  position: relative;
   margin: 0;
+  padding: 3px 8px 3px 10px;
 }
 
-li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  overflow: hidden;
-  white-space: nowrap;
+/* -------------------------------
+   Message Style setting
+   ------------------------------- */
+/* Tinted and System card: a stripe in the tone over the card the system draws. An overlay rather than a background,
+   because the system's background uses url()s relative to its own stylesheet, which would break when taken over
+   through var() here. */
+li.chat-message.tiny-monitor-msg:is(.tm-style-tinted, .tm-style-accent)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border-left: 3px solid var(--tm-tone);
+  pointer-events: none;
+}
 
-  color: #ffffff;
-  font-family: var(--font-primary);
-  font-weight: 700;
+li.chat-message.tiny-monitor-msg.tm-style-tinted::before {
+  background: color-mix(in srgb, var(--tm-tone) var(--tm-tint), transparent);
+}
+
+/* Solid: the tone replaces the card's background, with white text. Background and text colour must win over core's
+   parchment image and dnd5e's chat card rule (an ID selector), hence !important. */
+li.chat-message.tiny-monitor-msg.tm-style-solid {
+  --tm-ink-tone: #ffffff;
+  background: var(--tm-tone) !important;
+  color: #ffffff !important;
+}
+
+li.chat-message.tiny-monitor-msg.tm-style-solid :is(.tm-gain, .tm-loss) {
+  color: inherit;
+}
+
+li.chat-message.tiny-monitor-msg.tm-style-solid .tm-detail {
+  opacity: 0.85;
+}
+
+/* -------------------------------
+   Line Layout
+   ------------------------------- */
+/* icon · actor · what changed · change · old → new · time. The line flows like a sentence and wraps word by word;
+   wrapped rows line up under the actor because the icon sits in its own column. Compact lines use a single row
+   instead (see Compact Mode). */
+li.chat-message.tiny-monitor-msg .tiny-monitor-line {
+  position: relative;
+  display: block;
+  padding-left: 20px;
   font-size: 13px;
-  line-height: 1.3;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  line-height: 1.35;
+  color: inherit;
+  overflow-wrap: break-word;
 }
 
-/* Actor name: can shrink and truncate with ellipsis */
-li.chat-message.tiny-monitor-msg .tiny-monitor-line .tm-actor {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Message text: never shrinks, always fully visible */
-li.chat-message.tiny-monitor-msg .tiny-monitor-line .tm-text {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-li.chat-message.tiny-monitor-msg .tiny-monitor-line>i {
-  flex: 0 0 auto;
-  opacity: 0.9;
+li.chat-message.tiny-monitor-msg .tm-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  text-align: center;
   font-size: 12px;
-  align-self: center;
+  color: var(--tm-ink-tone);
+}
+
+li.chat-message.tiny-monitor-msg .tm-actor {
+  font-weight: 600;
+}
+
+li.chat-message.tiny-monitor-msg .tm-delta {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--tm-ink-tone);
+}
+
+li.chat-message.tiny-monitor-msg .tm-detail {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+/* Top right of the line (it comes first in the line, so the text flows around it) */
+li.chat-message.tiny-monitor-msg .tm-time {
+  display: none;
+  float: right;
+  margin-left: 8px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+}
+
+li.chat-message.tiny-monitor-msg:is(:hover, :focus-within) .tm-time {
+  display: inline;
+}
+
+/* Image icons of custom tracked values */
+li.chat-message.tiny-monitor-msg .tm-custom-icon {
+  width: 14px;
+  height: 14px;
+  border: none;
+  vertical-align: middle;
+}
+
+/* Merged messages: one row per direction ("+ Alert, Suggestion" / "− Dream") */
+li.chat-message.tiny-monitor-msg .tm-rows {
+  margin: 1px 0 0 20px;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+li.chat-message.tiny-monitor-msg .tm-sign {
+  display: inline-block;
+  width: 1ch;
+  margin-right: 4px;
+  font-weight: 700;
+}
+
+li.chat-message.tiny-monitor-msg .tm-gain {
+  color: color-mix(in oklab, var(--tm-tone-gain) var(--tm-ink), currentColor);
+}
+
+li.chat-message.tiny-monitor-msg .tm-loss {
+  color: color-mix(in oklab, var(--tm-tone-loss) var(--tm-ink), currentColor);
 }
 
 /* -------------------------------
    Foundry UUID Link Overrides
    ------------------------------- */
-li.chat-message.tiny-monitor-msg .tiny-monitor-line .content-link {
-  background: rgba(0, 0, 0, 0.2);
+/* Actor and item links read as text; the underline shows they can be clicked. :not(#tm-none) adds an ID's weight to
+   win over chat restyles (e.g. Carolingian UI's link pills and word-break: break-all on chat links). */
+li.chat-message.tiny-monitor-msg a.content-link:not(#tm-none) {
+  display: inline;
+  margin: 0;
+  padding: 0;
   border: none;
+  background: none;
   color: inherit;
-  padding: 0 4px;
-  margin: 0 2px;
-  border-radius: 3px;
   text-decoration: none;
-  vertical-align: baseline;
+  white-space: inherit;
+  word-break: normal;
 }
 
-li.chat-message.tiny-monitor-msg .tiny-monitor-line .content-link:hover {
-  background: rgba(0, 0, 0, 0.4);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-}
-
-li.chat-message.tiny-monitor-msg .tiny-monitor-line .content-link i {
+li.chat-message.tiny-monitor-msg a.content-link > i {
   display: none;
 }
 
-/* -------------------------------
-   Tooltip Readability Fix (DnD5e 6.0 / 6.1)
-   ------------------------------- */
-/* dnd5e gives every content link tooltip the theme of the element around the link (theme-light in a light chat log),
-   but links without a rich dnd5e tooltip (e.g. actors) keep core's dark tooltip background: dark text on dark.
-   Core always uses theme-dark, so this only matches tooltips dnd5e switched. Not fixed upstream as of dnd5e 6.1.0. */
-#tooltip.theme-light:not(.dnd5e-tooltip) {
-  color: var(--color-light-1, #ffffff);
+li.chat-message.tiny-monitor-msg :is(.tm-text, .tm-rows) a.content-link {
+  text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent);
+}
+
+li.chat-message.tiny-monitor-msg a.content-link:hover {
+  text-decoration: underline;
 }
 
 /* -------------------------------
-   Multiline Support
+   Compact Mode (one line; expands on hover, keyboard focus or tap)
    ------------------------------- */
-li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line.tm-multiline {
-  white-space: normal;
-  word-break: break-word;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line.tm-multiline>i,
-li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line.tm-multiline .content-link {
-  margin-right: 4px;
-}
-
-/* -------------------------------
-   Color Themes
-   ------------------------------- */
-/* HP Changes */
-li.chat-message.tiny-monitor-msg.tiny-monitor-gain {
-  --tm-line-bg: var(--tm-hp-gain);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-loss {
-  --tm-line-bg: var(--tm-hp-loss);
-}
-
-/* Temp HP */
-li.chat-message.tiny-monitor-msg.tiny-monitor-temp {
-  --tm-line-bg: var(--tm-temp-hp);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-tempmax {
-  --tm-line-bg: var(--tm-temp-max-hp);
-}
-
-/* Currency */
-li.chat-message.tiny-monitor-msg.tiny-monitor-currency-gain {
-  --tm-line-bg: var(--tm-currency-gain);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-currency-loss {
-  --tm-line-bg: var(--tm-currency-loss);
-}
-
-/* Spell Slots */
-li.chat-message.tiny-monitor-msg.tiny-monitor-spellslot-expend {
-  --tm-line-bg: var(--tm-spellslot-expend);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-spellslot-regain {
-  --tm-line-bg: var(--tm-spellslot-regain);
-}
-
-/* Spell Preparation */
-li.chat-message.tiny-monitor-msg.tiny-monitor-spellprep {
-  --tm-line-bg: var(--tm-spellprep);
-}
-
-/* Inspiration */
-li.chat-message.tiny-monitor-msg.tiny-monitor-inspiration {
-  --tm-line-bg: var(--tm-inspiration);
-}
-
-/* Hit Dice */
-li.chat-message.tiny-monitor-msg.tiny-monitor-hitdice-expend {
-  --tm-line-bg: var(--tm-hitdice-expend);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-hitdice-regain {
-  --tm-line-bg: var(--tm-hitdice-regain);
-}
-
-/* Items */
-li.chat-message.tiny-monitor-msg.tiny-monitor-item-inc {
-  --tm-line-bg: var(--tm-item-add);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-item-dec {
-  --tm-line-bg: var(--tm-item-remove);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-item {
-  --tm-line-bg: var(--tm-item-rename);
-}
-
-/* Equip / Unequip */
-li.chat-message.tiny-monitor-msg.tiny-monitor-equip {
-  --tm-line-bg: var(--tm-equip);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-unequip {
-  --tm-line-bg: var(--tm-unequip);
-}
-
-/* Active Effects */
-li.chat-message.tiny-monitor-msg.tiny-monitor-effect-add {
-  --tm-line-bg: var(--tm-effect-add);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-effect-remove {
-  --tm-line-bg: var(--tm-effect-remove);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-effect-enable {
-  --tm-line-bg: var(--tm-effect-enable);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-effect-disable {
-  --tm-line-bg: var(--tm-effect-disable);
-}
-
-/* Experience Points */
-li.chat-message.tiny-monitor-msg.tiny-monitor-xp-gain {
-  --tm-line-bg: var(--tm-xp-gain);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-xp-loss {
-  --tm-line-bg: var(--tm-xp-loss);
-}
-
-/* Abilities (Mörk Borg) */
-li.chat-message.tiny-monitor-msg.tiny-monitor-ability-gain {
-  --tm-line-bg: var(--tm-ability-gain);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-ability-loss {
-  --tm-line-bg: var(--tm-ability-loss);
-}
-
-/* Omens (Mörk Borg) */
-li.chat-message.tiny-monitor-msg.tiny-monitor-omens-gain {
-  --tm-line-bg: var(--tm-omens-gain);
-}
-
-li.chat-message.tiny-monitor-msg.tiny-monitor-omens-loss {
-  --tm-line-bg: var(--tm-omens-loss);
-}
-
-/* -------------------------------
-   Compact Mode (expand on hover)
-   ------------------------------- */
-li.chat-message.tiny-monitor-msg.tm-compact .message-content .tiny-monitor-line {
-  max-height: 1.3em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: max-height 0.25s ease;
-}
-
-/* Override the multiline clamp when compact is active */
-li.chat-message.tiny-monitor-msg.tm-compact .message-content .tiny-monitor-line.tm-multiline {
-  display: block;
-  -webkit-line-clamp: unset;
-  line-clamp: unset;
+/* A single row: the actor keeps up to 45% of it, then the old and new value give way first and the text last */
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tiny-monitor-line {
+  display: flex;
+  align-items: baseline;
+  column-gap: 0.3em;
   white-space: nowrap;
+  overflow: hidden;
+}
+
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-actor {
+  flex: 0 0 auto;
+  max-width: 45%;
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 
-li.chat-message.tiny-monitor-msg.tm-compact:hover .message-content .tiny-monitor-line {
-  max-height: 10em;
-  overflow: visible;
-  white-space: normal;
-  word-break: break-word;
-  text-overflow: unset;
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-text {
+  flex: 1 1 auto;
+  min-width: 2.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-li.chat-message.tiny-monitor-msg.tm-compact:hover .message-content .tiny-monitor-line.tm-multiline {
-  white-space: normal;
-  text-overflow: unset;
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-delta {
+  flex: 0 0 auto;
+}
+
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-detail {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-rows {
+  display: none;
 }
 
 /* Hidden Messages (e.g. GM-only whispers hidden from player authors) */
@@ -426,13 +341,6 @@ li.chat-message.tm-deleted .message-content {
   overflow: auto;
   border: 1px dashed currentColor;
   border-radius: 4px;
-}
-
-/* Accessibility Support */
-@media (prefers-contrast: more) {
-  li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-  }
 }
 
 /* -------------------------------
@@ -629,13 +537,4 @@ li.chat-message.tm-deleted .message-content {
 
 .niks-tiny-changelogs-import-export .import-export-intro {
   margin-bottom: 16px;
-}
-
-/* Image icons of custom tracked values */
-li.chat-message.tiny-monitor-msg .tiny-monitor-line .tm-custom-icon {
-  flex: 0 0 auto;
-  width: 14px;
-  height: 14px;
-  border: none;
-  align-self: center;
 }

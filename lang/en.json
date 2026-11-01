@@ -3,11 +3,18 @@
     "Settings": {
       "compactMessages": {
         "Name": "Compact Messages",
-        "Hint": "If enabled, changelog messages are limited to a single line and expand when hovered over. Useful for keeping the chat log tidy."
+        "Hint": "If enabled, changelog messages are limited to a single line and expand when hovered over, focused or tapped. Useful for keeping the chat log tidy."
+      },
+      "messageStyle": {
+        "Name": "Message Style",
+        "Hint": "How changelog messages are coloured. 'Tinted' keeps your system's chat card with a light tint and a coloured stripe (default). 'Solid' fills the line with its colour and uses white text. 'System card' keeps the system's chat card unchanged apart from a coloured stripe.",
+        "Tinted": "Tinted (default)",
+        "Solid": "Solid",
+        "Accent": "System card"
       },
       "simpleOutput": {
         "Name": "Simplified Output",
-        "Hint": "If enabled, logs will only show the adjustment amount (e.g., '+5') instead of the full transition (e.g., '10 + 5 -> 15'). This provides a cleaner, less verbose chat log."
+        "Hint": "If enabled, changelog messages only show the change (e.g. '+5') instead of also showing the old and new value (e.g. '10 → 15'). Applies to messages posted after the change."
       },
       "messageVisibility": {
         "Name": "Message Visibility",
@@ -119,30 +126,32 @@
         "Hint": "If enabled, logs when a character uses or recovers Powers."
       }
     },
-
     "Line": {
       "HP": "HP",
       "Damage": "Damage",
-      "Temp": "Temp",
+      "TempHP": "Temp HP",
       "TempMax": "Temp Max",
       "MaxHealth": "Max Health",
-      "Uses": "Uses",
       "XP": "XP",
       "Omens": "Omens",
       "Powers": "Powers",
-      "Container": "Container",
-      "ItemAdded": "{actor} added {item}",
-      "ItemAddedQuantity": "{actor} added {item} (+{qty})",
-      "ItemDeleted": "{actor} deleted {item}",
-      "ItemEquipped": "{actor} equipped {item}",
-      "ItemUnequipped": "{actor} unequipped {item}",
+      "Items": "Items",
+      "ItemAdded": "added {items}",
+      "ItemDeleted": "deleted {items}",
+      "ItemUses": "{item} uses",
+      "ItemEquipped": "equipped {item}",
+      "ItemUnequipped": "unequipped {item}",
+      "CoinsIn": "{coin} in {container}",
+      "Spells": "Spells",
+      "SpellsPrepared": "prepared {items}",
+      "SpellsUnprepared": "unprepared {items}",
+      "Effects": "Effects",
       "UnknownEffect": "Unknown Effect",
-      "EffectGained": "{actor} gained effect: {effect}",
-      "EffectLost": "{actor} lost effect: {effect}",
-      "EffectEnabled": "{actor} enabled effect: {effect}",
-      "EffectDisabled": "{actor} disabled effect: {effect}"
+      "EffectGained": "gained {items}",
+      "EffectLost": "lost {items}",
+      "EffectEnabled": "enabled {effect}",
+      "EffectDisabled": "disabled {effect}"
     },
-
     "Coin": {
       "Platinum": "Platinum",
       "Gold": "Gold",
@@ -154,7 +163,6 @@
       "CopperPennies": "Copper Pennies",
       "Bits": "Bits"
     },
-
     "Dnd5e": {
       "InspirationGained": "gained Heroic Inspiration",
       "InspirationSpent": "spent Heroic Inspiration",
@@ -166,28 +174,12 @@
       "FailureGainedMany": "gained {count} Death Save Failures ({now}/3)",
       "FailureLostOne": "lost 1 Death Save Failure ({now}/3)",
       "FailureLostMany": "lost {count} Death Save Failures ({now}/3)",
-      "SlotLevel": "level {level}",
+      "SlotLevel": "Level {level}",
       "SlotPact": "Pact Magic",
-      "SlotExpendedOne": "expended {slot} slot",
-      "SlotExpendedMany": "expended {count} {slot} slots",
-      "SlotRegainedOne": "regained {slot} slot",
-      "SlotRegainedMany": "regained {count} {slot} slots",
-      "HitDie": "Hit Dice",
-      "HitDiceExpendedOne": "expended {die}",
-      "HitDiceExpendedMany": "expended {count} Hit Dice ({die})",
-      "HitDiceRegainedOne": "regained {die}",
-      "HitDiceRegainedMany": "regained {count} Hit Dice ({die})",
-      "SpellPrepared": "prepared {spell}",
-      "SpellUnprepared": "unprepared {spell}"
+      "Slots": "{slot} slots",
+      "HitDice": "Hit Dice",
+      "HitDiceDie": "Hit Dice ({die})"
     },
-
-    "MorkBorg": {
-      "PowersUsedOne": "used a power",
-      "PowersUsedMany": "used {count} powers",
-      "PowersRecoveredOne": "recovered a power",
-      "PowersRecoveredMany": "recovered {count} powers"
-    },
-
     "Chat": {
       "OnlyGMDelete": "Changelog messages can only be deleted by a GM.",
       "OnlyGMEdit": "Changelog messages can only be edited by a GM.",
@@ -202,7 +194,6 @@
       "WhisperedTo": "whispered to {users}",
       "Public": "public"
     },
-
     "Trackers": {
       "Title": "Custom Tracked Values",
       "Intro": "Define custom data paths to track on your actors. Paths must be valid properties on the Actor's data (e.g., <code>system.attributes.fatigue.value</code>).",
@@ -235,7 +226,6 @@
       "ImportFailed": "Failed to import custom trackers: {error}",
       "Exported": "Exported {count} custom trackers to {file}"
     },
-
     "ImportExport": {
       "Title": "Nik's Tiny Change Logs: Import / Export Settings",
       "Intro": "Export your <strong>Nik's Tiny Change Logs</strong> configuration to a portable JSON file for backup or transfer between worlds, or import an existing configuration.",

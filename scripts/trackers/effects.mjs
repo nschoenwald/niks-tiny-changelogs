@@ -2,14 +2,12 @@
 
 import { getWorldBool } from "../settings.mjs";
 import { isNameBlacklisted } from "../blacklist.mjs";
-import { buildRecipients, createEmitter, postMonitorMessage } from "../messages.mjs";
-import { escapeHTML, getActorLink, icon } from "../utils.mjs";
+import { buildRecipients, createEmitter } from "../messages.mjs";
+import { escapeHTML, formatLine, getActorLink } from "../utils.mjs";
 import { getTrackedActor } from "./tracked-actor.mjs";
 import { t } from "../i18n.mjs";
 
 const EFFECT_DELETE_STASH = new WeakMap();
-const EFFECT_ICON = icon("sparkles");
-const MULTILINE = { multiline: true };
 
 /**
  * The actor an effect applies to. ActiveEffect#target is the parent actor, or the owning actor for
@@ -30,8 +28,7 @@ export function registerEffectTracking() {
     const name = getEffectName(effect);
     const actor = resolveEffectActor(effect);
     if (!actor || isNameBlacklisted(name)) return;
-    const line = `${EFFECT_ICON} ${t("Line.EffectGained", { actor: getActorLink(actor), effect: escapeHTML(name) })}`;
-    postMonitorMessage(actor, line, "tiny-monitor-effect-add", "effect", MULTILINE);
+    createEmitter(actor).group("effects", "+", escapeHTML(name));
   });
 
   Hooks.on("preDeleteActiveEffect", (effect, options, userId) => {
@@ -39,7 +36,7 @@ export function registerEffectTracking() {
     const name = getEffectName(effect);
     const actor = resolveEffectActor(effect);
     if (!actor || isNameBlacklisted(name)) return;
-    EFFECT_DELETE_STASH.set(effect, { link: getActorLink(actor), whisper: buildRecipients(actor), name });
+    EFFECT_DELETE_STASH.set(effect, { target: { uuid: actor.uuid, link: getActorLink(actor) }, whisper: buildRecipients(actor), name });
   });
 
   Hooks.on("deleteActiveEffect", (effect, options, userId) => {
@@ -47,8 +44,7 @@ export function registerEffectTracking() {
     const stash = EFFECT_DELETE_STASH.get(effect);
     EFFECT_DELETE_STASH.delete(effect);
     if (!stash || isNameBlacklisted(stash.name)) return;
-    const line = `${EFFECT_ICON} ${t("Line.EffectLost", { actor: stash.link, effect: escapeHTML(stash.name) })}`;
-    createEmitter(null, stash.whisper)(line, "tiny-monitor-effect-remove", "effect", MULTILINE);
+    createEmitter(stash.target, stash.whisper).group("effects", "-", escapeHTML(stash.name));
   });
 
   Hooks.on("updateActiveEffect", (effect, change, options, userId) => {
@@ -59,7 +55,8 @@ export function registerEffectTracking() {
     if (!actor || isNameBlacklisted(name)) return;
 
     const disabled = Boolean(effect.disabled);
-    const line = `${EFFECT_ICON} ${t(disabled ? "Line.EffectDisabled" : "Line.EffectEnabled", { actor: getActorLink(actor), effect: escapeHTML(name) })}`;
-    postMonitorMessage(actor, line, disabled ? "tiny-monitor-effect-disable" : "tiny-monitor-effect-enable", "effect", MULTILINE);
+    const text = t(disabled ? "Line.EffectDisabled" : "Line.EffectEnabled", { effect: escapeHTML(name) });
+    const line = formatLine({ icon: disabled ? "toggle-off" : "toggle-on", actor: getActorLink(actor), text });
+    createEmitter(actor)(line, disabled ? "loss" : "gain", "effect");
   });
 }

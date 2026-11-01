@@ -5,11 +5,12 @@ import { MOD_ID } from "../constants.mjs";
 import { adapter } from "../systems/index.mjs";
 import { getWorldBool } from "../settings.mjs";
 import { isNameBlacklisted } from "../blacklist.mjs";
-import { buildRecipients, createEmitter, postMonitorMessage } from "../messages.mjs";
+import { buildRecipients, createEmitter } from "../messages.mjs";
 import { stashCurrency, reportCurrency } from "../currency.mjs";
 import ChangeDebouncer from "../debounce.mjs";
 import {
-  escapeHTML, formatChange, formatLine, getActorLink, getDelta, icon, readNumber, readRaw, updateTouchesRoots, willUpdatePath
+  describeChange, escapeHTML, formatLine, getActorLink, getDelta, getItemLink, readNumber, readRaw, toneOf,
+  updateTouchesRoots, willUpdatePath
 } from "../utils.mjs";
 import { getTrackedActor } from "./tracked-actor.mjs";
 import { t } from "../i18n.mjs";
@@ -17,8 +18,11 @@ import { t } from "../i18n.mjs";
 // Everything tracked on items lives under `system` or is the name
 const ITEM_WATCHED_ROOTS = new Set(["system", "name"]);
 const ITEM_DELETE_STASH = new WeakMap();
-const ITEM_ICON = icon("backpack");
-const MULTILINE = { multiline: true };
+
+/** An item in a merged "Items" message, with its quantity when there is more than one. */
+function itemEntry(html, qty) {
+  return qty > 1 ? `${html} ×${qty}` : html;
+}
 
 /** Remaining limited uses of an item, read from spent or remaining uses depending on the system. */
 function readRemainingUses(item, paths) {
@@ -48,23 +52,20 @@ function stashItemChanges(item, change) {
   return Object.values(stash).some(v => v !== undefined) ? stash : null;
 }
 
-function reportQuantity(item, old, link, safeName, emit) {
+function reportQuantity(item, old, emit) {
   const now = readNumber(item, adapter.getItemPaths(item).quantity) || 0;
   const delta = getDelta(old, now);
   if (delta === 0) return;
+  const actor = getActorLink(item.parent);
 
   // Coins kept as items (PF2e) read as currency
   const coinLabel = adapter.getCoinItemLabel(item);
   if (coinLabel) {
-    const line = formatLine(icon("coins"), link, `${escapeHTML(coinLabel)}: ${formatChange(old, now)}`);
-    emit(line, delta > 0 ? "tiny-monitor-currency-gain" : "tiny-monitor-currency-loss", "currency");
+    emit(formatLine({ icon: "coins", actor, text: escapeHTML(coinLabel), ...describeChange(old, now) }), "currency", "currency");
   }
-  else if (old === 0 && now === 1) emit(`${ITEM_ICON} ${t("Line.ItemAdded", { actor: link, item: safeName })}`, "tiny-monitor-item-inc", "item", MULTILINE);
-  else if (old === 1 && now === 0) emit(`${ITEM_ICON} ${t("Line.ItemDeleted", { actor: link, item: safeName })}`, "tiny-monitor-item-dec", "item", MULTILINE);
-  else {
-    const line = `${ITEM_ICON} ${link} ${safeName}: ${formatChange(old, now)}`;
-    emit(line, delta > 0 ? "tiny-monitor-item-inc" : "tiny-monitor-item-dec", "item", MULTILINE);
-  }
+  else if (old === 0 && now === 1) emit.group("items", "+", getItemLink(item));
+  else if (old === 1 && now === 0) emit.group("items", "-", getItemLink(item));
+  else emit(formatLine({ icon: "backpack", actor, text: getItemLink(item), ...describeChange(old, now) }), toneOf(delta), "item");
 }
 
 function reportItemChanges(item, stash) {
@@ -73,39 +74,39 @@ function reportItemChanges(item, stash) {
   const emit = createEmitter(actor);
 
   if (stash.system) adapter.reportItemChanges(item, stash.system, emit);
+  if (isNameBlacklisted(item.name)) return;
 
-  const blacklisted = isNameBlacklisted(item.name);
   const paths = adapter.getItemPaths(item);
-  const link = getActorLink(actor);
-  const safeName = escapeHTML(item.name || t("Line.Container"));
+  const actorLink = getActorLink(actor);
+  const itemLink = getItemLink(item);
 
-  if (stash.qty !== undefined && !blacklisted) reportQuantity(item, stash.qty, link, safeName, emit);
+  if (stash.qty !== undefined) reportQuantity(item, stash.qty, emit);
 
-  if (stash.uses !== undefined && !blacklisted) {
+  if (stash.uses !== undefined) {
     const max = readNumber(item, paths.usesMax);
     const now = readRemainingUses(item, paths);
     if (now !== stash.uses && max > 0) {
-      const text = getWorldBool("simpleOutput")
-        ? `${t("Line.Uses")}: ${formatChange(stash.uses, now)}`
-        : `${t("Line.Uses")}: ${formatChange(stash.uses, now, { suffix: ` / ${max}` })}`;
-      const cls = now > stash.uses ? "tiny-monitor-item-inc" : "tiny-monitor-item-dec";
-      emit(`${icon("battery-half")} ${link} ${safeName}: ${text}`, cls, "item-uses", MULTILINE);
+      const line = formatLine({
+        icon: "battery-half", actor: actorLink, text: t("Line.ItemUses", { item: itemLink }),
+        ...describeChange(stash.uses, now, { suffix: ` / ${max}` })
+      });
+      emit(line, toneOf(now - stash.uses, "spend"), "item-uses");
     }
   }
 
-  if (stash.name !== undefined && item.name !== stash.name && !blacklisted && !isNameBlacklisted(stash.name)) {
-    emit(`${ITEM_ICON} ${link} ${escapeHTML(stash.name)} → ${safeName}`, "tiny-monitor-item", "item", MULTILINE);
+  if (stash.name !== undefined && item.name !== stash.name && !isNameBlacklisted(stash.name)) {
+    emit(formatLine({ icon: "pen", actor: actorLink, text: `${escapeHTML(stash.name)} → ${itemLink}` }), "neutral", "item");
   }
 
-  if (stash.equip !== undefined && !blacklisted) {
+  if (stash.equip !== undefined) {
     const now = Boolean(readRaw(item, paths.equipped));
     if (now !== stash.equip) {
-      const line = `${icon("shirt")} ${t(now ? "Line.ItemEquipped" : "Line.ItemUnequipped", { actor: link, item: safeName })}`;
-      emit(line, now ? "tiny-monitor-equip" : "tiny-monitor-unequip", "equip", MULTILINE);
+      const text = t(now ? "Line.ItemEquipped" : "Line.ItemUnequipped", { item: itemLink });
+      emit(formatLine({ icon: "shirt", actor: actorLink, text }), "neutral", "equip");
     }
   }
 
-  if (stash.currency && !blacklisted) reportCurrency(item, stash.currency, `${link} (${safeName})`, emit);
+  if (stash.currency) reportCurrency(item, stash.currency, emit);
 }
 
 const debouncer = new ChangeDebouncer(reportItemChanges);
@@ -117,18 +118,14 @@ export function registerItemTracking() {
     if (!actor || isNameBlacklisted(item.name)) return;
 
     const qty = readNumber(item, adapter.getItemPaths(item).quantity) || 1;
-    const link = getActorLink(actor);
+    const emit = createEmitter(actor);
     const coinLabel = adapter.getCoinItemLabel(item);
     if (coinLabel) {
-      const line = formatLine(icon("coins"), link, `${escapeHTML(coinLabel)}: ${formatChange(0, qty)}`);
-      postMonitorMessage(actor, line, "tiny-monitor-currency-gain", "currency");
+      const line = formatLine({ icon: "coins", actor: getActorLink(actor), text: escapeHTML(coinLabel), ...describeChange(0, qty) });
+      emit(line, "currency", "currency");
       return;
     }
-    const safeName = escapeHTML(item.name);
-    const line = (qty === 1 || getWorldBool("simpleOutput"))
-      ? `${ITEM_ICON} ${t(qty > 1 ? "Line.ItemAddedQuantity" : "Line.ItemAdded", { actor: link, item: safeName, qty })}`
-      : `${ITEM_ICON} ${link} (${safeName}): 0 + ${qty} → ${qty}`;
-    postMonitorMessage(actor, line, "tiny-monitor-item-inc", "item", MULTILINE);
+    emit.group("items", "+", itemEntry(getItemLink(item), qty));
   });
 
   Hooks.on("preUpdateItem", (item, change, options, userId) => {
@@ -156,7 +153,8 @@ export function registerItemTracking() {
 
     const qtyPath = adapter.getItemPaths(item).quantity;
     ITEM_DELETE_STASH.set(item, {
-      link: getActorLink(actor),
+      // The actor's UUID and link, since the item and possibly the actor are gone when the message is built
+      target: { uuid: actor.uuid, link: getActorLink(actor) },
       whisper: buildRecipients(actor),
       name: item.name,
       qty: readNumber(item, qtyPath),
@@ -171,20 +169,16 @@ export function registerItemTracking() {
     ITEM_DELETE_STASH.delete(item);
     if (!stash || isNameBlacklisted(stash.name)) return;
 
-    const { hasQty, qty, link, whisper, name, coinLabel } = stash;
+    const { target, whisper, name, qty, hasQty, coinLabel } = stash;
     if (hasQty && qty === 0) return;
-    const emit = createEmitter(null, whisper);
+    const emit = createEmitter(target, whisper);
 
     if (coinLabel) {
-      const line = formatLine(icon("coins"), link, `${escapeHTML(coinLabel)}: ${formatChange(qty, 0)}`);
-      emit(line, "tiny-monitor-currency-loss", "currency");
+      const line = formatLine({ icon: "coins", actor: target.link, text: escapeHTML(coinLabel), ...describeChange(qty, 0) });
+      emit(line, "currency", "currency");
       return;
     }
-
-    const safeName = escapeHTML(name);
-    const line = (!hasQty || qty <= 1 || getWorldBool("simpleOutput"))
-      ? `${ITEM_ICON} ${t("Line.ItemDeleted", { actor: link, item: safeName })}`
-      : `${ITEM_ICON} ${link} ${safeName}: ${qty} - ${qty} → 0`;
-    emit(line, "tiny-monitor-item-dec", "item", MULTILINE);
+    // Deleted items can't be linked any more
+    emit.group("items", "-", itemEntry(escapeHTML(name), hasQty ? qty : 1));
   });
 }

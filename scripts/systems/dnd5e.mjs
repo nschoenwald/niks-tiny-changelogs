@@ -3,7 +3,7 @@ import { MOD_ID } from "../constants.mjs";
 import { settingText, t } from "../i18n.mjs";
 import { getWorldBool } from "../settings.mjs";
 import { isNameBlacklisted } from "../blacklist.mjs";
-import { escapeHTML, formatChange, formatLine, getActorLink, icon, readNumber, readRaw, willUpdatePath } from "../utils.mjs";
+import { describeChange, formatLine, getActorLink, getItemLink, readNumber, readRaw, toneOf, willUpdatePath } from "../utils.mjs";
 
 const INSPIRATION_PATH = "system.attributes.inspiration";
 const DEATH_SUCCESS_PATH = "system.attributes.death.success";
@@ -121,7 +121,8 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
     if (stash.inspiration !== undefined) {
       const now = Boolean(readRaw(actor, INSPIRATION_PATH));
       if (now !== stash.inspiration) {
-        emit(formatLine(icon("dice-d20"), link, t(now ? "Dnd5e.InspirationGained" : "Dnd5e.InspirationSpent")), "tiny-monitor-inspiration", "inspiration");
+        const text = t(now ? "Dnd5e.InspirationGained" : "Dnd5e.InspirationSpent");
+        emit(formatLine({ icon: "dice-d20", actor: link, text }), now ? "gain" : "spend", "inspiration");
       }
     }
 
@@ -133,7 +134,7 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
         const abs = Math.abs(delta);
         const text = t(`Dnd5e.${type}${delta > 0 ? "Gained" : "Lost"}${amount(abs)}`, { count: abs, now });
         const good = (delta > 0) === gainIsGood;
-        emit(formatLine(icon(iconName), link, text), good ? "tiny-monitor-gain" : "tiny-monitor-loss", "deathsave");
+        emit(formatLine({ icon: iconName, actor: link, text }), good ? "gain" : "loss", "deathsave");
       };
       reportSaves(DEATH_SUCCESS_PATH, stash.deathSaves.success, "Success", "heart-pulse", true);
       reportSaves(DEATH_FAILURE_PATH, stash.deathSaves.failure, "Failure", "skull", false);
@@ -144,20 +145,19 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
       for (const key of SPELL_SLOT_KEYS) {
         const old = stash.spellSlots[key];
         if (old === undefined) continue;
-        const delta = readNumber(actor, spellSlotPath(key)) - old;
-        if (delta === 0) continue;
-        const abs = Math.abs(delta);
+        const now = readNumber(actor, spellSlotPath(key));
+        if (now === old) continue;
         const slot = key === "pact" ? t("Dnd5e.SlotPact") : t("Dnd5e.SlotLevel", { level: key });
-        const text = t(`Dnd5e.Slot${delta < 0 ? "Expended" : "Regained"}${amount(abs)}`, { count: abs, slot });
-        emit(formatLine(icon("hat-wizard"), link, text), delta < 0 ? "tiny-monitor-spellslot-expend" : "tiny-monitor-spellslot-regain", "spellslot");
+        const line = formatLine({ icon: "hat-wizard", actor: link, text: t("Dnd5e.Slots", { slot }), ...describeChange(old, now) });
+        emit(line, toneOf(now - old, "spend"), "spellslot");
       }
     }
 
     if (stash.xp !== undefined) {
       const now = readNumber(actor, XP_PATH);
       if (now !== stash.xp) {
-        const text = `${t("Line.XP")}: ${formatChange(stash.xp, now, { format: n => n.toLocaleString() })}`;
-        emit(formatLine(icon("star"), link, text), now > stash.xp ? "tiny-monitor-xp-gain" : "tiny-monitor-xp-loss", "xp");
+        const change = describeChange(stash.xp, now, { format: n => n.toLocaleString() });
+        emit(formatLine({ icon: "star", actor: link, text: t("Line.XP"), ...change }), toneOf(now - stash.xp), "xp");
       }
     }
   }
@@ -178,25 +178,23 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
   }
 
   reportItemChanges(item, stash, emit) {
-    const link = getActorLink(item.parent);
-
     if (stash.hdSpent !== undefined) {
-      // A positive delta means Hit Dice were used
-      const delta = readNumber(item, "system.hd.spent") - stash.hdSpent;
-      if (delta !== 0) {
-        const abs = Math.abs(delta);
-        const die = readRaw(item, "system.hd.denomination") || t("Dnd5e.HitDie");
-        const text = t(`Dnd5e.HitDice${delta > 0 ? "Expended" : "Regained"}${amount(abs)}`, { count: abs, die });
-        emit(formatLine(icon("heart-pulse"), link, text), delta > 0 ? "tiny-monitor-hitdice-expend" : "tiny-monitor-hitdice-regain", "hitdice");
+      // Shown as Hit Dice left, so expending them reads as a decrease
+      const max = readNumber(item, "system.hd.max") || readNumber(item, "system.levels");
+      const before = max - stash.hdSpent;
+      const after = max - readNumber(item, "system.hd.spent");
+      if (before !== after) {
+        const die = readRaw(item, "system.hd.denomination");
+        const text = die ? t("Dnd5e.HitDiceDie", { die }) : t("Dnd5e.HitDice");
+        // Without a known maximum, only the change is shown
+        const change = max > 0 ? describeChange(before, after) : { delta: describeChange(0, after - before).delta };
+        emit(formatLine({ icon: "heart-pulse", actor: getActorLink(item.parent), text, ...change }), toneOf(after - before, "spend"), "hitdice");
       }
     }
 
     if (stash.prepared !== undefined && !isNameBlacklisted(item.name)) {
       const now = isSpellPrepared(item);
-      if (now !== stash.prepared) {
-        const text = t(now ? "Dnd5e.SpellPrepared" : "Dnd5e.SpellUnprepared", { spell: escapeHTML(item.name) });
-        emit(formatLine(icon("book-journal-whills"), link, text), "tiny-monitor-spellprep", "spellprep");
-      }
+      if (now !== stash.prepared) emit.group("spells", now ? "+" : "-", getItemLink(item));
     }
   }
 }

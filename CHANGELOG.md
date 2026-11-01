@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.17.0
+
+### Added
+- **New Look for Changelog Messages**: Lines are calmer and easier to scan. Each shows an icon, the actor, what changed, the change itself in bold (e.g. "−6") and the old and new value (e.g. "10 → 4"). Five colours show what a change means: gains, losses, spent resources, currency and neutral changes. Text keeps your chat card's colours, so it stays readable in light and dark chat.
+- **Combined Messages**: Items added and removed together, spells prepared together and effects gained or lost together now post one message per actor instead of one per change. A level-up that swaps spells and feats shows up as "Items +3 −4", with the added and removed items listed below.
+- **Message Style**: A new setting to choose how changelog messages are coloured; changing it restyles the messages already in the chat right away. *Tinted* (default) keeps your system's chat card, including D&D 5e's paper texture, with a light tint and a coloured stripe. *Solid* fills the line with its colour. *System card* only adds a coloured stripe.
+- **Item Links**: Item names in changelog messages are now links to the item. Their previews (e.g. D&D 5e's item cards) open to the left of the sidebar instead of covering the chat log.
+- **Time on Hover**: Hovering a changelog message shows when it happened.
+
+### Improved
+- **Compact Messages**: Compact messages now also expand on keyboard focus or tap, so they work on touch screens. Turning the setting on or off now applies to the messages already in the chat right away, without a reload.
+- **Simplified Output**: Now hides the old and new value and keeps the change (e.g. "+5").
+- **Older Messages**: Changelog messages from earlier versions are shown in the new look as well.
+
+### Fixed
+- **Short Rest Summaries (Nik's D&D 5e Tweaks)**: Since 14.16.0, a player's short rest showed the individual HP and Hit Dice messages next to the rest summary. Modules that hide changelog messages on the player's side work again.
+- **Solid Colours in D&D 5e**: Changelog text could take D&D 5e's dark chat text colour on a coloured line.
+- **Actor Tooltips**: Hovering an actor name in a changelog message no longer shows a tooltip. It only said "Character Actor" and appeared as an empty dark box with some UI modules. Item names keep their tooltips, such as D&D 5e's item preview.
+
 ## 14.16.0
 
 ### Added
@@ -16,7 +35,7 @@ All notable changes to this project will be documented in this file.
 - **Custom Tracked Values Storage**: Custom tracked values are stored in a new format. Existing ones are moved over automatically the first time a GM logs in, and older export files can still be imported.
 - **Changelog Colours**: Changelog messages now always keep their colour, even when core or system chat styles give chat messages a parchment or card background.
 - **Dark Theme**: The Import / Export and Custom Tracked Values windows are now easier to read with the dark Applications theme.
-- **Tooltips**: The fix for unreadable actor tooltips now only applies to D&D 5e tooltips that need it, so other tooltips keep their own colours.
+- **Tooltips**: The module no longer changes the colours of any tooltips, so tooltips from other modules and systems look as intended.
 - **Under the Hood**: The module's code was reorganised to make it easier to maintain and extend. Changelog messages look the same as before.
 
 ### Fixed

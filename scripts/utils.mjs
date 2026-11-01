@@ -13,11 +13,18 @@ function clipName(name) {
   return chars.slice(0, MAX_NAME_CHARS).join("") + "…";
 }
 
+/** A content link label: braces would end the @UUID label early, and HTML in names must stay text. */
+function linkLabel(name) {
+  return escapeHTML(String(name ?? "").replace(/{/g, "(").replace(/}/g, ")"));
+}
+
 export function getActorLink(actor) {
-  const rawName = actor?.token?.name ?? actor?.name ?? "";
-  // Braces would end the @UUID label early; HTML in names must stay text
-  const label = escapeHTML(clipName(rawName).replace(/{/g, "(").replace(/}/g, ")"));
-  return `@UUID[${actor?.uuid ?? ""}]{${label}}`;
+  return `@UUID[${actor?.uuid ?? ""}]{${linkLabel(clipName(actor?.token?.name ?? actor?.name ?? ""))}}`;
+}
+
+/** A link to an item that still exists; deleted items are shown by name only (escapeHTML). */
+export function getItemLink(item) {
+  return `@UUID[${item.uuid}]{${linkLabel(item.name)}}`;
 }
 
 /** A Font Awesome solid icon. */
@@ -25,9 +32,27 @@ export function icon(name) {
   return `<i class="fa-solid fa-${name}"></i>`;
 }
 
-/** A single-line changelog entry: icon, actor (shrinks first) and text (always fully visible). */
-export function formatLine(iconHtml, actorHtml, text) {
-  return `${iconHtml} <span class="tm-actor">${actorHtml}</span> <span class="tm-text">${text}</span>`;
+/**
+ * One changelog line: icon, actor, what changed, then the change ("+5") and its old and new value ("10 → 15").
+ * The old and new value are left out with Simplified Output.
+ * @param {object} parts
+ * @param {string} [parts.icon]      Font Awesome icon name
+ * @param {string} [parts.iconHtml]  Icon markup instead of `icon` (e.g. a custom image)
+ * @param {string} parts.actor       Actor link
+ * @param {string} [parts.text]      What changed (escaped HTML)
+ * @param {string} [parts.delta]     The change, e.g. from describeChange
+ * @param {string} [parts.detail]    Old and new value, e.g. from describeChange
+ * @returns {string}
+ */
+export function formatLine({ icon: iconName, iconHtml, actor, text = "", delta = "", detail = "" }) {
+  const parts = [
+    `<span class="tm-icon">${iconHtml ?? icon(iconName)}</span>`,
+    `<span class="tm-actor">${actor}</span>`,
+    `<span class="tm-text">${text}</span>`
+  ];
+  if (delta) parts.push(`<span class="tm-delta">${delta}</span>`);
+  if (detail && !getWorldBool("simpleOutput")) parts.push(`<span class="tm-detail">${detail}</span>`);
+  return parts.join(" ");
 }
 
 export function readNumber(doc, path) {
@@ -60,19 +85,25 @@ export function getDelta(oldVal, newVal) {
 }
 
 /**
- * Describe a numeric change as "old ± diff → new", or only "± diff" with Simplified Output.
+ * A numeric change for formatLine: the signed difference ("+5", "−5") and the old and new value ("10 → 15").
  * @param {number} oldVal
  * @param {number} newVal
  * @param {object} [options]
  * @param {(n: number) => string} [options.format]  Formats each number
- * @param {string} [options.suffix]                 Appended to the full form (e.g. " / 5")
+ * @param {string} [options.suffix]                 Appended to the old and new value (e.g. " / 5")
+ * @returns {{delta: string, detail: string}}
  */
-export function formatChange(oldVal, newVal, { format = String, suffix = "" } = {}) {
+export function describeChange(oldVal, newVal, { format = String, suffix = "" } = {}) {
   const delta = getDelta(oldVal, newVal);
-  const sign = delta > 0 ? "+" : "-";
-  const abs = format(Math.abs(delta));
-  if (getWorldBool("simpleOutput")) return `${sign} ${abs}`;
-  return `${format(oldVal)} ${sign} ${abs} → ${format(newVal)}${suffix}`;
+  return {
+    delta: `${delta > 0 ? "+" : "−"}${format(Math.abs(delta))}`,
+    detail: `${format(oldVal)} → ${format(newVal)}${suffix}`
+  };
+}
+
+/** The tone of a numeric change: "gain" for an increase, otherwise `down` ("loss" unless given). */
+export function toneOf(delta, down = "loss") {
+  return delta > 0 ? "gain" : down;
 }
 
 function isPlainObject(v) {

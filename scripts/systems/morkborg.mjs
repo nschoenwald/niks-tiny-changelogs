@@ -2,7 +2,7 @@ import BaseSystemAdapter from "./base.mjs";
 import { MOD_ID } from "../constants.mjs";
 import { settingText, t } from "../i18n.mjs";
 import { getWorldBool } from "../settings.mjs";
-import { formatChange, formatLine, getActorLink, icon, readNumber, readRaw, willUpdatePath } from "../utils.mjs";
+import { describeChange, escapeHTML, formatLine, getActorLink, readNumber, readRaw, toneOf, willUpdatePath } from "../utils.mjs";
 
 const ABILITIES_PATH = "system.abilities";
 const OMENS_PATH = "system.omens.value";
@@ -77,31 +77,16 @@ export default class MorkBorgAdapter extends BaseSystemAdapter {
 
   reportActorChanges(actor, stash, emit) {
     const link = getActorLink(actor);
-    const isSimple = getWorldBool("simpleOutput");
+    const report = (icon, text, old, now, down, kind) => {
+      if (now === old) return;
+      emit(formatLine({ icon, actor: link, text, ...describeChange(old, now) }), toneOf(now - old, down), kind);
+    };
 
     for (const [key, old] of Object.entries(stash.abilities ?? {})) {
-      const now = readNumber(actor, `${ABILITIES_PATH}.${key}.value`);
-      if (now === old) continue;
-      const label = isSimple ? key.toUpperCase().slice(0, 3) : key.toUpperCase();
-      emit(formatLine(icon("dice-d20"), link, `${label}: ${formatChange(old, now)}`), now > old ? "tiny-monitor-ability-gain" : "tiny-monitor-ability-loss", "ability");
+      const name = escapeHTML(key.charAt(0).toUpperCase() + key.slice(1));
+      report("dice-d20", name, old, readNumber(actor, `${ABILITIES_PATH}.${key}.value`), "loss", "ability");
     }
-
-    if (stash.omens !== undefined) {
-      const now = readNumber(actor, OMENS_PATH);
-      if (now !== stash.omens) {
-        emit(formatLine(icon("dice-d20"), link, `${t("Line.Omens")}: ${formatChange(stash.omens, now)}`), now > stash.omens ? "tiny-monitor-omens-gain" : "tiny-monitor-omens-loss", "omens");
-      }
-    }
-
-    if (stash.powers !== undefined) {
-      const delta = readNumber(actor, POWERS_PATH) - stash.powers;
-      if (delta !== 0) {
-        const abs = Math.abs(delta);
-        const text = isSimple
-          ? `${t("Line.Powers")}: ${delta > 0 ? "+" : "-"} ${abs}`
-          : `${t("Line.Powers")}: ${t(`MorkBorg.Powers${delta < 0 ? "Used" : "Recovered"}${abs === 1 ? "One" : "Many"}`, { count: abs })}`;
-        emit(formatLine(icon("hat-wizard"), link, text), delta < 0 ? "tiny-monitor-spellslot-expend" : "tiny-monitor-spellslot-regain", "spellslot");
-      }
-    }
+    if (stash.omens !== undefined) report("eye", t("Line.Omens"), stash.omens, readNumber(actor, OMENS_PATH), "spend", "omens");
+    if (stash.powers !== undefined) report("hat-wizard", t("Line.Powers"), stash.powers, readNumber(actor, POWERS_PATH), "spend", "spellslot");
   }
 }

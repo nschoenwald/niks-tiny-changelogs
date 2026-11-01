@@ -29,6 +29,13 @@ The module features **Auto-Detection** for health data paths, working out of the
 ### 💰 Currency Tracking
 Logs whenever an actor or container gains or loses currency (e.g., Gold, Silver, Copper). It tracks character wallet changes as well as container currency (backpacks, chests, pouches, bags of holding), including direct sheet edits, conversions, and transfers. It automatically detects the correct currency paths for `dnd5e`, `shadowdark`, `demonlord` (Gold Crowns, Silver Shillings, Copper Pennies, Bits) and `morkborg`, but can be manually configured for other systems. In `pf2e`, where coins are items, gaining, spending or removing a coin stack is reported as currency.
 
+### 📜 How Changelog Messages Look
+Every line has the same layout: an icon for what kind of thing changed, the actor, what changed, the change itself (`−6`) and the old and new value (`10 → 4`). Hovering a line shows the time. Actor and item names are links; item previews (e.g. D&D 5e's item cards) open to the left of the sidebar.
+
+The colour says what the change means, with five colours: green for gains, red for losses, purple for spent resources (spell slots, Hit Dice, uses), gold for currency and grey-blue for neutral changes (renames, equipping, preparing spells). Custom tracked values use their own colour.
+
+Changes that happen together are combined: adding and removing several items, preparing several spells or gaining several effects at once (e.g. on a level-up) posts one message per actor, such as "Items +3 −4" with the added and removed items below.
+
 ### 🎒 Item & Inventory Tracking
 Keep an eye on what your players pick up or consume!
 - **Quantity Adjustments**: Logs when items are consumed, bought, or given away.
@@ -99,7 +106,12 @@ You can customize the module's behavior in the settings to perfectly match your 
   - Access via the **Import / Export** button in the Module Settings menu.
   - When importing, choose whether to **Replace** or **Merge** custom tracker definitions.
   - Provides a confirmation preview dialog detailing found settings before applying changes.
-- **Simplified Output**: Toggle between full transition logs (e.g., `10 + 5 → 15`) or simplified math logs (`+5`).
+- **Message Style**: How changelog messages are coloured:
+  - *Tinted* (default): your system's chat card with a light tint and a coloured stripe, so e.g. D&D 5e's paper texture still shows.
+  - *Solid*: the line is filled with its colour, with white text.
+  - *System card*: your system's chat card unchanged apart from a coloured stripe.
+- **Simplified Output**: Show only the change (`+5`) instead of also showing the old and new value (`10 → 15`). Applies to new messages; Message Style and Compact Messages also change the messages already in the chat.
+- **Compact Messages**: Keep each changelog message to one line; it expands on hover, keyboard focus or tap.
 - **Ignored Names / Blacklist**: A flexible, free-text blacklist to prevent specific items, Active Effects, or custom resources from being reported (e.g., spammy paladin auras or utility items).
   - Supports comma-separated or newline-separated names (case-insensitive, e.g. `Aura of Protection, Torch`).
   - Supports wildcards (e.g. `Aura of *` to catch *Aura of Protection*, *Aura of Courage*, etc., or `*Aura*`).

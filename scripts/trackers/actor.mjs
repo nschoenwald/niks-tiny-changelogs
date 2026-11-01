@@ -9,7 +9,7 @@ import { stashCurrency, reportCurrency } from "../currency.mjs";
 import ChangeDebouncer from "../debounce.mjs";
 import { t } from "../i18n.mjs";
 import {
-  escapeHTML, formatChange, formatLine, getActorLink, getDelta, icon, readNumber, updateTouchesRoots, willUpdatePath
+  describeChange, escapeHTML, formatLine, getActorLink, getDelta, readNumber, toneOf, updateTouchesRoots, willUpdatePath
 } from "../utils.mjs";
 
 let cachedActiveCustomResources = null;
@@ -76,14 +76,14 @@ function stashActorChanges(actor, change) {
   return Object.values(stash).some(v => v !== undefined) ? stash : null;
 }
 
-/** Post a "label: old ± diff → new" line for a value that changed. */
-function reportValue(actor, emit, path, old, { label, iconName, cls, kind }) {
+/** Post a "label  +5  10 → 15" line for a value that changed. */
+function reportValue(actor, emit, path, old, { label, icon, tone, kind }) {
   if (old === undefined || !path) return;
   const now = readNumber(actor, path);
   const delta = getDelta(old, now);
   if (delta === 0) return;
-  const line = formatLine(icon(iconName), getActorLink(actor), `${label}: ${formatChange(old, now)}`);
-  emit(line, typeof cls === "function" ? cls(delta) : cls, kind);
+  const line = formatLine({ icon: typeof icon === "function" ? icon(delta) : icon, actor: getActorLink(actor), text: label, ...describeChange(old, now) });
+  emit(line, typeof tone === "function" ? tone(delta) : tone, kind);
 }
 
 function reportCustomResources(actor, stash, emit) {
@@ -95,23 +95,17 @@ function reportCustomResources(actor, stash, emit) {
     const delta = getDelta(old, now);
     if (delta === 0) continue;
 
-    let text;
-    if (getWorldBool("simpleOutput")) {
-      text = `${escapeHTML(res.name)}: ${formatChange(old, now)}`;
-    } else {
-      // Replacer functions, so "$" sequences in names are not treated as replacement patterns
-      const actionMsg = (delta > 0 ? res.msgGain : res.msgLoss)
-        .replace(/{name}/g, () => res.name)
-        .replace(/{old}/g, () => String(old))
-        .replace(/{new}/g, () => String(now))
-        .replace(/{diff}/g, () => String(Math.abs(delta)));
-      text = `${escapeHTML(actionMsg)} (${formatChange(old, now)})`;
-    }
-
+    // Replacer functions, so "$" sequences in names are not treated as replacement patterns
+    const actionMsg = (delta > 0 ? res.msgGain : res.msgLoss)
+      .replace(/{name}/g, () => res.name)
+      .replace(/{old}/g, () => String(old))
+      .replace(/{new}/g, () => String(now))
+      .replace(/{diff}/g, () => String(Math.abs(delta)));
     const iconHtml = (res.icon.includes("/") || res.icon.includes("."))
       ? `<img class="tm-custom-icon" src="${escapeHTML(res.icon)}" alt="" />`
       : `<i class="${escapeHTML(res.icon)}"></i>`;
-    emit(formatLine(iconHtml, link, text), "tiny-monitor-custom", "custom", { color: res.color });
+    const line = formatLine({ iconHtml, actor: link, text: escapeHTML(actionMsg), ...describeChange(old, now) });
+    emit(line, "custom", "custom", { color: res.color });
   }
 }
 
@@ -119,18 +113,18 @@ function reportActorChanges(actor, stash) {
   const { hpPath, tempPath, tempMaxPath, damageSystem, tempMaxLabel = t("Line.TempMax") } = resolveHealthPaths(actor);
   const emit = createEmitter(actor);
 
+  // In damage systems (Demonlord) the value counts damage taken, so an increase is a loss
+  const healed = delta => (damageSystem ? delta < 0 : delta > 0);
   reportValue(actor, emit, hpPath, stash.hp, {
     label: damageSystem ? t("Line.Damage") : t("Line.HP"),
-    iconName: "heart",
-    cls: delta => ((damageSystem ? delta < 0 : delta > 0) ? "tiny-monitor-gain" : "tiny-monitor-loss"),
+    icon: delta => (healed(delta) ? "heart" : "heart-crack"),
+    tone: delta => (healed(delta) ? "gain" : "loss"),
     kind: "hp"
   });
-  reportValue(actor, emit, tempPath, stash.temp, { label: t("Line.Temp"), iconName: "shield-halved", cls: "tiny-monitor-temp", kind: "temp" });
-  reportValue(actor, emit, tempMaxPath, stash.tempMax, {
-    label: tempMaxLabel, iconName: "circle-plus", cls: "tiny-monitor-tempmax", kind: "tempmax"
-  });
+  reportValue(actor, emit, tempPath, stash.temp, { label: t("Line.TempHP"), icon: "shield-halved", tone: toneOf, kind: "temp" });
+  reportValue(actor, emit, tempMaxPath, stash.tempMax, { label: tempMaxLabel, icon: "circle-plus", tone: toneOf, kind: "tempmax" });
 
-  if (stash.currency) reportCurrency(actor, stash.currency, getActorLink(actor), emit);
+  if (stash.currency) reportCurrency(actor, stash.currency, emit);
   if (stash.system) adapter.reportActorChanges(actor, stash.system, emit);
   if (stash.custom) reportCustomResources(actor, stash.custom, emit);
 }
