@@ -1,24 +1,24 @@
 <div class="custom-tracker-config">
-  <div class="form-group" style="flex-direction: column; align-items: stretch;">
-    <p class="notes" style="margin-bottom: 15px;">
-      Define custom data paths to track on your actors. Paths must be valid properties on the Actor's data (e.g., <code>system.attributes.fatigue.value</code>).
+  <div class="form-group tracker-intro">
+    <p class="notes">
+      {{{localize "NTCL.Trackers.Intro"}}}
       <br><br>
-      <strong>Formatting Placeholders:</strong> You can use <code>{name}</code>, <code>{old}</code>, <code>{new}</code>, and <code>{diff}</code> in your gain/loss messages to make them dynamic. Note that boolean (true/false) properties are treated numerically (1 or 0).
+      {{{localize "NTCL.Trackers.Placeholders"}}}
       <br><br>
-      <strong>Icons:</strong> Type a FontAwesome class (e.g., <code>fa-solid fa-droplet</code>) or click the file picker icon to browse for an image.
+      {{{localize "NTCL.Trackers.Icons"}}}
       <br><br>
-      <a href="https://github.com/nschoenwald/niks-tiny-changelogs#%EF%B8%8F-custom-tracked-values" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Read the full documentation and examples on GitHub</a>
+      <a href="https://github.com/nschoenwald/niks-tiny-changelogs#%EF%B8%8F-custom-tracked-values" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> {{localize "NTCL.Trackers.Docs"}}</a>
     </p>
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+    <table class="tracker-table">
       <thead>
         <tr>
-          <th>Name (e.g. Wounds)</th>
-          <th>Path (e.g. system.wounds.value)</th>
-          <th>Gain Msg (e.g. gained a wound)</th>
-          <th>Loss Msg (e.g. healed a wound)</th>
-          <th>Icon (FA Class or Path)</th>
-          <th>Color</th>
-          <th><a class="tracker-action" data-action="addResource" title="Add Resource"><i class="fa-solid fa-plus"></i></a></th>
+          <th>{{localize "NTCL.Trackers.ColName"}}</th>
+          <th>{{localize "NTCL.Trackers.ColPath"}}</th>
+          <th>{{localize "NTCL.Trackers.ColGain"}}</th>
+          <th>{{localize "NTCL.Trackers.ColLoss"}}</th>
+          <th>{{localize "NTCL.Trackers.ColIcon"}}</th>
+          <th>{{localize "NTCL.Trackers.ColColor"}}</th>
+          <th><a class="tracker-action" data-action="addResource" data-tooltip="NTCL.Trackers.Add" aria-label="{{localize 'NTCL.Trackers.Add'}}"><i class="fa-solid fa-plus"></i></a></th>
         </tr>
       </thead>
       <tbody>
@@ -29,34 +29,34 @@
           <td><input type="text" name="resources.{{@index}}.msgGain" value="{{this.msgGain}}" required /></td>
           <td><input type="text" name="resources.{{@index}}.msgLoss" value="{{this.msgLoss}}" required /></td>
           <td>
-            <div style="display: flex; gap: 4px;">
-              <input type="text" name="resources.{{@index}}.icon" value="{{this.icon}}" required placeholder="fa-solid fa-star or icon.svg" />
-              <button type="button" class="custom-file-picker" data-action="browseIcon" data-target="resources.{{@index}}.icon" title="Browse Files" tabindex="-1" style="flex: 0 0 24px; padding: 0;">
+            <div class="tracker-icon-field">
+              <input type="text" name="resources.{{@index}}.icon" value="{{this.icon}}" required placeholder="{{localize 'NTCL.Trackers.IconPlaceholder'}}" />
+              <button type="button" class="custom-file-picker" data-action="browseIcon" data-target="resources.{{@index}}.icon" data-tooltip="NTCL.Trackers.Browse" aria-label="{{localize 'NTCL.Trackers.Browse'}}" tabindex="-1">
                 <i class="fas fa-file-import fa-fw"></i>
               </button>
             </div>
           </td>
           <td><input type="color" name="resources.{{@index}}.color" value="{{this.color}}" required /></td>
-          <td style="text-align: center;"><a class="tracker-action" data-action="deleteResource" title="Delete Resource"><i class="fa-solid fa-trash"></i></a></td>
+          <td class="tracker-row-actions"><a class="tracker-action" data-action="deleteResource" data-tooltip="NTCL.Trackers.Delete" aria-label="{{localize 'NTCL.Trackers.Delete'}}"><i class="fa-solid fa-trash"></i></a></td>
         </tr>
         {{else}}
-        <tr><td colspan="7" style="text-align: center; padding: 10px;">No custom tracked resources defined. Click the + icon to add one.</td></tr>
+        <tr><td colspan="7" class="tracker-empty">{{localize "NTCL.Trackers.Empty"}}</td></tr>
         {{/each}}
       </tbody>
     </table>
   </div>
-  <input type="file" class="tracker-import-file-input" accept=".json" style="display: none;" />
-  <footer class="sheet-footer flexrow tracker-footer" style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-    <div class="tracker-footer-actions" style="display: flex; gap: 8px;">
-      <button type="button" class="tracker-export-btn" data-action="exportTrackers" title="Export custom trackers to a JSON file">
-        <i class="fas fa-file-export"></i> Export Trackers
+  <input type="file" class="tracker-import-file-input" accept=".json" hidden />
+  <footer class="sheet-footer flexrow tracker-footer">
+    <div class="tracker-footer-actions">
+      <button type="button" class="tracker-export-btn" data-action="exportTrackers" data-tooltip="NTCL.Trackers.ExportHint">
+        <i class="fas fa-file-export"></i> {{localize "NTCL.Trackers.Export"}}
       </button>
-      <button type="button" class="tracker-import-btn" data-action="importTrackers" title="Import custom trackers from a JSON file">
-        <i class="fas fa-file-import"></i> Import Trackers
+      <button type="button" class="tracker-import-btn" data-action="importTrackers" data-tooltip="NTCL.Trackers.ImportHint">
+        <i class="fas fa-file-import"></i> {{localize "NTCL.Trackers.Import"}}
       </button>
     </div>
-    <button type="submit" class="tracker-save-btn" style="flex: 0 0 auto; min-width: 150px;">
-      <i class="fas fa-save"></i> Save Changes
+    <button type="submit" class="tracker-save-btn">
+      <i class="fas fa-save"></i> {{localize "NTCL.Trackers.Save"}}
     </button>
   </footer>
 </div>

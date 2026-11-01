@@ -1,6 +1,15 @@
 import BaseSystemAdapter from "./base.mjs";
 
 export default class ShadowdarkAdapter extends BaseSystemAdapter {
+  // Dropped light sources become "Light" actors that every player owns
+  isTrackedActor(actor) {
+    return actor?.type !== "Light";
+  }
+
+  isNpc(actor) {
+    return actor?.type === "NPC";
+  }
+
   getHealthPaths(actor) {
     return {
       hpPath: "system.attributes.hp.value",
@@ -10,21 +19,22 @@ export default class ShadowdarkAdapter extends BaseSystemAdapter {
     };
   }
 
-  // Shadowdark player characters keep coins at system.coins (gp, sp, cp)
+  // Player characters keep coins at system.coins (gp, sp, cp)
+  getCurrencyPaths(doc, manualBase) {
+    if (doc instanceof Actor && !manualBase) return ["system.coins"];
+    return super.getCurrencyPaths(doc, manualBase);
+  }
+
+  getCoinKeys() {
+    return ["gp", "sp", "cp"];
+  }
+
   getCurrencyUpdatePaths(manualBase) {
     return [...super.getCurrencyUpdatePaths(manualBase), "system.coins"];
   }
 
-  getCurrencyInfo(actor, manualBase) {
-    if (manualBase) return super.getCurrencyInfo(actor, manualBase);
-    const obj = foundry.utils.getProperty(actor, "system.coins");
-    if (!obj || typeof obj !== "object") return { basePath: null, coins: [], isFlatCurrency: false };
-    const coins = ["gp", "sp", "cp"].filter(k => Object.hasOwn(obj, k));
-    return { basePath: "system.coins", coins, isFlatCurrency: false };
-  }
-
-  getCoinLabel(denom) {
-    const labels = { gp: "Gold", sp: "Silver", cp: "Copper" };
-    return labels[denom] ?? super.getCoinLabel(denom);
+  // Class abilities count remaining uses at system.uses.available
+  getItemPaths(item) {
+    return { ...super.getItemPaths(item), usesSpent: null, usesValue: "system.uses.available" };
   }
 }

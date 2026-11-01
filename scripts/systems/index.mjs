@@ -5,28 +5,27 @@ import Pf2eAdapter from "./pf2e.mjs";
 import ShadowdarkAdapter from "./shadowdark.mjs";
 import DemonlordAdapter from "./demonlord.mjs";
 
-export default class SystemManager {
-  /**
-   * Retrieves the appropriate adapter for the given system ID.
-   * If a specific adapter doesn't exist, it falls back to the BaseSystemAdapter.
-   * @param {string} systemId 
-   * @param {string} modId
-   * @returns {BaseSystemAdapter}
-   */
-  static getAdapter(systemId, modId) {
-    switch (systemId) {
-      case "dnd5e":
-        return new Dnd5eAdapter(modId);
-      case "morkborg":
-        return new MorkBorgAdapter(modId);
-      case "pf2e":
-        return new Pf2eAdapter(modId);
-      case "shadowdark":
-        return new ShadowdarkAdapter(modId);
-      case "demonlord":
-        return new DemonlordAdapter(modId);
-      default:
-        return new BaseSystemAdapter(modId);
-    }
-  }
+const ADAPTERS = {
+  dnd5e: Dnd5eAdapter,
+  morkborg: MorkBorgAdapter,
+  pf2e: Pf2eAdapter,
+  shadowdark: ShadowdarkAdapter,
+  demonlord: DemonlordAdapter
+};
+
+/**
+ * The adapter of the active system, set by initAdapter during init.
+ * @type {BaseSystemAdapter}
+ */
+export let adapter = null;
+
+/**
+ * Create the adapter for the given system, falling back to BaseSystemAdapter for systems without one.
+ * @param {string} systemId
+ * @returns {BaseSystemAdapter}
+ */
+export function initAdapter(systemId) {
+  const Adapter = ADAPTERS[systemId] ?? BaseSystemAdapter;
+  adapter = new Adapter();
+  return adapter;
 }

@@ -1,87 +1,66 @@
 /* -------------------------------
    Variables & Configuration
+   Changelog lines use fixed dark backgrounds with white text, so they read the same in every theme.
    ------------------------------- */
-li.chat-message.tiny-monitor-msg {
+:root {
   /* HP Changes */
-  --tm-hp-gain: #1b5e20;
-  /* Green */
-  --tm-hp-loss: #8b1e1e;
-  /* Red */
+  --tm-hp-gain: #1b5e20; /* Green */
+  --tm-hp-loss: #8b1e1e; /* Red */
 
   /* Temp HP */
-  --tm-temp-hp: #0d47a1;
-  /* Blue */
-  --tm-temp-max-hp: #006064;
-  /* Dark Teal */
+  --tm-temp-hp: #0d47a1; /* Blue */
+  --tm-temp-max-hp: #006064; /* Dark Teal */
 
   /* Currency */
-  --tm-currency-gain: #c87f1f;
-  /* Gold */
-  --tm-currency-loss: #a02a3a;
-  /* Dark Red/Crimson */
+  --tm-currency-gain: #c87f1f; /* Gold */
+  --tm-currency-loss: #a02a3a; /* Dark Red/Crimson */
 
   /* Spell Slots */
-  --tm-spellslot-expend: #4a148c;
-  /* Deep Purple */
-  --tm-spellslot-regain: #7b1fa2;
-  /* Lighter Purple */
+  --tm-spellslot-expend: #4a148c; /* Deep Purple */
+  --tm-spellslot-regain: #7b1fa2; /* Lighter Purple */
 
   /* Spell Preparation */
-  --tm-spellprep: #283593;
-  /* Indigo */
+  --tm-spellprep: #283593; /* Indigo */
 
   /* Inspiration */
-  --tm-inspiration: #ff8f00;
-  /* Amber */
+  --tm-inspiration: #ff8f00; /* Amber */
 
   /* Hit Dice */
-  --tm-hitdice-expend: #d84315;
-  /* Deep Orange */
-  --tm-hitdice-regain: #f57c00;
-  /* Orange */
+  --tm-hitdice-expend: #d84315; /* Deep Orange */
+  --tm-hitdice-regain: #f57c00; /* Orange */
 
   /* Items */
-  --tm-item-add: #0a6b4a;
-  /* Emerald */
-  --tm-item-remove: #a02a3a;
-  /* Crimson */
-  --tm-item-rename: #37474f;
-  /* Slate */
+  --tm-item-add: #0a6b4a; /* Emerald */
+  --tm-item-remove: #a02a3a; /* Crimson */
+  --tm-item-rename: #37474f; /* Slate */
 
   /* Equip / Unequip */
-  --tm-equip: #1565c0;
-  /* Blue */
-  --tm-unequip: #5d4037;
-  /* Brown */
+  --tm-equip: #1565c0; /* Blue */
+  --tm-unequip: #5d4037; /* Brown */
 
   /* Active Effects */
-  --tm-effect-add: #2e7d32;
-  /* Forest Green */
-  --tm-effect-remove: #b71c1c;
-  /* Deep Red */
-  --tm-effect-enable: #00838f;
-  /* Teal */
-  --tm-effect-disable: #616161;
-  /* Grey */
+  --tm-effect-add: #2e7d32; /* Forest Green */
+  --tm-effect-remove: #b71c1c; /* Deep Red */
+  --tm-effect-enable: #00838f; /* Teal */
+  --tm-effect-disable: #616161; /* Grey */
 
   /* Experience Points */
-  --tm-xp-gain: #9e7c1a;
-  /* Dark Gold */
-  --tm-xp-loss: #6d4c41;
-  /* Brown */
+  --tm-xp-gain: #9e7c1a; /* Dark Gold */
+  --tm-xp-loss: #6d4c41; /* Brown */
 
   /* Abilities (Mörk Borg) */
-  --tm-ability-gain: #00695c;
-  /* Dark Teal Green */
-  --tm-ability-loss: #880e4f;
-  /* Dark Raspberry */
+  --tm-ability-gain: #00695c; /* Dark Teal Green */
+  --tm-ability-loss: #880e4f; /* Dark Raspberry */
 
   /* Omens (Mörk Borg) */
-  --tm-omens-gain: #827717;
-  /* Olive */
-  --tm-omens-loss: #4e342e;
-  /* Dark Brown */
+  --tm-omens-gain: #827717; /* Olive */
+  --tm-omens-loss: #4e342e; /* Dark Brown */
 
+  /* Deleted message notices */
+  --tm-deleted-accent: #a02a3a;
+}
+
+li.chat-message.tiny-monitor-msg {
   /* Foundry V14 Grid Reset */
   display: grid !important;
   grid-template-columns: 1fr !important;
@@ -89,8 +68,11 @@ li.chat-message.tiny-monitor-msg {
   padding: 0 !important;
 
   /* Component Styling */
+  /* Each message class only sets --tm-line-bg. The background must win over core's parchment image and
+     dnd5e's chat card background (an ID selector), so it is set once here with !important. */
+  background: var(--tm-line-bg, var(--tm-item-rename)) !important;
   contain: content;
-  border: none;
+  border: none !important;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   margin-top: 1px;
@@ -175,11 +157,13 @@ li.chat-message.tiny-monitor-msg .tiny-monitor-line .content-link i {
 }
 
 /* -------------------------------
-   Tooltip Readability Fix (Foundry V14 / DnD5e 6.x)
+   Tooltip Readability Fix (DnD5e 6.0 / 6.1)
    ------------------------------- */
-/* Prevent standard document tooltips (e.g. Actor links) from rendering dark text on a dark background when .theme-light is attached without .dnd5e-tooltip */
-#tooltip:not(.dnd5e-tooltip) {
-  color: var(--color-light-1, #ffffff) !important;
+/* dnd5e gives every content link tooltip the theme of the element around the link (theme-light in a light chat log),
+   but links without a rich dnd5e tooltip (e.g. actors) keep core's dark tooltip background: dark text on dark.
+   Core always uses theme-dark, so this only matches tooltips dnd5e switched. Not fixed upstream as of dnd5e 6.1.0. */
+#tooltip.theme-light:not(.dnd5e-tooltip) {
+  color: var(--color-light-1, #ffffff);
 }
 
 /* -------------------------------
@@ -205,123 +189,123 @@ li.chat-message.tiny-monitor-msg .message-content .tiny-monitor-line.tm-multilin
    ------------------------------- */
 /* HP Changes */
 li.chat-message.tiny-monitor-msg.tiny-monitor-gain {
-  background-color: var(--tm-hp-gain);
+  --tm-line-bg: var(--tm-hp-gain);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-loss {
-  background-color: var(--tm-hp-loss);
+  --tm-line-bg: var(--tm-hp-loss);
 }
 
 /* Temp HP */
 li.chat-message.tiny-monitor-msg.tiny-monitor-temp {
-  background-color: var(--tm-temp-hp);
+  --tm-line-bg: var(--tm-temp-hp);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-tempmax {
-  background-color: var(--tm-temp-max-hp);
+  --tm-line-bg: var(--tm-temp-max-hp);
 }
 
 /* Currency */
 li.chat-message.tiny-monitor-msg.tiny-monitor-currency-gain {
-  background-color: var(--tm-currency-gain);
+  --tm-line-bg: var(--tm-currency-gain);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-currency-loss {
-  background-color: var(--tm-currency-loss);
+  --tm-line-bg: var(--tm-currency-loss);
 }
 
 /* Spell Slots */
 li.chat-message.tiny-monitor-msg.tiny-monitor-spellslot-expend {
-  background-color: var(--tm-spellslot-expend);
+  --tm-line-bg: var(--tm-spellslot-expend);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-spellslot-regain {
-  background-color: var(--tm-spellslot-regain);
+  --tm-line-bg: var(--tm-spellslot-regain);
 }
 
 /* Spell Preparation */
 li.chat-message.tiny-monitor-msg.tiny-monitor-spellprep {
-  background-color: var(--tm-spellprep);
+  --tm-line-bg: var(--tm-spellprep);
 }
 
 /* Inspiration */
 li.chat-message.tiny-monitor-msg.tiny-monitor-inspiration {
-  background-color: var(--tm-inspiration);
+  --tm-line-bg: var(--tm-inspiration);
 }
 
 /* Hit Dice */
 li.chat-message.tiny-monitor-msg.tiny-monitor-hitdice-expend {
-  background-color: var(--tm-hitdice-expend);
+  --tm-line-bg: var(--tm-hitdice-expend);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-hitdice-regain {
-  background-color: var(--tm-hitdice-regain);
+  --tm-line-bg: var(--tm-hitdice-regain);
 }
 
 /* Items */
 li.chat-message.tiny-monitor-msg.tiny-monitor-item-inc {
-  background-color: var(--tm-item-add);
+  --tm-line-bg: var(--tm-item-add);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-item-dec {
-  background-color: var(--tm-item-remove);
+  --tm-line-bg: var(--tm-item-remove);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-item {
-  background-color: var(--tm-item-rename);
+  --tm-line-bg: var(--tm-item-rename);
 }
 
 /* Equip / Unequip */
 li.chat-message.tiny-monitor-msg.tiny-monitor-equip {
-  background-color: var(--tm-equip);
+  --tm-line-bg: var(--tm-equip);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-unequip {
-  background-color: var(--tm-unequip);
+  --tm-line-bg: var(--tm-unequip);
 }
 
 /* Active Effects */
 li.chat-message.tiny-monitor-msg.tiny-monitor-effect-add {
-  background-color: var(--tm-effect-add);
+  --tm-line-bg: var(--tm-effect-add);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-effect-remove {
-  background-color: var(--tm-effect-remove);
+  --tm-line-bg: var(--tm-effect-remove);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-effect-enable {
-  background-color: var(--tm-effect-enable);
+  --tm-line-bg: var(--tm-effect-enable);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-effect-disable {
-  background-color: var(--tm-effect-disable);
+  --tm-line-bg: var(--tm-effect-disable);
 }
 
 /* Experience Points */
 li.chat-message.tiny-monitor-msg.tiny-monitor-xp-gain {
-  background-color: var(--tm-xp-gain);
+  --tm-line-bg: var(--tm-xp-gain);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-xp-loss {
-  background-color: var(--tm-xp-loss);
+  --tm-line-bg: var(--tm-xp-loss);
 }
 
 /* Abilities (Mörk Borg) */
 li.chat-message.tiny-monitor-msg.tiny-monitor-ability-gain {
-  background-color: var(--tm-ability-gain);
+  --tm-line-bg: var(--tm-ability-gain);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-ability-loss {
-  background-color: var(--tm-ability-loss);
+  --tm-line-bg: var(--tm-ability-loss);
 }
 
 /* Omens (Mörk Borg) */
 li.chat-message.tiny-monitor-msg.tiny-monitor-omens-gain {
-  background-color: var(--tm-omens-gain);
+  --tm-line-bg: var(--tm-omens-gain);
 }
 
 li.chat-message.tiny-monitor-msg.tiny-monitor-omens-loss {
-  background-color: var(--tm-omens-loss);
+  --tm-line-bg: var(--tm-omens-loss);
 }
 
 /* -------------------------------
@@ -367,7 +351,7 @@ li.chat-message.tm-hidden {
 li.chat-message.tm-deleted {
   padding: 2px 6px;
   margin: 1px 0;
-  border-left: 3px solid #a02a3a;
+  border-left: 3px solid var(--tm-deleted-accent);
   border-radius: 4px;
 }
 
@@ -412,7 +396,7 @@ li.chat-message.tm-deleted .message-content {
 }
 
 .tm-deleted-summary > i {
-  color: #a02a3a;
+  color: var(--tm-deleted-accent);
 }
 
 .tm-deleted-text {
@@ -452,15 +436,21 @@ li.chat-message.tm-deleted .message-content {
 }
 
 /* -------------------------------
-   Settings Import / Export App
+   Config Windows (Custom Tracked Values, Import / Export)
    ------------------------------- */
+/* Panel colours mix the window's text colour, so they follow the Core Apps light/dark theme */
+.niks-tiny-changelogs-config {
+  --tm-panel-bg: color-mix(in srgb, currentColor 5%, transparent);
+  --tm-panel-border: color-mix(in srgb, currentColor 20%, transparent);
+}
+
 .niks-tiny-changelogs-import-export .window-content {
   padding: 12px 16px 16px;
 }
 
 .niks-tiny-changelogs-import-export .import-export-section {
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--color-border-light-2, rgba(0, 0, 0, 0.15));
+  background: var(--tm-panel-bg);
+  border: 1px solid var(--tm-panel-border);
   border-radius: 6px;
   padding: 12px 14px;
   margin-bottom: 12px;
@@ -500,8 +490,8 @@ li.chat-message.tm-deleted .message-content {
 }
 
 .niks-tiny-changelogs-import-export .stat-pill {
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--color-border-light-2, rgba(0, 0, 0, 0.1));
+  background: var(--tm-panel-bg);
+  border: 1px solid var(--tm-panel-border);
   border-radius: 4px;
   padding: 6px 10px;
   display: flex;
@@ -570,7 +560,7 @@ li.chat-message.tm-deleted .message-content {
 
 .niks-tiny-changelogs-import-export .section-divider {
   border: none;
-  border-top: 1px solid var(--color-border-light-2, rgba(0, 0, 0, 0.15));
+  border-top: 1px solid var(--tm-panel-border);
   margin: 12px 0;
 }
 
@@ -582,4 +572,70 @@ li.chat-message.tm-deleted .message-content {
   font-size: 12px;
   padding: 4px 10px;
   cursor: pointer;
+}
+
+/* Custom Tracked Values window */
+.niks-tiny-changelogs-config .tracker-intro {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.niks-tiny-changelogs-config .tracker-intro .notes {
+  margin-bottom: 15px;
+}
+
+.niks-tiny-changelogs-config .tracker-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.niks-tiny-changelogs-config .tracker-icon-field {
+  display: flex;
+  gap: 4px;
+}
+
+.niks-tiny-changelogs-config .custom-file-picker {
+  flex: 0 0 24px;
+  padding: 0;
+}
+
+.niks-tiny-changelogs-config .tracker-row-actions {
+  text-align: center;
+}
+
+.niks-tiny-changelogs-config .tracker-empty {
+  text-align: center;
+  padding: 10px;
+}
+
+.niks-tiny-changelogs-config .tracker-footer {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.niks-tiny-changelogs-config .tracker-footer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.niks-tiny-changelogs-config .tracker-save-btn {
+  flex: 0 0 auto;
+  min-width: 150px;
+}
+
+.niks-tiny-changelogs-import-export .import-export-intro {
+  margin-bottom: 16px;
+}
+
+/* Image icons of custom tracked values */
+li.chat-message.tiny-monitor-msg .tiny-monitor-line .tm-custom-icon {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: none;
+  align-self: center;
 }

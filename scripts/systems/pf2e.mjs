@@ -10,23 +10,16 @@ export default class Pf2eAdapter extends BaseSystemAdapter {
     };
   }
 
-  getCurrencyInfo(actor, manualBase) {
-    const candidates = manualBase ? [manualBase] : ["system.currencies", "system.currency"];
-
-    let basePath = null, obj = null;
-    for (const p of candidates) {
-      const o = foundry.utils.getProperty(actor, p);
-      if (o && typeof o === "object") { basePath = p; obj = o; break; }
-    }
-    if (!basePath) return { basePath: null, coins: [], isFlatCurrency: false };
-
-    const all = ["pp", "gp", "ep", "sp", "cp"];
-    const coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
-    return { basePath, coins, isFlatCurrency: false };
+  // PF2e keeps coins as treasure items: one item per denomination, its quantity is the amount
+  getCoinItemLabel(item) {
+    if (item.type !== "treasure" || !item.isCoinage) return null;
+    const key = item.unit;
+    const label = CONFIG.PF2E?.currencies?.[key];
+    return label ? game.i18n.localize(label) : this.getCoinLabel(key ?? item.name);
   }
 
-  getCoinLabel(denom) {
-    const labels = { pp: "Platinum", gp: "Gold", sp: "Silver", cp: "Copper" };
-    return labels[denom] ?? super.getCoinLabel(denom);
+  // Consumables count remaining uses at system.uses.value; system.equipped is an object (carry type, hands held)
+  getItemPaths(item) {
+    return { ...super.getItemPaths(item), usesSpent: null, usesValue: "system.uses.value", equipped: null };
   }
 }

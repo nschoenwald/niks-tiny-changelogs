@@ -1,8 +1,20 @@
-export default class BaseSystemAdapter {
-  constructor(modId) {
-    this.MOD_ID = modId;
-  }
+import { t } from "../i18n.mjs";
 
+// Coin keys with a translated label (lang/en.json "NTCL.Coin")
+const COIN_LABELS = {
+  pp: "Platinum", gp: "Gold", ep: "Electrum", sp: "Silver", cp: "Copper", silver: "Silver",
+  gc: "GoldCrowns", ss: "SilverShillings", bits: "Bits"
+};
+
+/**
+ * System adapter: everything the trackers need to know about a game system's data.
+ * The defaults fit systems with D&D-like data; each supported system overrides what differs.
+ *
+ * Tracking a system-specific value takes two steps. Before an update, `stash*Changes` returns the old values
+ * the update will change. After the update (debounced, so quick successive updates are reported once),
+ * `report*Changes` receives the merged old values (the oldest of each field wins) and posts a line per change.
+ */
+export default class BaseSystemAdapter {
   // -------------------------------------------------------------------------
   // Configuration
   // -------------------------------------------------------------------------
@@ -13,12 +25,35 @@ export default class BaseSystemAdapter {
   registerSettings() {}
 
   // -------------------------------------------------------------------------
-  // Path Detection & Labels
+  // Actor Types
+  // -------------------------------------------------------------------------
+
+  /**
+   * Whether changes on this actor (and its items and effects) are tracked at all.
+   * @param {Actor} actor
+   * @returns {boolean}
+   */
+  isTrackedActor(actor) {
+    return true;
+  }
+
+  /**
+   * Whether the actor counts as an NPC for the NPC Message Audience setting.
+   * @param {Actor} actor
+   * @returns {boolean}
+   */
+  isNpc(actor) {
+    return actor?.type === "npc";
+  }
+
+  // -------------------------------------------------------------------------
+  // Health
   // -------------------------------------------------------------------------
 
   /**
    * Determine the health data paths for the given actor.
    * An optional `tempMaxLabel` overrides the "Temp Max" label used for changes at `tempMaxPath`.
+   * With `damageSystem`, the value counts damage taken, so an increase is a loss.
    * @param {Actor} actor
    * @returns {{hpPath: string|null, tempPath: string|null, tempMaxPath: string|null, damageSystem: boolean, tempMaxLabel?: string}}
    */
@@ -26,25 +61,45 @@ export default class BaseSystemAdapter {
     return { hpPath: null, tempPath: null, tempMaxPath: null, damageSystem: false };
   }
 
+  // -------------------------------------------------------------------------
+  // Currency
+  // -------------------------------------------------------------------------
+
   /**
-   * Determine the currency paths and coins array.
-   * @param {Actor} actor 
-   * @param {string|null} manualBase 
-   * @returns {{basePath: string|null, coins: string[], isFlatCurrency: boolean}}
+   * Data paths that can hold a currency object on this actor or item, in order of preference.
+   * @param {Actor|Item} doc
+   * @param {string|null} manualBase  The Currency Base Path setting
+   * @returns {string[]}
    */
-  getCurrencyInfo(actor, manualBase) {
-    const candidates = manualBase ? [manualBase] : ["system.currency"];
+  getCurrencyPaths(doc, manualBase) {
+    if (doc instanceof Item) return manualBase ? [manualBase, "system.currency", "system.currencies"] : ["system.currency", "system.currencies"];
+    return manualBase ? [manualBase] : ["system.currency"];
+  }
 
-    let basePath = null, obj = null;
-    for (const p of candidates) {
-      const o = foundry.utils.getProperty(actor, p);
-      if (o && typeof o === "object") { basePath = p; obj = o; break; }
+  /**
+   * Known coin keys, in display order.
+   * @returns {string[]}
+   */
+  getCoinKeys() {
+    return ["pp", "gp", "ep", "sp", "cp"];
+  }
+
+  /**
+   * The coins of an actor or item, from the first currency object found at `getCurrencyPaths`.
+   * Items (e.g. containers) without known coin keys fall back to every numeric field of that object.
+   * @param {Actor|Item} doc
+   * @param {string|null} manualBase
+   * @returns {{key: string, path: string}[]}  Coin key (for getCoinLabel) and full data path
+   */
+  getCurrencyInfo(doc, manualBase) {
+    for (const basePath of this.getCurrencyPaths(doc, manualBase)) {
+      const obj = foundry.utils.getProperty(doc, basePath);
+      if (!obj || typeof obj !== "object") continue;
+      let keys = this.getCoinKeys().filter(k => Object.hasOwn(obj, k));
+      if (!keys.length && doc instanceof Item) keys = Object.keys(obj).filter(k => Number.isFinite(Number(obj[k])));
+      return keys.map(key => ({ key, path: `${basePath}.${key}` }));
     }
-    if (!basePath) return { basePath: null, coins: [], isFlatCurrency: false };
-
-    const all = ["pp", "gp", "ep", "sp", "cp"];
-    const coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
-    return { basePath, coins, isFlatCurrency: false };
+    return [];
   }
 
   /**
@@ -68,86 +123,82 @@ export default class BaseSystemAdapter {
   }
 
   /**
-   * Determine the currency paths and coins array for an item (e.g. container).
-   * @param {Item} item 
-   * @param {string|null} manualBase 
-   * @returns {{basePath: string|null, coins: string[], isFlatCurrency: boolean}}
-   */
-  getItemCurrencyInfo(item, manualBase) {
-    const candidates = manualBase ? [manualBase, "system.currency", "system.currencies"] : ["system.currency", "system.currencies"];
-
-    let basePath = null, obj = null;
-    for (const p of candidates) {
-      const o = foundry.utils.getProperty(item, p);
-      if (o && typeof o === "object") { basePath = p; obj = o; break; }
-    }
-    if (!basePath) return { basePath: null, coins: [], isFlatCurrency: false };
-
-    const all = ["pp", "gp", "ep", "sp", "cp"];
-    let coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
-    if (coins.length === 0) {
-      coins = Object.keys(obj).filter(k => {
-        const val = obj[k];
-        return typeof val === "number" || Number.isFinite(Number(val));
-      });
-    }
-    return { basePath, coins, isFlatCurrency: false };
-  }
-
-  /**
-   * Determine the display label for a given currency denominator.
-   * @param {string} denom 
+   * Determine the display label for a given coin key.
+   * @param {string} key
    * @returns {string}
    */
-  getCoinLabel(denom) {
-    return denom.toUpperCase();
+  getCoinLabel(key) {
+    return COIN_LABELS[key] ? t(`Coin.${COIN_LABELS[key]}`) : key.toUpperCase();
+  }
+
+  /**
+   * For systems that keep coins as items: the coin label of an item whose quantity is an amount of money,
+   * so its quantity changes are reported as currency. Null for any other item.
+   * @param {Item} item
+   * @returns {string|null}
+   */
+  getCoinItemLabel(item) {
+    return null;
   }
 
   // -------------------------------------------------------------------------
-  // Actor Updates
+  // Items
   // -------------------------------------------------------------------------
 
   /**
-   * Extracts system-specific values from the actor prior to an update.
-   * The returned payload is merged into the debounce context.
-   * @param {Actor} actor 
-   * @param {object} update 
-   * @param {object} context 
-   * @returns {object|null}
+   * Data paths of the generic item values (quantity, limited uses, equipped). A null path is not tracked.
+   * Limited uses are read either as spent uses (`usesSpent`) or as remaining uses (`usesValue`).
+   * @param {Item} item
+   * @returns {{quantity: string|null, usesMax: string|null, usesSpent: string|null, usesValue: string|null, equipped: string|null}}
    */
-  buildPreUpdatePayload(actor, update, context) {
+  getItemPaths(item) {
+    return {
+      quantity: "system.quantity",
+      usesMax: "system.uses.max",
+      usesSpent: "system.uses.spent",
+      usesValue: null,
+      equipped: "system.equipped"
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // System-specific Values
+  // -------------------------------------------------------------------------
+
+  /**
+   * Old values of system-specific actor data that the update will change.
+   * @param {Actor} actor
+   * @param {object} change
+   * @returns {object|null}  Null when nothing tracked changes
+   */
+  stashActorChanges(actor, change) {
     return null;
   }
 
   /**
-   * Process the system-specific payload and post messages if needed.
-   * @param {Actor} actor 
-   * @param {object} payload 
-   * @param {object} context (includes getWorldBool, readNumber, readRaw, postMonitorMessage, link, options)
+   * Post a line for each system-specific actor value that changed.
+   * @param {Actor} actor
+   * @param {object} stash  Merged results of stashActorChanges
+   * @param {import("../messages.mjs").Emit} emit
    */
-  async processActorUpdate(actor, payload, context) {}
-
-  // -------------------------------------------------------------------------
-  // Item Updates
-  // -------------------------------------------------------------------------
+  reportActorChanges(actor, stash, emit) {}
 
   /**
-   * Extracts system-specific values from the item prior to an update.
-   * @param {Item} item
-   * @param {object} update
-   * @param {object} context
-   * @returns {object|null}
+   * Old values of system-specific item data that the update will change.
+   * @param {Item} item  An item owned by a tracked actor
+   * @param {object} change
+   * @returns {object|null}  Null when nothing tracked changes
    */
-  buildPreUpdateItemPayload(item, update, context) {
+  stashItemChanges(item, change) {
     return null;
   }
 
   /**
-   * Post system-specific messages for a debounced item update. Runs before the generic
-   * item processing (quantity, uses, rename, equip, currency), which always runs as well.
+   * Post a line for each system-specific item value that changed. Runs before the generic item report
+   * (quantity, uses, rename, equip, currency), which always runs as well.
    * @param {Item} item
-   * @param {string} action
-   * @param {object} context (includes oldItemData with the merged `system` payload)
+   * @param {object} stash  Merged results of stashItemChanges
+   * @param {import("../messages.mjs").Emit} emit
    */
-  async processItemChange(item, action, context) {}
+  reportItemChanges(item, stash, emit) {}
 }

@@ -1,40 +1,59 @@
 import BaseSystemAdapter from "./base.mjs";
+import { MOD_ID } from "../constants.mjs";
+import { settingText, t } from "../i18n.mjs";
+import { getWorldBool } from "../settings.mjs";
+import { isNameBlacklisted } from "../blacklist.mjs";
+import { escapeHTML, formatChange, formatLine, getActorLink, icon, readNumber, readRaw, willUpdatePath } from "../utils.mjs";
+
+const INSPIRATION_PATH = "system.attributes.inspiration";
+const DEATH_SUCCESS_PATH = "system.attributes.death.success";
+const DEATH_FAILURE_PATH = "system.attributes.death.failure";
+const XP_PATH = "system.details.xp.value";
+const SPELL_SLOT_KEYS = [1, 2, 3, 4, 5, 6, 7, 8, 9, "pact"];
+
+function spellSlotPath(key) {
+  return key === "pact" ? "system.spells.pact.value" : `system.spells.spell${key}.value`;
+}
+
+/** Whether a spell counts as prepared (dnd5e 5.x+: 0 = unprepared, 1 = prepared, 2 = always prepared). */
+function isSpellPrepared(item) {
+  return Number(readRaw(item, "system.prepared") ?? 0) >= 1;
+}
+
+/** "One" or "Many", to pick the singular or plural form of a translation. */
+function amount(count) {
+  return count === 1 ? "One" : "Many";
+}
 
 export default class Dnd5eAdapter extends BaseSystemAdapter {
   registerSettings() {
-    game.settings.register(this.MOD_ID, "trackDnd5eInspiration", {
-      name: "Track Inspiration",
-      hint: "If enabled, logs when a character gains or uses Heroic Inspiration.",
+    game.settings.register(MOD_ID, "trackDnd5eInspiration", {
+      ...settingText("trackDnd5eInspiration"),
       scope: "world", config: true, type: Boolean, default: true
     });
 
-    game.settings.register(this.MOD_ID, "trackDnd5eDeathSaves", {
-      name: "Track Death Saves",
-      hint: "If enabled, logs successes and failures for Death Saving Throws on characters.",
+    game.settings.register(MOD_ID, "trackDnd5eDeathSaves", {
+      ...settingText("trackDnd5eDeathSaves"),
       scope: "world", config: true, type: Boolean, default: true
     });
 
-    game.settings.register(this.MOD_ID, "trackDnd5eSpellPrep", {
-      name: "Track Spell Preparation",
-      hint: "If enabled, logs when spells are prepared or unprepared on characters.",
+    game.settings.register(MOD_ID, "trackDnd5eSpellPrep", {
+      ...settingText("trackDnd5eSpellPrep"),
       scope: "world", config: true, type: Boolean, default: true
     });
 
-    game.settings.register(this.MOD_ID, "trackDnd5eSpellSlots", {
-      name: "Track Spell Slots",
-      hint: "If enabled, logs when spell slots are expended or regained.",
+    game.settings.register(MOD_ID, "trackDnd5eSpellSlots", {
+      ...settingText("trackDnd5eSpellSlots"),
       scope: "world", config: true, type: Boolean, default: true
     });
 
-    game.settings.register(this.MOD_ID, "trackDnd5eHitDice", {
-      name: "Track Hit Dice",
-      hint: "If enabled, logs when characters expend or regain Hit Dice.",
+    game.settings.register(MOD_ID, "trackDnd5eHitDice", {
+      ...settingText("trackDnd5eHitDice"),
       scope: "world", config: true, type: Boolean, default: true
     });
 
-    game.settings.register(this.MOD_ID, "trackDnd5eXP", {
-      name: "Track Experience Points",
-      hint: "If enabled, logs when a character gains or loses Experience Points.",
+    game.settings.register(MOD_ID, "trackDnd5eXP", {
+      ...settingText("trackDnd5eXP"),
       scope: "world", config: true, type: Boolean, default: true
     });
   }
@@ -48,263 +67,135 @@ export default class Dnd5eAdapter extends BaseSystemAdapter {
     };
   }
 
-  getCurrencyInfo(actor, manualBase) {
-    const info = super.getCurrencyInfo(actor, manualBase);
-    if (info.basePath && CONFIG.DND5E?.currencies) {
-      const obj = foundry.utils.getProperty(actor, info.basePath);
-      if (obj && typeof obj === "object") {
-        const all = Object.keys(CONFIG.DND5E.currencies);
-        const coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
-        if (coins.length > 0) return { ...info, coins };
-      }
-    }
-    return info;
+  getCurrencyPaths(doc, manualBase) {
+    if (doc instanceof Item) return manualBase ? [manualBase, "system.currency"] : ["system.currency"];
+    return super.getCurrencyPaths(doc, manualBase);
   }
 
-  getItemCurrencyInfo(item, manualBase) {
-    const candidates = manualBase ? [manualBase, "system.currency"] : ["system.currency"];
-
-    let basePath = null, obj = null;
-    for (const p of candidates) {
-      const o = foundry.utils.getProperty(item, p);
-      if (o && typeof o === "object") { basePath = p; obj = o; break; }
-    }
-    if (!basePath) return { basePath: null, coins: [], isFlatCurrency: false };
-
-    const all = CONFIG.DND5E?.currencies
-      ? Object.keys(CONFIG.DND5E.currencies)
-      : ["pp", "gp", "ep", "sp", "cp"];
-    let coins = all.filter(k => Object.prototype.hasOwnProperty.call(obj, k));
-    if (coins.length === 0) {
-      coins = Object.keys(obj).filter(k => {
-        const val = obj[k];
-        return typeof val === "number" || Number.isFinite(Number(val));
-      });
-    }
-    return { basePath, coins, isFlatCurrency: false };
+  getCoinKeys() {
+    return CONFIG.DND5E?.currencies ? Object.keys(CONFIG.DND5E.currencies) : super.getCoinKeys();
   }
 
-  getCoinLabel(denom) {
-    const rawLabel = CONFIG.DND5E?.currencies?.[denom]?.label;
+  getCoinLabel(key) {
+    const rawLabel = CONFIG.DND5E?.currencies?.[key]?.label;
     if (rawLabel) {
       const localized = game.i18n.localize(rawLabel);
       if (localized && localized !== rawLabel) return localized;
       if (localized && !rawLabel.startsWith("DND5E.")) return localized;
     }
-    const labels = { pp: "Platinum", gp: "Gold", ep: "Electrum", sp: "Silver", cp: "Copper" };
-    return labels[denom] ?? super.getCoinLabel(denom);
+    return super.getCoinLabel(key);
   }
 
-  buildPreUpdatePayload(actor, update, context) {
-    const payload = {};
+  stashActorChanges(actor, change) {
+    const stash = {};
 
-    // Inspiration
-    if (context.getWorldBool("trackDnd5eInspiration")) {
-      const inspPath = "system.attributes.inspiration";
-      if (context.willUpdatePath(update, inspPath)) {
-        payload.oldInspiration = Boolean(context.readRaw(actor, inspPath));
-        payload.hasInspiration = true;
-      }
+    if (getWorldBool("trackDnd5eInspiration") && willUpdatePath(change, INSPIRATION_PATH)) {
+      stash.inspiration = Boolean(readRaw(actor, INSPIRATION_PATH));
     }
 
-    // Death Saves
-    if (context.getWorldBool("trackDnd5eDeathSaves") && actor.type === "character") {
-      const successPath = "system.attributes.death.success";
-      const failurePath = "system.attributes.death.failure";
-      if (context.willUpdatePath(update, successPath) || context.willUpdatePath(update, failurePath)) {
-        payload.deathSavesOld = {
-          oldSucc: context.readNumber(actor, successPath),
-          oldFail: context.readNumber(actor, failurePath)
-        };
-      }
+    if (getWorldBool("trackDnd5eDeathSaves") && actor.type === "character"
+      && (willUpdatePath(change, DEATH_SUCCESS_PATH) || willUpdatePath(change, DEATH_FAILURE_PATH))) {
+      stash.deathSaves = {
+        success: readNumber(actor, DEATH_SUCCESS_PATH),
+        failure: readNumber(actor, DEATH_FAILURE_PATH)
+      };
     }
 
-    // Spell Slots (Levels 1-9 and Pact Magic)
-    if (context.getWorldBool("trackDnd5eSpellSlots", true) && foundry.utils.hasProperty(update, "system.spells")) {
-      const slotKeys = [1, 2, 3, 4, 5, 6, 7, 8, 9, "pact"];
-      const slotPaths = slotKeys.map(k => ({
-        key: k,
-        path: k === "pact" ? "system.spells.pact.value" : `system.spells.spell${k}.value`
-      }));
-      const changedSlots = slotPaths.filter(s => context.willUpdatePath(update, s.path) && foundry.utils.hasProperty(actor, s.path));
-      if (changedSlots.length > 0) {
-        payload.spellSlotsOld = Object.fromEntries(
-          changedSlots.map(s => [s.key, { key: s.key, path: s.path, oldValue: context.readNumber(actor, s.path) }])
-        );
-      }
+    // Spell slots (levels 1-9 and Pact Magic)
+    if (getWorldBool("trackDnd5eSpellSlots") && foundry.utils.hasProperty(change, "system.spells")) {
+      const changed = SPELL_SLOT_KEYS.filter(k => willUpdatePath(change, spellSlotPath(k))
+        && foundry.utils.hasProperty(actor, spellSlotPath(k)));
+      if (changed.length) stash.spellSlots = Object.fromEntries(changed.map(k => [k, readNumber(actor, spellSlotPath(k))]));
     }
 
-    // XP
-    const xpPath = "system.details.xp.value";
-    if (context.getWorldBool("trackDnd5eXP", true) && actor.type === "character" && context.willUpdatePath(update, xpPath)) {
-      payload.oldXP = context.readNumber(actor, xpPath);
+    if (getWorldBool("trackDnd5eXP") && actor.type === "character" && willUpdatePath(change, XP_PATH)) {
+      stash.xp = readNumber(actor, XP_PATH);
     }
 
-    return Object.keys(payload).length > 0 ? payload : null;
+    return Object.keys(stash).length > 0 ? stash : null;
   }
 
-  async processActorUpdate(actor, payload, context) {
-    const { link, postMonitorMessage, readRaw, readNumber, getWorldBool } = context;
+  reportActorChanges(actor, stash, emit) {
+    const link = getActorLink(actor);
 
-    // Inspiration
-    if (payload.hasInspiration && payload.oldInspiration !== undefined) {
-      const inspPath = "system.attributes.inspiration";
-      const newInsp = Boolean(readRaw(actor, inspPath));
-      if (newInsp !== payload.oldInspiration) {
-        const icon = `<i class="fa-solid fa-dice-d20"></i>`;
-        const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${newInsp ? "gained" : "spent"} Heroic Inspiration</span>`;
-        await postMonitorMessage(actor, line, "tiny-monitor-inspiration", "inspiration");
+    if (stash.inspiration !== undefined) {
+      const now = Boolean(readRaw(actor, INSPIRATION_PATH));
+      if (now !== stash.inspiration) {
+        emit(formatLine(icon("dice-d20"), link, t(now ? "Dnd5e.InspirationGained" : "Dnd5e.InspirationSpent")), "tiny-monitor-inspiration", "inspiration");
       }
     }
 
-    // Death Saves
-    if (payload.deathSavesOld) {
-      const successPath = "system.attributes.death.success";
-      const failurePath = "system.attributes.death.failure";
-      const newSucc = readNumber(actor, successPath);
-      const newFail = readNumber(actor, failurePath);
-      const oldSucc = Number(payload.deathSavesOld.oldSucc ?? 0);
-      const oldFail = Number(payload.deathSavesOld.oldFail ?? 0);
-
-      // Successes
-      if (newSucc !== oldSucc) {
-        const delta = newSucc - oldSucc;
-        const icon = `<i class="fa-solid fa-heart-pulse"></i>`;
-        if (delta > 0) {
-          const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">gained ${delta} Death Save ${delta === 1 ? 'Success' : 'Successes'} (${newSucc}/3)</span>`;
-          await postMonitorMessage(actor, line, "tiny-monitor-gain", "deathsave");
-        } else {
-          const absDelta = Math.abs(delta);
-          const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">lost ${absDelta} Death Save ${absDelta === 1 ? 'Success' : 'Successes'} (${newSucc}/3)</span>`;
-          await postMonitorMessage(actor, line, "tiny-monitor-loss", "deathsave");
-        }
-      }
-
-      // Failures
-      if (newFail !== oldFail) {
-        const delta = newFail - oldFail;
-        const icon = `<i class="fa-solid fa-skull"></i>`;
-        if (delta > 0) {
-          const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">gained ${delta} Death Save ${delta === 1 ? 'Failure' : 'Failures'} (${newFail}/3)</span>`;
-          await postMonitorMessage(actor, line, "tiny-monitor-loss", "deathsave");
-        } else {
-          const absDelta = Math.abs(delta);
-          const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">lost ${absDelta} Death Save ${absDelta === 1 ? 'Failure' : 'Failures'} (${newFail}/3)</span>`;
-          await postMonitorMessage(actor, line, "tiny-monitor-gain", "deathsave");
-        }
-      }
-    }
-
-    // Spell Slots
-    if (payload.spellSlotsOld && Object.keys(payload.spellSlotsOld).length > 0) {
-      const sortedKeys = Object.keys(payload.spellSlotsOld).sort((a, b) => {
-        if (a === "pact") return 1;
-        if (b === "pact") return -1;
-        return Number(a) - Number(b);
-      });
-      for (const key of sortedKeys) {
-        const slotData = payload.spellSlotsOld[key];
-        const newVal = readNumber(actor, slotData.path);
-        const oldVal = slotData.oldValue;
-        const delta = newVal - oldVal;
-
-        if (delta !== 0) {
-          const icon = `<i class="fa-solid fa-hat-wizard"></i>`;
-          const action = delta < 0 ? "expended" : "regained";
-          const cls = delta < 0 ? "tiny-monitor-spellslot-expend" : "tiny-monitor-spellslot-regain";
-          const absDelta = Math.abs(delta);
-          const slotWord = absDelta === 1 ? "slot" : "slots";
-          const quantityStr = absDelta > 1 ? `${absDelta} ` : "";
-          const slotLabel = key === "pact" ? "Pact Magic" : `level ${key}`;
-          const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${action} ${quantityStr}${slotLabel} ${slotWord}</span>`;
-          await postMonitorMessage(actor, line, cls, "spellslot");
-        }
-      }
-    }
-
-    // XP
-    if (payload.oldXP !== undefined) {
-      const newXP = readNumber(actor, "system.details.xp.value");
-      const delta = newXP - payload.oldXP;
-      if (delta !== 0) {
-        const icon = `<i class="fa-solid fa-star"></i>`;
-        const sign = delta > 0 ? "+" : "-";
+    if (stash.deathSaves) {
+      const reportSaves = (path, old, type, iconName, gainIsGood) => {
+        const now = readNumber(actor, path);
+        const delta = now - old;
+        if (delta === 0) return;
         const abs = Math.abs(delta);
-        const isSimple = getWorldBool("simpleOutput");
-        const cls = delta > 0 ? "tiny-monitor-xp-gain" : "tiny-monitor-xp-loss";
+        const text = t(`Dnd5e.${type}${delta > 0 ? "Gained" : "Lost"}${amount(abs)}`, { count: abs, now });
+        const good = (delta > 0) === gainIsGood;
+        emit(formatLine(icon(iconName), link, text), good ? "tiny-monitor-gain" : "tiny-monitor-loss", "deathsave");
+      };
+      reportSaves(DEATH_SUCCESS_PATH, stash.deathSaves.success, "Success", "heart-pulse", true);
+      reportSaves(DEATH_FAILURE_PATH, stash.deathSaves.failure, "Failure", "skull", false);
+    }
 
-        const text = isSimple
-          ? `XP: ${sign} ${abs.toLocaleString()}`
-          : `XP: ${payload.oldXP.toLocaleString()} ${sign} ${abs.toLocaleString()} → ${newXP.toLocaleString()}`;
+    if (stash.spellSlots) {
+      // Object keys come back as strings; report in slot order with Pact Magic last
+      for (const key of SPELL_SLOT_KEYS) {
+        const old = stash.spellSlots[key];
+        if (old === undefined) continue;
+        const delta = readNumber(actor, spellSlotPath(key)) - old;
+        if (delta === 0) continue;
+        const abs = Math.abs(delta);
+        const slot = key === "pact" ? t("Dnd5e.SlotPact") : t("Dnd5e.SlotLevel", { level: key });
+        const text = t(`Dnd5e.Slot${delta < 0 ? "Expended" : "Regained"}${amount(abs)}`, { count: abs, slot });
+        emit(formatLine(icon("hat-wizard"), link, text), delta < 0 ? "tiny-monitor-spellslot-expend" : "tiny-monitor-spellslot-regain", "spellslot");
+      }
+    }
 
-        const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${text}</span>`;
-        await postMonitorMessage(actor, line, cls, "xp");
+    if (stash.xp !== undefined) {
+      const now = readNumber(actor, XP_PATH);
+      if (now !== stash.xp) {
+        const text = `${t("Line.XP")}: ${formatChange(stash.xp, now, { format: n => n.toLocaleString() })}`;
+        emit(formatLine(icon("star"), link, text), now > stash.xp ? "tiny-monitor-xp-gain" : "tiny-monitor-xp-loss", "xp");
       }
     }
   }
 
-  /** Whether a spell counts as prepared (dnd5e 5.x+: 0 = unprepared, 1 = prepared, 2 = always prepared). */
-  dnd5eIsSpellPreparedLike(item, readRaw) {
-    return Number(readRaw(item, "system.prepared") ?? 0) >= 1;
-  }
+  stashItemChanges(item, change) {
+    const stash = {};
 
-  buildPreUpdateItemPayload(item, update, context) {
-    const payload = {};
-    const willPrep = context.getWorldBool("trackDnd5eSpellPrep") && item.type === "spell"
-      && !context.isNameBlacklisted(item.name)
-      && (context.willUpdatePath(update, "system.prepared") || context.willUpdatePath(update, "system.method"));
-
-    const willHD = context.getWorldBool("trackDnd5eHitDice", true) && item.type === "class"
-      && context.willUpdatePath(update, "system.hd.spent");
-
-    if (willPrep) {
-      payload.oldPrep = this.dnd5eIsSpellPreparedLike(item, context.readRaw);
+    if (getWorldBool("trackDnd5eSpellPrep") && item.type === "spell" && !isNameBlacklisted(item.name)
+      && (willUpdatePath(change, "system.prepared") || willUpdatePath(change, "system.method"))) {
+      stash.prepared = isSpellPrepared(item);
     }
 
-    if (willHD) {
-      payload.oldHD = context.readNumber(item, "system.hd.spent");
+    if (getWorldBool("trackDnd5eHitDice") && item.type === "class" && willUpdatePath(change, "system.hd.spent")) {
+      stash.hdSpent = readNumber(item, "system.hd.spent");
     }
 
-    return Object.keys(payload).length > 0 ? payload : null;
+    return Object.keys(stash).length > 0 ? stash : null;
   }
 
-  async processItemChange(item, action, context) {
-    const { getWorldBool, postMonitorMessage, readRaw, getActorLink, escapeHTML, oldItemData, isNameBlacklisted } = context;
-    if (action !== "update" || !oldItemData?.system) return;
+  reportItemChanges(item, stash, emit) {
+    const link = getActorLink(item.parent);
 
-    // Hit Dice
-    if (item.type === "class" && getWorldBool("trackDnd5eHitDice", true) && oldItemData.system.oldHD !== undefined) {
-      const oldUses = oldItemData.system.oldHD;
-      const newUses = Number(readRaw(item, "system.hd.spent")) || 0;
-
-      if (oldUses !== newUses) {
-        const delta = newUses - oldUses; // Positive delta = used
-        const actionStr = delta > 0 ? "expended" : "regained";
-        const absDelta = Math.abs(delta);
-        const icon = `<i class="fa-solid fa-heart-pulse"></i>`;
-        const dieName = readRaw(item, "system.hd.denomination") || "Hit Dice";
-        const word = absDelta === 1 ? dieName : `Hit Dice (${dieName})`;
-
-        const link = getActorLink(item.parent);
-        const cls = delta > 0 ? "tiny-monitor-hitdice-expend" : "tiny-monitor-hitdice-regain";
-        const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${actionStr} ${absDelta > 1 ? `${absDelta} ` : ""}${word}</span>`;
-        await postMonitorMessage(item.parent, line, cls, "hitdice");
+    if (stash.hdSpent !== undefined) {
+      // A positive delta means Hit Dice were used
+      const delta = readNumber(item, "system.hd.spent") - stash.hdSpent;
+      if (delta !== 0) {
+        const abs = Math.abs(delta);
+        const die = readRaw(item, "system.hd.denomination") || t("Dnd5e.HitDie");
+        const text = t(`Dnd5e.HitDice${delta > 0 ? "Expended" : "Regained"}${amount(abs)}`, { count: abs, die });
+        emit(formatLine(icon("heart-pulse"), link, text), delta > 0 ? "tiny-monitor-hitdice-expend" : "tiny-monitor-hitdice-regain", "hitdice");
       }
     }
 
-    // Spell Preparation
-    if (item.type === "spell" && getWorldBool("trackDnd5eSpellPrep", true) && oldItemData.system.oldPrep !== undefined
-      && !isNameBlacklisted(item.name)) {
-      const isPreparedBefore = oldItemData.system.oldPrep;
-      const isPreparedAfter = this.dnd5eIsSpellPreparedLike(item, readRaw);
-
-      if (isPreparedBefore !== isPreparedAfter) {
-        const icon = `<i class="fa-solid fa-book-journal-whills"></i>`;
-        const link = getActorLink(item.parent);
-        const safeItemName = escapeHTML(item.name);
-        const actionStr = isPreparedAfter ? "prepared" : "unprepared";
-        const line = `${icon} <span class="tm-actor">${link}</span> <span class="tm-text">${actionStr} ${safeItemName}</span>`;
-        await postMonitorMessage(item.parent, line, "tiny-monitor-spellprep", "spellprep");
+    if (stash.prepared !== undefined && !isNameBlacklisted(item.name)) {
+      const now = isSpellPrepared(item);
+      if (now !== stash.prepared) {
+        const text = t(now ? "Dnd5e.SpellPrepared" : "Dnd5e.SpellUnprepared", { spell: escapeHTML(item.name) });
+        emit(formatLine(icon("book-journal-whills"), link, text), "tiny-monitor-spellprep", "spellprep");
       }
     }
   }

@@ -1,7 +1,11 @@
-import { parseCustomResources } from "./custom-resources.mjs";
+import {
+  LEGACY_TRACKERS_SETTING, TRACKERS_SETTING, extractCustomResources, mergeCustomResources, readStoredCustomResources, saveCustomResources
+} from "./custom-resources.mjs";
+import { MOD_ID, TRACKER_CONFIG_ID } from "./constants.mjs";
+import { t } from "./i18n.mjs";
 
-const MOD_ID = "niks-tiny-changelogs";
-const TRACKER_CONFIG_ID = "niks-tiny-changelogs-custom-tracker-config";
+// Trackers are exported and imported on their own, not as plain setting values
+const TRACKER_KEYS = new Set([TRACKERS_SETTING, LEGACY_TRACKERS_SETTING]);
 const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 
 /**
@@ -31,6 +35,7 @@ export function exportAllSettings() {
   for (const [fullKey] of game.settings.settings.entries()) {
     if (fullKey.startsWith(`${MOD_ID}.`)) {
       const key = fullKey.slice(MOD_ID.length + 1);
+      if (TRACKER_KEYS.has(key)) continue;
       try {
         settingsData[key] = game.settings.get(MOD_ID, key);
       } catch (err) {
@@ -47,12 +52,12 @@ export function exportAllSettings() {
     exportedAt: new Date().toISOString(),
     exportedBy: game.user.name,
     settings: settingsData,
-    customTrackers: parseCustomResources(settingsData.customTrackedResources ?? [])
+    customTrackers: readStoredCustomResources()
   };
 
-  const filename = `niks-tiny-changelogs-settings-${new Date().toISOString().slice(0, 10)}.json`;
+  const filename = `${MOD_ID}-settings-${new Date().toISOString().slice(0, 10)}.json`;
   downloadJsonFile(filename, exportPayload);
-  ui.notifications.info(`[${MOD_ID}] Settings exported to ${filename}`);
+  ui.notifications.info(t("ImportExport.Exported", { file: filename }));
   return exportPayload;
 }
 
@@ -72,9 +77,9 @@ export function exportCustomTrackers(trackers) {
     customTrackers: list
   };
 
-  const filename = `niks-tiny-changelogs-custom-trackers-${new Date().toISOString().slice(0, 10)}.json`;
+  const filename = `${MOD_ID}-custom-trackers-${new Date().toISOString().slice(0, 10)}.json`;
   downloadJsonFile(filename, exportPayload);
-  ui.notifications.info(`[${MOD_ID}] Exported ${list.length} custom trackers to ${filename}`);
+  ui.notifications.info(t("Trackers.Exported", { count: list.length, file: filename }));
   return exportPayload;
 }
 
@@ -83,29 +88,21 @@ export function exportCustomTrackers(trackers) {
  */
 export async function applyImportedData(data, filename = "file.json", options = { trackerMode: "replace" }) {
   if (!data || typeof data !== "object") {
-    throw new Error("Invalid JSON data: payload is not an object or array.");
+    throw new Error(t("ImportExport.ErrorNotObject"));
   }
 
   // Validate module if present
   if (data.module && data.module !== MOD_ID) {
-    throw new Error(`Invalid configuration file: file belongs to module "${data.module}", not "${MOD_ID}".`);
+    throw new Error(t("ImportExport.ErrorOtherModule", { module: data.module, expected: MOD_ID }));
   }
 
   // Extract settings and custom trackers
   const incomingSettings = (data.settings && typeof data.settings === "object") ? { ...data.settings } : {};
-  let incomingTrackers = null;
-
-  if (Array.isArray(data.customTrackers)) {
-    incomingTrackers = parseCustomResources(data.customTrackers);
-  } else if (incomingSettings.customTrackedResources) {
-    incomingTrackers = parseCustomResources(incomingSettings.customTrackedResources);
-  } else if (Array.isArray(data)) {
-    incomingTrackers = parseCustomResources(data);
-  }
+  const incomingTrackers = extractCustomResources(data);
 
   // Determine applicable settings count
   const matchingSettingKeys = Object.keys(incomingSettings).filter(key => {
-    return key !== "customTrackedResources" && game.settings.settings.has(`${MOD_ID}.${key}`);
+    return !TRACKER_KEYS.has(key) && game.settings.settings.has(`${MOD_ID}.${key}`);
   });
 
   const hasSettings = matchingSettingKeys.length > 0;
@@ -113,22 +110,22 @@ export async function applyImportedData(data, filename = "file.json", options = 
   const trackerCount = hasTrackers ? incomingTrackers.length : 0;
 
   if (!hasSettings && !hasTrackers) {
-    throw new Error("No recognizable settings or custom tracker definitions found in the file.");
+    throw new Error(t("ImportExport.ErrorNothingFound"));
   }
 
   // Build confirmation message
-  const modeLabel = options.trackerMode === "merge" ? "merge with" : "replace";
+  const modeLabel = t(options.trackerMode === "merge" ? "ImportExport.ModeMergeWith" : "ImportExport.ModeReplaceVerb");
   const desc = [];
   if (hasSettings) {
-    desc.push(`<strong>${matchingSettingKeys.length}</strong> module setting(s)`);
+    desc.push(t("ImportExport.FoundSettings", { count: matchingSettingKeys.length }));
   }
   if (hasTrackers) {
-    desc.push(`<strong>${trackerCount}</strong> custom tracker config(s) (will <em>${modeLabel}</em> existing trackers)`);
+    desc.push(t("ImportExport.FoundTrackers", { count: trackerCount, mode: modeLabel }));
   }
 
   const confirmed = await DialogV2.confirm({
-    window: { title: "Import Nik's Tiny Change Logs Settings" },
-    content: `<p>Found ${desc.join(" and ")} in <em>${foundry.utils.escapeHTML(filename)}</em>.</p><p>Import and apply these configurations to your world now?</p>`,
+    window: { title: "NTCL.ImportExport.ConfirmTitle" },
+    content: t("ImportExport.ConfirmContent", { found: desc.join(` ${t("ImportExport.And")} `), file: foundry.utils.escapeHTML(filename) }),
     rejectClose: false,
     modal: true
   });
@@ -156,33 +153,24 @@ export async function applyImportedData(data, filename = "file.json", options = 
   // Apply custom trackers if provided
   let finalTrackersCount = 0;
   if (hasTrackers) {
-    let finalTrackers = incomingTrackers;
-    if (options.trackerMode === "merge") {
-      const currentTrackers = parseCustomResources(game.settings.get(MOD_ID, "customTrackedResources"));
-      const existingPaths = new Set(currentTrackers.map(t => t.path));
-      finalTrackers = [...currentTrackers];
-      for (const t of incomingTrackers) {
-        if (!existingPaths.has(t.path)) {
-          finalTrackers.push(t);
-          existingPaths.add(t.path);
-        }
-      }
-    }
+    const finalTrackers = options.trackerMode === "merge"
+      ? mergeCustomResources(readStoredCustomResources(), incomingTrackers)
+      : incomingTrackers;
 
-    await game.settings.set(MOD_ID, "customTrackedResources", JSON.stringify(finalTrackers));
+    await saveCustomResources(finalTrackers);
     finalTrackersCount = finalTrackers.length;
   }
 
   refreshOpenConfigWindows();
 
   const successDetails = [];
-  if (appliedSettingsCount > 0) successDetails.push(`${appliedSettingsCount} setting(s) updated`);
-  if (hasTrackers) successDetails.push(`${finalTrackersCount} custom tracker(s) configured`);
+  if (appliedSettingsCount > 0) successDetails.push(t("ImportExport.SettingsUpdated", { count: appliedSettingsCount }));
+  if (hasTrackers) successDetails.push(t("ImportExport.TrackersConfigured", { count: finalTrackersCount }));
   const detailStr = successDetails.length > 0 ? ` (${successDetails.join(", ")})` : "";
 
-  ui.notifications.info(`[${MOD_ID}] Successfully imported configurations from ${filename}${detailStr}.`);
+  ui.notifications.info(t("ImportExport.Imported", { file: filename, details: detailStr }));
   if (failedKeys.length) {
-    ui.notifications.warn(`[${MOD_ID}] Some settings had invalid values and were skipped: ${failedKeys.join(", ")}`);
+    ui.notifications.warn(t("ImportExport.SkippedInvalid", { keys: failedKeys.join(", ") }));
   }
   return {
     applied: true,
@@ -215,9 +203,9 @@ function refreshOpenConfigWindows() {
  */
 export default class SettingsImportExportApp extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
-    id: "niks-tiny-changelogs-import-export",
+    id: `${MOD_ID}-import-export`,
     classes: ["niks-tiny-changelogs-config", "niks-tiny-changelogs-import-export"],
-    window: { title: "Nik's Tiny Change Logs: Import / Export Settings", icon: "fas fa-file-import" },
+    window: { title: "NTCL.ImportExport.Title", icon: "fas fa-file-import" },
     position: { width: 560, height: "auto" },
     actions: {
       exportAll: SettingsImportExportApp.#onExportAll,
@@ -233,14 +221,14 @@ export default class SettingsImportExportApp extends HandlebarsApplicationMixin(
     const registeredKeys = Array.from(game.settings.settings.keys())
       .filter(k => k.startsWith(`${MOD_ID}.`))
       .map(k => k.slice(MOD_ID.length + 1))
-      .filter(k => k !== "customTrackedResources");
+      .filter(k => !TRACKER_KEYS.has(k));
 
     return {
       moduleVersion: getModuleVersion(),
       systemId: game.system.id,
       systemTitle: game.system.title || game.system.id,
       settingsCount: registeredKeys.length,
-      customTrackerCount: parseCustomResources(game.settings.get(MOD_ID, "customTrackedResources")).length
+      customTrackerCount: readStoredCustomResources().length
     };
   }
 
@@ -268,7 +256,7 @@ export default class SettingsImportExportApp extends HandlebarsApplicationMixin(
     if (!file) return;
 
     if (!game.user.can("SETTINGS_MODIFY") && !game.user.isGM) {
-      ui.notifications.error("You do not have permission to modify world settings.");
+      ui.notifications.error(t("ImportExport.NoPermission"));
       return;
     }
 
@@ -279,7 +267,7 @@ export default class SettingsImportExportApp extends HandlebarsApplicationMixin(
       if (result.applied) this.close();
     } catch (err) {
       console.error(`[${MOD_ID}] Failed to import settings file:`, err);
-      ui.notifications.error(`Import failed: ${err.message}`);
+      ui.notifications.error(t("ImportExport.ImportFailed", { error: err.message }));
     }
   }
 }

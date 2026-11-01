@@ -1,29 +1,22 @@
 import { exportCustomTrackers, readJsonFile } from "./settings-import-export.mjs";
-import { CUSTOM_RESOURCE_DEFAULTS, parseCustomResources } from "./custom-resources.mjs";
+import { CUSTOM_RESOURCE_DEFAULTS, extractCustomResources, mergeCustomResources, parseCustomResources, readStoredCustomResources, saveCustomResources } from "./custom-resources.mjs";
+import { MOD_ID, TRACKER_CONFIG_ID } from "./constants.mjs";
+import { t } from "./i18n.mjs";
 
-const MOD_ID = "niks-tiny-changelogs";
 const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 
 async function promptImportMode(trackerCount, filename) {
   return DialogV2.wait({
-    window: { title: "Import Custom Trackers" },
-    content: `<p>Found <strong>${trackerCount}</strong> custom tracker(s) in <em>${foundry.utils.escapeHTML(filename)}</em>.</p><p>How would you like to apply them to your current list?</p>`,
+    window: { title: "NTCL.Trackers.ImportTitle" },
+    content: t("Trackers.ImportPrompt", { count: trackerCount, file: foundry.utils.escapeHTML(filename) }),
     buttons: [
-      { action: "append", label: "Append / Merge", icon: "fas fa-plus", default: true, callback: () => "append" },
-      { action: "replace", label: "Replace All", icon: "fas fa-sync", callback: () => "replace" },
-      { action: "cancel", label: "Cancel", icon: "fas fa-times", callback: () => null }
+      { action: "append", label: "NTCL.Trackers.ImportAppend", icon: "fas fa-plus", default: true, callback: () => "append" },
+      { action: "replace", label: "NTCL.Trackers.ImportReplace", icon: "fas fa-sync", callback: () => "replace" },
+      { action: "cancel", label: "NTCL.Trackers.Cancel", icon: "fas fa-times", callback: () => null }
     ],
     rejectClose: false,
     modal: true
   });
-}
-
-/** Extract tracker definitions from any supported export format. */
-function extractTrackers(data) {
-  if (Array.isArray(data?.customTrackers)) return data.customTrackers;
-  if (data?.settings?.customTrackedResources) return data.settings.customTrackedResources;
-  if (Array.isArray(data)) return data;
-  return [];
 }
 
 export default class CustomTrackerConfig extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -33,10 +26,10 @@ export default class CustomTrackerConfig extends HandlebarsApplicationMixin(Appl
   }
 
   static DEFAULT_OPTIONS = {
-    id: "niks-tiny-changelogs-custom-tracker-config",
+    id: TRACKER_CONFIG_ID,
     tag: "form",
     classes: ["niks-tiny-changelogs-config"],
-    window: { title: "Custom Tracked Values", icon: "fas fa-cogs" },
+    window: { title: "NTCL.Trackers.Title", icon: "fas fa-cogs" },
     position: { width: 900, height: "auto" },
     form: { handler: CustomTrackerConfig.#onSubmit, closeOnSubmit: true },
     actions: {
@@ -54,7 +47,7 @@ export default class CustomTrackerConfig extends HandlebarsApplicationMixin(Appl
 
   /** Replace the unsaved local list with the stored setting (e.g. after a settings import). */
   reloadFromSettings() {
-    this.localResources = parseCustomResources(game.settings.get(MOD_ID, "customTrackedResources"));
+    this.localResources = readStoredCustomResources();
   }
 
   async _prepareContext(options) {
@@ -79,8 +72,7 @@ export default class CustomTrackerConfig extends HandlebarsApplicationMixin(Appl
 
   static async #onSubmit(event, form, formData) {
     const data = foundry.utils.expandObject(formData.object);
-    const resources = parseCustomResources(data.resources ? Object.values(data.resources) : []);
-    await game.settings.set(MOD_ID, "customTrackedResources", JSON.stringify(resources));
+    await saveCustomResources(data.resources ? Object.values(data.resources) : []);
   }
 
   static #onAddResource(event) {
@@ -131,9 +123,9 @@ export default class CustomTrackerConfig extends HandlebarsApplicationMixin(Appl
     if (!file) return;
 
     try {
-      const incomingTrackers = parseCustomResources(extractTrackers(await readJsonFile(file)));
+      const incomingTrackers = extractCustomResources(await readJsonFile(file)) ?? [];
       if (incomingTrackers.length === 0) {
-        ui.notifications.warn("No custom tracker configurations found in the selected file.");
+        ui.notifications.warn(t("Trackers.NoneFound"));
         return;
       }
 
@@ -142,23 +134,15 @@ export default class CustomTrackerConfig extends HandlebarsApplicationMixin(Appl
 
       this.#syncFromForm();
 
-      if (mode === "replace") {
-        this.localResources = incomingTrackers;
-      } else if (mode === "append") {
-        const existingPaths = new Set(this.localResources.map(r => r.path));
-        for (const item of incomingTrackers) {
-          if (!existingPaths.has(item.path)) {
-            this.localResources.push(item);
-            existingPaths.add(item.path);
-          }
-        }
-      }
+      this.localResources = mode === "replace"
+        ? incomingTrackers
+        : mergeCustomResources(this.localResources, incomingTrackers);
 
       this.render();
-      ui.notifications.info(`Imported ${incomingTrackers.length} custom tracker(s). Click "Save Changes" to save.`);
+      ui.notifications.info(t("Trackers.Imported", { count: incomingTrackers.length }));
     } catch (err) {
       console.error(`[${MOD_ID}] Failed to import custom trackers:`, err);
-      ui.notifications.error(`Failed to import custom trackers: ${err.message}`);
+      ui.notifications.error(t("Trackers.ImportFailed", { error: err.message }));
     }
   }
 }

@@ -1,0 +1,276 @@
+{
+  "NTCL": {
+    "Settings": {
+      "compactMessages": {
+        "Name": "Compact Messages",
+        "Hint": "If enabled, changelog messages are limited to a single line and expand when hovered over. Useful for keeping the chat log tidy."
+      },
+      "simpleOutput": {
+        "Name": "Simplified Output",
+        "Hint": "If enabled, logs will only show the adjustment amount (e.g., '+5') instead of the full transition (e.g., '10 + 5 -> 15'). This provides a cleaner, less verbose chat log."
+      },
+      "messageVisibility": {
+        "Name": "Message Visibility",
+        "Hint": "Controls who can see changelog messages. 'GM only' whispers exclusively to GMs. 'GM + Owners' whispers to GMs and the owning player(s) (default). 'Everyone' posts a public message visible to all players and GMs. 'Player only' whispers to all non-GM players. For NPCs, the audience is further refined by the NPC Message Audience setting unless Visibility is set to 'GM only' or 'Player only'.",
+        "GM": "GM only",
+        "GMPlayer": "GM + Owners (default)",
+        "Everyone": "Everyone",
+        "Player": "Player only"
+      },
+      "npcAudience": {
+        "Name": "NPC Message Audience",
+        "Hint": "Controls who can see changelog messages for NPC actors. 'GM only' whispers exclusively to GMs. 'GM + Owners' whispers to GMs and the owning player(s) (default). 'Everyone' posts a public message visible to all players and GMs. Only applies when Message Visibility is set to 'GM + Owners' or 'Everyone'.",
+        "GM": "GM only",
+        "GMOwners": "GM + Owners (default)",
+        "Everyone": "Everyone"
+      },
+      "trackCurrency": {
+        "Name": "Track Currency",
+        "Hint": "If enabled, the module will monitor and log changes to actor and container currency."
+      },
+      "trackItemChanges": {
+        "Name": "Track Item Changes",
+        "Hint": "If enabled, the module will monitor and log changes to items."
+      },
+      "trackDeletedMessages": {
+        "Name": "Track Deleted Chat Messages",
+        "Hint": "If enabled, when a player deletes a chat message, a copy of it is whispered to the GM(s)."
+      },
+      "protectChangelogMessages": {
+        "Name": "Protect Changelog Messages",
+        "Hint": "If enabled, players cannot delete or edit changelog messages, so changes (e.g. HP gains) cannot be hidden from the GM. GMs can still delete them."
+      },
+      "trackEquipUnequip": {
+        "Name": "Track Equip / Unequip",
+        "Hint": "If enabled, the module will log when items are equipped or unequipped on an actor."
+      },
+      "trackActiveEffects": {
+        "Name": "Track Active Effects",
+        "Hint": "If enabled, the module will log when Active Effects are added, removed, enabled, or disabled on an actor."
+      },
+      "nameBlacklist": {
+        "Name": "Ignored Names / Blacklist",
+        "Hint": "Comma-separated list of item and Active Effect names to ignore from changelogs (case-insensitive, e.g. 'Aura of Protection, Torch'). Supports wildcards (*) and regex (/pattern/)."
+      },
+      "customTrackersMenu": {
+        "Name": "Custom Tracked Values",
+        "Label": "Configure",
+        "Hint": "Configure custom actor data paths to track (e.g. Wounds, Fatigue) along with their messages, colors, and icons."
+      },
+      "importExportMenu": {
+        "Name": "Import / Export Settings",
+        "Label": "Import / Export",
+        "Hint": "Export all module settings and custom tracker configurations to a JSON file, or import settings from a previously exported file."
+      },
+      "autoDetectPaths": {
+        "Name": "Auto-Detect HP Paths",
+        "Hint": "If enabled, the module attempts to automatically determine the correct data paths for HP and other attributes based on the active system. Disable this to manually configure paths below."
+      },
+      "hpPath": {
+        "Name": "HP Value Path",
+        "Hint": "Manual System Data Path for HP Value."
+      },
+      "tempHpPath": {
+        "Name": "Temp HP Path",
+        "Hint": "Manual System Data Path for Temporary HP."
+      },
+      "tempHpMaxPath": {
+        "Name": "Temp HP Max Path",
+        "Hint": "Manual System Data Path for Temporary HP Max."
+      },
+      "currencyBasePath": {
+        "Name": "Currency Base Path (Adv)",
+        "Hint": "Manual System Data Path for Currency. Use this to override the default detection if needed."
+      },
+      "trackDnd5eInspiration": {
+        "Name": "Track Inspiration",
+        "Hint": "If enabled, logs when a character gains or uses Heroic Inspiration."
+      },
+      "trackDnd5eDeathSaves": {
+        "Name": "Track Death Saves",
+        "Hint": "If enabled, logs successes and failures for Death Saving Throws on characters."
+      },
+      "trackDnd5eSpellPrep": {
+        "Name": "Track Spell Preparation",
+        "Hint": "If enabled, logs when spells are prepared or unprepared on characters."
+      },
+      "trackDnd5eSpellSlots": {
+        "Name": "Track Spell Slots",
+        "Hint": "If enabled, logs when spell slots are expended or regained."
+      },
+      "trackDnd5eHitDice": {
+        "Name": "Track Hit Dice",
+        "Hint": "If enabled, logs when characters expend or regain Hit Dice."
+      },
+      "trackDnd5eXP": {
+        "Name": "Track Experience Points",
+        "Hint": "If enabled, logs when a character gains or loses Experience Points."
+      },
+      "trackMorkBorgAbilities": {
+        "Name": "Track Abilities",
+        "Hint": "If enabled, logs when a character increases or decreases Abilities scores."
+      },
+      "trackMorkBorgOmens": {
+        "Name": "Track Omens",
+        "Hint": "If enabled, logs when a character gains or uses Omens."
+      },
+      "trackMorkBorgPowers": {
+        "Name": "Track Powers",
+        "Hint": "If enabled, logs when a character uses or recovers Powers."
+      }
+    },
+
+    "Line": {
+      "HP": "HP",
+      "Damage": "Damage",
+      "Temp": "Temp",
+      "TempMax": "Temp Max",
+      "MaxHealth": "Max Health",
+      "Uses": "Uses",
+      "XP": "XP",
+      "Omens": "Omens",
+      "Powers": "Powers",
+      "Container": "Container",
+      "ItemAdded": "{actor} added {item}",
+      "ItemAddedQuantity": "{actor} added {item} (+{qty})",
+      "ItemDeleted": "{actor} deleted {item}",
+      "ItemEquipped": "{actor} equipped {item}",
+      "ItemUnequipped": "{actor} unequipped {item}",
+      "UnknownEffect": "Unknown Effect",
+      "EffectGained": "{actor} gained effect: {effect}",
+      "EffectLost": "{actor} lost effect: {effect}",
+      "EffectEnabled": "{actor} enabled effect: {effect}",
+      "EffectDisabled": "{actor} disabled effect: {effect}"
+    },
+
+    "Coin": {
+      "Platinum": "Platinum",
+      "Gold": "Gold",
+      "Electrum": "Electrum",
+      "Silver": "Silver",
+      "Copper": "Copper",
+      "GoldCrowns": "Gold Crowns",
+      "SilverShillings": "Silver Shillings",
+      "CopperPennies": "Copper Pennies",
+      "Bits": "Bits"
+    },
+
+    "Dnd5e": {
+      "InspirationGained": "gained Heroic Inspiration",
+      "InspirationSpent": "spent Heroic Inspiration",
+      "SuccessGainedOne": "gained 1 Death Save Success ({now}/3)",
+      "SuccessGainedMany": "gained {count} Death Save Successes ({now}/3)",
+      "SuccessLostOne": "lost 1 Death Save Success ({now}/3)",
+      "SuccessLostMany": "lost {count} Death Save Successes ({now}/3)",
+      "FailureGainedOne": "gained 1 Death Save Failure ({now}/3)",
+      "FailureGainedMany": "gained {count} Death Save Failures ({now}/3)",
+      "FailureLostOne": "lost 1 Death Save Failure ({now}/3)",
+      "FailureLostMany": "lost {count} Death Save Failures ({now}/3)",
+      "SlotLevel": "level {level}",
+      "SlotPact": "Pact Magic",
+      "SlotExpendedOne": "expended {slot} slot",
+      "SlotExpendedMany": "expended {count} {slot} slots",
+      "SlotRegainedOne": "regained {slot} slot",
+      "SlotRegainedMany": "regained {count} {slot} slots",
+      "HitDie": "Hit Dice",
+      "HitDiceExpendedOne": "expended {die}",
+      "HitDiceExpendedMany": "expended {count} Hit Dice ({die})",
+      "HitDiceRegainedOne": "regained {die}",
+      "HitDiceRegainedMany": "regained {count} Hit Dice ({die})",
+      "SpellPrepared": "prepared {spell}",
+      "SpellUnprepared": "unprepared {spell}"
+    },
+
+    "MorkBorg": {
+      "PowersUsedOne": "used a power",
+      "PowersUsedMany": "used {count} powers",
+      "PowersRecoveredOne": "recovered a power",
+      "PowersRecoveredMany": "recovered {count} powers"
+    },
+
+    "Chat": {
+      "OnlyGMDelete": "Changelog messages can only be deleted by a GM.",
+      "OnlyGMEdit": "Changelog messages can only be edited by a GM.",
+      "UnknownPlayer": "Unknown Player",
+      "UnknownSpeaker": "Unknown",
+      "DeletedChangelog": "<strong>{user}</strong> deleted a changelog entry: {entry}",
+      "DeletedMessage": "<strong>{user}</strong> deleted a {kind} from <strong>{speaker}</strong>",
+      "KindWhisper": "whisper",
+      "KindRoll": "roll",
+      "KindCard": "card",
+      "KindMessage": "message",
+      "WhisperedTo": "whispered to {users}",
+      "Public": "public"
+    },
+
+    "Trackers": {
+      "Title": "Custom Tracked Values",
+      "Intro": "Define custom data paths to track on your actors. Paths must be valid properties on the Actor's data (e.g., <code>system.attributes.fatigue.value</code>).",
+      "Placeholders": "<strong>Formatting Placeholders:</strong> You can use <code>{name}</code>, <code>{old}</code>, <code>{new}</code>, and <code>{diff}</code> in your gain/loss messages to make them dynamic. Note that boolean (true/false) properties are treated numerically (1 or 0).",
+      "Icons": "<strong>Icons:</strong> Type a FontAwesome class (e.g., <code>fa-solid fa-droplet</code>) or click the file picker icon to browse for an image.",
+      "Docs": "Read the full documentation and examples on GitHub",
+      "ColName": "Name (e.g. Wounds)",
+      "ColPath": "Path (e.g. system.wounds.value)",
+      "ColGain": "Gain Msg (e.g. gained a wound)",
+      "ColLoss": "Loss Msg (e.g. healed a wound)",
+      "ColIcon": "Icon (FA Class or Path)",
+      "ColColor": "Color",
+      "Add": "Add Resource",
+      "Delete": "Delete Resource",
+      "Browse": "Browse Files",
+      "IconPlaceholder": "fa-solid fa-star or icon.svg",
+      "Empty": "No custom tracked resources defined. Click the + icon to add one.",
+      "Export": "Export Trackers",
+      "ExportHint": "Export custom trackers to a JSON file",
+      "Import": "Import Trackers",
+      "ImportHint": "Import custom trackers from a JSON file",
+      "Save": "Save Changes",
+      "ImportTitle": "Import Custom Trackers",
+      "ImportPrompt": "<p>Found <strong>{count}</strong> custom tracker(s) in <em>{file}</em>.</p><p>How would you like to apply them to your current list?</p>",
+      "ImportAppend": "Append / Merge",
+      "ImportReplace": "Replace All",
+      "Cancel": "Cancel",
+      "NoneFound": "No custom tracker configurations found in the selected file.",
+      "Imported": "Imported {count} custom tracker(s). Click \"Save Changes\" to save.",
+      "ImportFailed": "Failed to import custom trackers: {error}",
+      "Exported": "Exported {count} custom trackers to {file}"
+    },
+
+    "ImportExport": {
+      "Title": "Nik's Tiny Change Logs: Import / Export Settings",
+      "Intro": "Export your <strong>Nik's Tiny Change Logs</strong> configuration to a portable JSON file for backup or transfer between worlds, or import an existing configuration.",
+      "ExportHeading": "Export Configuration",
+      "ExportDesc": "Exports all module settings (visibility, feature toggles, blacklist, and system trackers) and all custom tracked resource definitions.",
+      "Version": "Version",
+      "ActiveSystem": "Active System",
+      "Settings": "Settings",
+      "SettingsCount": "{count} registered",
+      "CustomTrackers": "Custom Trackers",
+      "TrackersCount": "{count} defined",
+      "ExportButton": "Export Settings to JSON",
+      "ImportHeading": "Import Configuration",
+      "ImportDesc": "Upload a <code>.json</code> file exported from Nik's Tiny Change Logs. You will be prompted with a preview of found settings before changes are applied.",
+      "TrackerMode": "Custom Trackers Handling:",
+      "ModeReplace": "<strong>Replace</strong> &mdash; Overwrite all existing custom trackers",
+      "ModeMerge": "<strong>Merge</strong> &mdash; Keep existing custom trackers and append new ones",
+      "ImportButton": "Select JSON File to Import",
+      "Exported": "Settings exported to {file}",
+      "ErrorNotObject": "Invalid JSON data: payload is not an object or array.",
+      "ErrorOtherModule": "Invalid configuration file: file belongs to module \"{module}\", not \"{expected}\".",
+      "ErrorNothingFound": "No recognizable settings or custom tracker definitions found in the file.",
+      "FoundSettings": "<strong>{count}</strong> module setting(s)",
+      "FoundTrackers": "<strong>{count}</strong> custom tracker config(s) (will <em>{mode}</em> existing trackers)",
+      "ModeMergeWith": "merge with",
+      "ModeReplaceVerb": "replace",
+      "And": "and",
+      "ConfirmTitle": "Import Nik's Tiny Change Logs Settings",
+      "ConfirmContent": "<p>Found {found} in <em>{file}</em>.</p><p>Import and apply these configurations to your world now?</p>",
+      "SettingsUpdated": "{count} setting(s) updated",
+      "TrackersConfigured": "{count} custom tracker(s) configured",
+      "Imported": "Successfully imported configurations from {file}{details}.",
+      "SkippedInvalid": "Some settings had invalid values and were skipped: {keys}",
+      "NoPermission": "You do not have permission to modify world settings.",
+      "ImportFailed": "Import failed: {error}"
+    }
+  }
+}

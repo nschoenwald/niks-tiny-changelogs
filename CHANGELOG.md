@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.16.0
+
+### Added
+- **Demonlord**: Changes to Gold Crowns, Silver Shillings, Copper Pennies and Bits are now logged, as are talent uses and spell castings.
+- **PF2e**: Coins are now logged as currency (e.g. "Gold: 12 + 8 → 20"), including new and removed coin stacks, and uses of consumables are logged.
+- **Shadowdark**: Uses of class abilities with limited uses are now logged.
+- **libWrapper**: When libWrapper is active, the module uses it for its chat scrolling tweak.
+- **Translations**: All text now comes from a language file, so the module can be translated.
+
+### Improved
+- **Changelog Messages Created by the GM**: Changelog messages about a player's changes are now created by the GM. Players can no longer edit or delete them in any way, and messages meant for the GM only never reach the player's game. When no GM is online, players create the messages themselves as before.
+- **Custom Tracked Values Storage**: Custom tracked values are stored in a new format. Existing ones are moved over automatically the first time a GM logs in, and older export files can still be imported.
+- **Changelog Colours**: Changelog messages now always keep their colour, even when core or system chat styles give chat messages a parchment or card background.
+- **Dark Theme**: The Import / Export and Custom Tracked Values windows are now easier to read with the dark Applications theme.
+- **Tooltips**: The fix for unreadable actor tooltips now only applies to D&D 5e tooltips that need it, so other tooltips keep their own colours.
+- **Under the Hood**: The module's code was reorganised to make it easier to maintain and extend. Changelog messages look the same as before.
+
+### Fixed
+- **Protect Changelog Messages**: Players can no longer edit the text of changelog messages, only GMs can. Previously a player could change what an entry said even though they couldn't delete it.
+- **NPC Message Audience**: Now applies to Shadowdark NPCs, Demonlord creatures, and Mörk Borg creatures and followers. Previously these were treated like player characters.
+- **Shadowdark**: Light sources dropped on the scene no longer post item messages. Every player owns them, so those messages went to everyone.
+- **Demonlord / Mörk Borg**: Demonlord vehicles and Mörk Borg containers and misery trackers are no longer tracked.
+- **Demonlord**: Equip / Unequip tracking now follows whether an item is worn.
+
 ## 14.15.1
 
 ### Improved

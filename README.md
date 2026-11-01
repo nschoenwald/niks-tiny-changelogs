@@ -12,6 +12,8 @@ It keeps track of health changes, currency adjustments, item inventory updates, 
 
 - **Foundry VTT**: V13 – V14
 - **System**: System-agnostic (Dedicated tracking for DnD5e, PF2e, Shadowdark, Mörk Borg, Demonlord)
+- **Optional**: [libWrapper](https://github.com/ruipin/fvtt-lib-wrapper) is used when active
+- **Languages**: English. All text is in `lang/en.json`, so the module can be translated.
 ---
 
 ## Features
@@ -25,22 +27,24 @@ Automatically monitors and logs changes to:
 The module features **Auto-Detection** for health data paths, working out of the box with `dnd5e`, `pf2e`, `shadowdark`, `demonlord`, and `morkborg`. For other systems, disable auto-detection and specify the data paths manually in the settings.
 
 ### 💰 Currency Tracking
-Logs whenever an actor or container gains or loses currency (e.g., Gold, Silver, Copper). It tracks character wallet changes as well as container currency (backpacks, chests, pouches, bags of holding), including direct sheet edits, conversions, and transfers. It automatically detects the correct currency paths for `dnd5e`, `pf2e`, `shadowdark` and `morkborg`, but can be manually configured for other systems.
+Logs whenever an actor or container gains or loses currency (e.g., Gold, Silver, Copper). It tracks character wallet changes as well as container currency (backpacks, chests, pouches, bags of holding), including direct sheet edits, conversions, and transfers. It automatically detects the correct currency paths for `dnd5e`, `shadowdark`, `demonlord` (Gold Crowns, Silver Shillings, Copper Pennies, Bits) and `morkborg`, but can be manually configured for other systems. In `pf2e`, where coins are items, gaining, spending or removing a coin stack is reported as currency.
 
 ### 🎒 Item & Inventory Tracking
 Keep an eye on what your players pick up or consume!
 - **Quantity Adjustments**: Logs when items are consumed, bought, or given away.
-- **Limited Uses**: Logs when an item with limited uses spends or regains uses.
+- **Limited Uses**: Logs when an item with limited uses spends or regains uses (Shadowdark: class abilities; PF2e: consumables; Demonlord: talent uses and spell castings).
 - **Additions & Deletions**: Logs when an item is added to an actor or removed entirely.
 - **Renaming**: Logs when an item's name is changed.
+
+Actors that aren't characters or creatures are not tracked: dropped light sources in Shadowdark, vehicles in Demonlord, and containers and the misery tracker in Mörk Borg.
 
 ### 🗑️ Chat Moderation
 When a player deletes a chat message, the module whispers a compact one-line summary to the GM(s) (who deleted what, from whom). Click it to expand the original speaker, audience, time and full content. This is perfect for keeping an eye on accidentally (or purposely) deleted rolls!
 
-With **Protect Changelog Messages** (enabled by default), players additionally cannot delete changelog entries at all, so they can't hide things like HP gains. GMs can still delete them.
+Changelog messages about a player's changes are created by the GM, so players don't own them: they can't edit or delete them, and messages meant for the GM only never reach the player's game at all. When no GM is online, players create their own changelog messages instead; **Protect Changelog Messages** (enabled by default) then still stops them from deleting or editing those entries. GMs can always delete them.
 
 ### 👕 Equip / Unequip Tracking *(disabled by default)*
-Optionally logs when an item is equipped or unequipped on an actor. Enable this via the **Track Equip / Unequip** setting.
+Optionally logs when an item is equipped or unequipped on an actor (in Demonlord: worn or taken off). Enable this via the **Track Equip / Unequip** setting. Not available in PF2e, which tracks how an item is carried rather than whether it is equipped.
 
 ### ✨ Active Effect Tracking *(disabled by default)*
 Optionally logs when Active Effects are added, removed, enabled, or disabled on an actor. Only effects that actually apply to the actor are reported, including effects transferred from its items; effects that live on an item for other purposes (e.g. a spell's effect meant for its targets, or enchantments) are ignored. Enable this via the **Track Active Effects** setting.
@@ -105,7 +109,7 @@ You can customize the module's behavior in the settings to perfectly match your 
   - *Everyone* (Public chat messages visible to all players and GMs)
   - *GM only* (Private whispers exclusively to GMs; player clients will not see logs even for actions they perform)
   - *Player only* (Whispered exclusively to non-GM players; hidden from GMs)
-- **NPC Message Audience**: When Message Visibility is set to 'GM + Owners' or 'Everyone', this further refines who receives NPC changelog messages:
+- **NPC Message Audience**: When Message Visibility is set to 'GM + Owners' or 'Everyone', this further refines who receives NPC changelog messages (NPCs are the system's NPC actor types: `npc` in dnd5e and pf2e, `NPC` in Shadowdark, creatures in Demonlord, creatures and followers in Mörk Borg):
   - *GM + Owners* (Whispered to GMs and any owning player(s) of the NPC, default)
   - *GM only* (Private whispers exclusively to GMs)
   - *Everyone* (Public chat messages visible to all players and GMs)
