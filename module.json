@@ -14,7 +14,8 @@
   ],
   "compatibility": {
     "minimum": "13",
-    "verified": "14"
+    "verified": "14",
+    "maximum": "14"
   },
   "esmodules": [
     "scripts/niks-tiny-changelogs.mjs"
