@@ -1,0 +1,266 @@
+{
+  "NTCL": {
+    "Settings": {
+      "compactMessages": {
+        "Name": "Kompaktowe wiadomości",
+        "Hint": "Po włączeniu wiadomości dziennika zmian mieszczą się w jednej linii i rozwijają po najechaniu, zaznaczeniu lub dotknięciu. Pomaga utrzymać porządek na czacie."
+      },
+      "messageStyle": {
+        "Name": "Styl wiadomości",
+        "Hint": "Jak kolorowane są wiadomości. „Przyciemniony” zachowuje kartę czatu systemu z lekkim odcieniem i kolorowym paskiem (domyślnie). „Pełny” wypełnia linię kolorem i używa białego tekstu. „Karta systemu” zostawia kartę czatu systemu bez zmian poza kolorowym paskiem.",
+        "Tinted": "Przyciemniony (domyślnie)",
+        "Solid": "Pełny",
+        "Accent": "Karta systemu"
+      },
+      "simpleOutput": {
+        "Name": "Uproszczony wynik",
+        "Hint": "Po włączeniu wiadomości pokazują tylko zmianę (np. „+5”) zamiast starej i nowej wartości (np. „10 → 15”). Dotyczy wiadomości opublikowanych po zmianie."
+      },
+      "messageVisibility": {
+        "Name": "Widoczność wiadomości",
+        "Hint": "Określa, kto widzi wiadomości dziennika zmian. „Tylko MG” szepcze wyłącznie do MG. „MG + właściciele” szepcze do MG i graczy-właścicieli (domyślnie). „Wszyscy” publikuje wiadomość publiczną widoczną dla wszystkich. „Tylko gracze” szepcze do wszystkich graczy niebędących MG. W przypadku BN odbiorców dodatkowo zawęża ustawienie „Odbiorcy wiadomości BN”, chyba że widoczność to „Tylko MG” lub „Tylko gracze”.",
+        "GM": "Tylko MG",
+        "GMPlayer": "MG + właściciele (domyślnie)",
+        "Everyone": "Wszyscy",
+        "Player": "Tylko gracze"
+      },
+      "npcAudience": {
+        "Name": "Odbiorcy wiadomości BN",
+        "Hint": "Określa, kto widzi wiadomości dziennika zmian aktorów BN. „Tylko MG” szepcze wyłącznie do MG. „MG + właściciele” szepcze do MG i graczy-właścicieli (domyślnie). „Wszyscy” publikuje wiadomość publiczną widoczną dla wszystkich. Działa tylko, gdy widoczność to „MG + właściciele” lub „Wszyscy”.",
+        "GM": "Tylko MG",
+        "GMOwners": "MG + właściciele (domyślnie)",
+        "Everyone": "Wszyscy"
+      },
+      "trackCurrency": {
+        "Name": "Śledź walutę",
+        "Hint": "Po włączeniu moduł monitoruje i zapisuje zmiany waluty aktorów i pojemników."
+      },
+      "trackItemChanges": {
+        "Name": "Śledź zmiany przedmiotów",
+        "Hint": "Po włączeniu moduł monitoruje i zapisuje zmiany przedmiotów."
+      },
+      "trackDeletedMessages": {
+        "Name": "Śledź usunięte wiadomości czatu",
+        "Hint": "Po włączeniu, gdy gracz usunie wiadomość z czatu, jej kopia jest szeptana do MG."
+      },
+      "protectChangelogMessages": {
+        "Name": "Chroń wiadomości dziennika",
+        "Hint": "Po włączeniu gracze nie mogą usuwać ani edytować wiadomości dziennika zmian, więc zmian (np. przyrostu PW) nie da się ukryć przed MG. MG nadal mogą je usuwać."
+      },
+      "trackEquipUnequip": {
+        "Name": "Śledź zakładanie / zdejmowanie",
+        "Hint": "Po włączeniu moduł zapisuje, gdy przedmioty są zakładane lub zdejmowane przez aktora."
+      },
+      "trackActiveEffects": {
+        "Name": "Śledź aktywne efekty",
+        "Hint": "Po włączeniu moduł zapisuje, gdy aktywne efekty są dodawane, usuwane, włączane lub wyłączane na aktorze."
+      },
+      "nameBlacklist": {
+        "Name": "Ignorowane nazwy / czarna lista",
+        "Hint": "Lista nazw przedmiotów i aktywnych efektów oddzielonych przecinkami, ignorowanych w dzienniku (bez rozróżniania wielkości liter, np. „Aura ochrony, Pochodnia”). Obsługuje symbole wieloznaczne (*) i regex (/wzorzec/)."
+      },
+      "customTrackersMenu": {
+        "Name": "Własne śledzone wartości",
+        "Label": "Konfiguruj",
+        "Hint": "Skonfiguruj własne ścieżki danych aktora do śledzenia (np. Rany, Zmęczenie) wraz z wiadomościami, kolorami i ikonami."
+      },
+      "importExportMenu": {
+        "Name": "Import / eksport ustawień",
+        "Label": "Import / eksport",
+        "Hint": "Eksportuj wszystkie ustawienia modułu i własne trackery do pliku JSON albo importuj ustawienia z wcześniej wyeksportowanego pliku."
+      },
+      "autoDetectPaths": {
+        "Name": "Automatycznie wykrywaj ścieżki PW",
+        "Hint": "Po włączeniu moduł próbuje automatycznie ustalić właściwe ścieżki danych PW i innych atrybutów na podstawie aktywnego systemu. Wyłącz, aby ręcznie ustawić ścieżki poniżej."
+      },
+      "hpPath": {
+        "Name": "Ścieżka wartości PW",
+        "Hint": "Ręczna ścieżka danych systemu dla wartości PW."
+      },
+      "tempHpPath": {
+        "Name": "Ścieżka tymczasowych PW",
+        "Hint": "Ręczna ścieżka danych systemu dla tymczasowych PW."
+      },
+      "tempHpMaxPath": {
+        "Name": "Ścieżka maks. tymczasowych PW",
+        "Hint": "Ręczna ścieżka danych systemu dla maksimum tymczasowych PW."
+      },
+      "currencyBasePath": {
+        "Name": "Ścieżka bazowa waluty (zaawansowane)",
+        "Hint": "Ręczna ścieżka danych systemu dla waluty. Pozwala w razie potrzeby nadpisać domyślne wykrywanie."
+      },
+      "trackDnd5eInspiration": {
+        "Name": "Śledź inspirację",
+        "Hint": "Po włączeniu zapisuje, gdy postać zdobywa lub wykorzystuje Heroiczną inspirację."
+      },
+      "trackDnd5eDeathSaves": {
+        "Name": "Śledź rzuty przeciw śmierci",
+        "Hint": "Po włączeniu zapisuje sukcesy i porażki w rzutach obronnych przeciw śmierci postaci."
+      },
+      "trackDnd5eSpellPrep": {
+        "Name": "Śledź przygotowanie czarów",
+        "Hint": "Po włączeniu zapisuje, gdy postacie przygotowują czary lub przestają mieć je przygotowane."
+      },
+      "trackDnd5eSpellSlots": {
+        "Name": "Śledź komórki czarów",
+        "Hint": "Po włączeniu zapisuje, gdy komórki czarów są zużywane lub odzyskiwane."
+      },
+      "trackDnd5eHitDice": {
+        "Name": "Śledź kości wytrzymałości",
+        "Hint": "Po włączeniu zapisuje, gdy postacie zużywają lub odzyskują kości wytrzymałości."
+      },
+      "trackDnd5eXP": {
+        "Name": "Śledź punkty doświadczenia",
+        "Hint": "Po włączeniu zapisuje, gdy postać zdobywa lub traci punkty doświadczenia."
+      },
+      "trackMorkBorgAbilities": {
+        "Name": "Śledź cechy",
+        "Hint": "Po włączeniu zapisuje, gdy postać podnosi lub obniża wartości cech."
+      },
+      "trackMorkBorgOmens": {
+        "Name": "Śledź omeny",
+        "Hint": "Po włączeniu zapisuje, gdy postać zdobywa lub wykorzystuje omeny."
+      },
+      "trackMorkBorgPowers": {
+        "Name": "Śledź moce",
+        "Hint": "Po włączeniu zapisuje, gdy postać używa lub odzyskuje moce."
+      }
+    },
+    "Line": {
+      "HP": "PW",
+      "Damage": "Obrażenia",
+      "TempHP": "Tymcz. PW",
+      "TempMax": "Tymcz. maks.",
+      "MaxHealth": "Maks. zdrowie",
+      "XP": "PD",
+      "Omens": "Omeny",
+      "Powers": "Moce",
+      "Items": "Przedmioty",
+      "ItemAdded": "dodano {items}",
+      "ItemDeleted": "usunięto {items}",
+      "ItemUses": "Użycia: {item}",
+      "ItemEquipped": "założono {item}",
+      "ItemUnequipped": "zdjęto {item}",
+      "CoinsIn": "{coin} w {container}",
+      "Spells": "Czary",
+      "SpellsPrepared": "przygotowano {items}",
+      "SpellsUnprepared": "cofnięto przygotowanie {items}",
+      "Effects": "Efekty",
+      "UnknownEffect": "Nieznany efekt",
+      "EffectGained": "zyskano {items}",
+      "EffectLost": "utracono {items}",
+      "EffectEnabled": "włączono {effect}",
+      "EffectDisabled": "wyłączono {effect}"
+    },
+    "Coin": {
+      "Platinum": "Platyna",
+      "Gold": "Złoto",
+      "Electrum": "Elektrum",
+      "Silver": "Srebro",
+      "Copper": "Miedź",
+      "GoldCrowns": "Złote korony",
+      "SilverShillings": "Srebrne szylingi",
+      "CopperPennies": "Miedziane pensy",
+      "Bits": "Drobniaki"
+    },
+    "Dnd5e": {
+      "InspirationGained": "zdobyto Heroiczną inspirację",
+      "InspirationSpent": "wykorzystano Heroiczną inspirację",
+      "SuccessGainedOne": "zdobyto 1 sukces w rzucie przeciw śmierci ({now}/3)",
+      "SuccessGainedMany": "zdobyto sukcesy w rzutach przeciw śmierci: {count} ({now}/3)",
+      "SuccessLostOne": "utracono 1 sukces w rzucie przeciw śmierci ({now}/3)",
+      "SuccessLostMany": "utracono sukcesy w rzutach przeciw śmierci: {count} ({now}/3)",
+      "FailureGainedOne": "1 porażka w rzucie przeciw śmierci ({now}/3)",
+      "FailureGainedMany": "porażki w rzutach przeciw śmierci: {count} ({now}/3)",
+      "FailureLostOne": "usunięto 1 porażkę w rzucie przeciw śmierci ({now}/3)",
+      "FailureLostMany": "usunięto porażki w rzutach przeciw śmierci: {count} ({now}/3)",
+      "SlotLevel": "Krąg {level}",
+      "SlotPact": "Magia paktu",
+      "Slots": "Komórki ({slot})",
+      "HitDice": "Kości wytrzymałości",
+      "HitDiceDie": "Kości wytrzymałości ({die})"
+    },
+    "Chat": {
+      "OnlyGMDelete": "Wiadomości dziennika zmian może usuwać tylko MG.",
+      "OnlyGMEdit": "Wiadomości dziennika zmian może edytować tylko MG.",
+      "UnknownPlayer": "Nieznany gracz",
+      "UnknownSpeaker": "Nieznany",
+      "DeletedChangelog": "<strong>{user}</strong> usunął(-ęła) wpis dziennika: {entry}",
+      "DeletedMessage": "<strong>{user}</strong> usunął(-ęła) wiadomość ({kind}) od <strong>{speaker}</strong>",
+      "KindWhisper": "szept",
+      "KindRoll": "rzut",
+      "KindCard": "karta",
+      "KindMessage": "wiadomość",
+      "WhisperedTo": "szept do: {users}",
+      "Public": "publiczna"
+    },
+    "Trackers": {
+      "Title": "Własne śledzone wartości",
+      "Intro": "Zdefiniuj własne ścieżki danych do śledzenia u aktorów. Ścieżki muszą być prawidłowymi właściwościami danych aktora (np. <code>system.attributes.fatigue.value</code>).",
+      "Placeholders": "<strong>Symbole zastępcze:</strong> w wiadomościach o przyroście/spadku możesz użyć <code>{name}</code>, <code>{old}</code>, <code>{new}</code> i <code>{diff}</code>, aby były dynamiczne. Właściwości logiczne (true/false) są traktowane jak liczby (1 lub 0).",
+      "Icons": "<strong>Ikony:</strong> wpisz klasę FontAwesome (np. <code>fa-solid fa-droplet</code>) albo kliknij ikonę wyboru pliku, aby wybrać obraz.",
+      "Docs": "Pełna dokumentacja i przykłady na GitHubie",
+      "ColName": "Nazwa (np. Rany)",
+      "ColPath": "Ścieżka (np. system.wounds.value)",
+      "ColGain": "Wiad. przyrostu (np. otrzymano ranę)",
+      "ColLoss": "Wiad. spadku (np. wyleczono ranę)",
+      "ColIcon": "Ikona (klasa FA lub ścieżka)",
+      "ColColor": "Kolor",
+      "Add": "Dodaj zasób",
+      "Delete": "Usuń zasób",
+      "Browse": "Przeglądaj pliki",
+      "IconPlaceholder": "fa-solid fa-star lub icon.svg",
+      "Empty": "Brak własnych śledzonych zasobów. Kliknij ikonę +, aby dodać.",
+      "Export": "Eksportuj trackery",
+      "ExportHint": "Eksportuj własne trackery do pliku JSON",
+      "Import": "Importuj trackery",
+      "ImportHint": "Importuj własne trackery z pliku JSON",
+      "Save": "Zapisz zmiany",
+      "ImportTitle": "Importuj własne trackery",
+      "ImportPrompt": "<p>Znaleziono własne trackery (<strong>{count}</strong>) w <em>{file}</em>.</p><p>Jak zastosować je do obecnej listy?</p>",
+      "ImportAppend": "Dołącz / scal",
+      "ImportReplace": "Zastąp wszystkie",
+      "Cancel": "Anuluj",
+      "NoneFound": "W wybranym pliku nie znaleziono konfiguracji własnych trackerów.",
+      "Imported": "Zaimportowano własne trackery: {count}. Kliknij „Zapisz zmiany”, aby zapisać.",
+      "ImportFailed": "Nie udało się zaimportować własnych trackerów: {error}",
+      "Exported": "Wyeksportowano własne trackery ({count}) do {file}"
+    },
+    "ImportExport": {
+      "Title": "Nik's Tiny Change Logs: import / eksport ustawień",
+      "Intro": "Eksportuj konfigurację <strong>Nik's Tiny Change Logs</strong> do przenośnego pliku JSON jako kopię zapasową lub do przeniesienia między światami albo zaimportuj istniejącą konfigurację.",
+      "ExportHeading": "Eksport konfiguracji",
+      "ExportDesc": "Eksportuje wszystkie ustawienia modułu (widoczność, przełączniki funkcji, czarną listę i trackery systemowe) oraz wszystkie definicje własnych śledzonych zasobów.",
+      "Version": "Wersja",
+      "ActiveSystem": "Aktywny system",
+      "Settings": "Ustawienia",
+      "SettingsCount": "zarejestrowane: {count}",
+      "CustomTrackers": "Własne trackery",
+      "TrackersCount": "zdefiniowane: {count}",
+      "ExportButton": "Eksportuj ustawienia do JSON",
+      "ImportHeading": "Import konfiguracji",
+      "ImportDesc": "Prześlij plik <code>.json</code> wyeksportowany z Nik's Tiny Change Logs. Przed zastosowaniem zmian zobaczysz podgląd znalezionych ustawień.",
+      "TrackerMode": "Obsługa własnych trackerów:",
+      "ModeReplace": "<strong>Zastąp</strong> &mdash; nadpisz wszystkie istniejące własne trackery",
+      "ModeMerge": "<strong>Scal</strong> &mdash; zachowaj istniejące trackery i dołącz nowe",
+      "ImportButton": "Wybierz plik JSON do importu",
+      "Exported": "Wyeksportowano ustawienia do {file}",
+      "ErrorNotObject": "Nieprawidłowe dane JSON: zawartość nie jest obiektem ani tablicą.",
+      "ErrorOtherModule": "Nieprawidłowy plik konfiguracji: należy do modułu „{module}”, a nie „{expected}”.",
+      "ErrorNothingFound": "W pliku nie znaleziono rozpoznawalnych ustawień ani definicji własnych trackerów.",
+      "FoundSettings": "ustawienia modułu: <strong>{count}</strong>",
+      "FoundTrackers": "własne trackery: <strong>{count}</strong> (istniejące trackery zostaną <em>{mode}</em>)",
+      "ModeMergeWith": "scalone",
+      "ModeReplaceVerb": "zastąpione",
+      "And": "i",
+      "ConfirmTitle": "Import ustawień Nik's Tiny Change Logs",
+      "ConfirmContent": "<p>Znaleziono w <em>{file}</em>: {found}.</p><p>Zaimportować i zastosować tę konfigurację w świecie teraz?</p>",
+      "SettingsUpdated": "zaktualizowane ustawienia: {count}",
+      "TrackersConfigured": "skonfigurowane własne trackery: {count}",
+      "Imported": "Pomyślnie zaimportowano konfigurację z {file}{details}.",
+      "SkippedInvalid": "Niektóre ustawienia miały nieprawidłowe wartości i zostały pominięte: {keys}",
+      "NoPermission": "Nie masz uprawnień do zmiany ustawień świata.",
+      "ImportFailed": "Import nie powiódł się: {error}"
+    }
+  }
+}

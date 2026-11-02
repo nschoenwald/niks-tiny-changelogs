@@ -1,0 +1,266 @@
+{
+  "NTCL": {
+    "Settings": {
+      "compactMessages": {
+        "Name": "Mensajes compactos",
+        "Hint": "Si está activado, los mensajes del registro de cambios ocupan una sola línea y se despliegan al pasar el ratón, enfocarlos o tocarlos. Útil para mantener ordenado el chat."
+      },
+      "messageStyle": {
+        "Name": "Estilo de los mensajes",
+        "Hint": "Cómo se colorean los mensajes. «Teñido» mantiene la tarjeta de chat de tu sistema con un tinte suave y una franja de color (por defecto). «Sólido» rellena la línea con su color y usa texto blanco. «Tarjeta del sistema» deja la tarjeta de chat del sistema sin cambios salvo una franja de color.",
+        "Tinted": "Teñido (por defecto)",
+        "Solid": "Sólido",
+        "Accent": "Tarjeta del sistema"
+      },
+      "simpleOutput": {
+        "Name": "Salida simplificada",
+        "Hint": "Si está activado, los mensajes solo muestran el cambio (p. ej., «+5») en lugar del valor anterior y el nuevo (p. ej., «10 → 15»). Se aplica a los mensajes publicados después del cambio."
+      },
+      "messageVisibility": {
+        "Name": "Visibilidad de los mensajes",
+        "Hint": "Controla quién ve los mensajes del registro. «Solo DJ» susurra únicamente a los DJ. «DJ + propietarios» susurra a los DJ y a los jugadores propietarios (por defecto). «Todos» publica un mensaje público visible para todos. «Solo jugadores» susurra a todos los jugadores que no son DJ. Para los PNJ, la audiencia se ajusta además con el ajuste «Audiencia de mensajes de PNJ», salvo que la visibilidad sea «Solo DJ» o «Solo jugadores».",
+        "GM": "Solo DJ",
+        "GMPlayer": "DJ + propietarios (por defecto)",
+        "Everyone": "Todos",
+        "Player": "Solo jugadores"
+      },
+      "npcAudience": {
+        "Name": "Audiencia de mensajes de PNJ",
+        "Hint": "Controla quién ve los mensajes del registro de los actores PNJ. «Solo DJ» susurra únicamente a los DJ. «DJ + propietarios» susurra a los DJ y a los jugadores propietarios (por defecto). «Todos» publica un mensaje público visible para todos. Solo se aplica si la visibilidad es «DJ + propietarios» o «Todos».",
+        "GM": "Solo DJ",
+        "GMOwners": "DJ + propietarios (por defecto)",
+        "Everyone": "Todos"
+      },
+      "trackCurrency": {
+        "Name": "Registrar monedas",
+        "Hint": "Si está activado, el módulo vigila y registra los cambios en las monedas de actores y contenedores."
+      },
+      "trackItemChanges": {
+        "Name": "Registrar cambios de objetos",
+        "Hint": "Si está activado, el módulo vigila y registra los cambios en los objetos."
+      },
+      "trackDeletedMessages": {
+        "Name": "Registrar mensajes de chat eliminados",
+        "Hint": "Si está activado, cuando un jugador elimina un mensaje de chat, se susurra una copia a los DJ."
+      },
+      "protectChangelogMessages": {
+        "Name": "Proteger los mensajes del registro",
+        "Hint": "Si está activado, los jugadores no pueden eliminar ni editar los mensajes del registro, así que los cambios (p. ej., ganancias de PG) no se pueden ocultar al DJ. Los DJ siguen pudiendo eliminarlos."
+      },
+      "trackEquipUnequip": {
+        "Name": "Registrar equipar / desequipar",
+        "Hint": "Si está activado, el módulo registra cuándo se equipan o desequipan objetos en un actor."
+      },
+      "trackActiveEffects": {
+        "Name": "Registrar efectos activos",
+        "Hint": "Si está activado, el módulo registra cuándo se añaden, quitan, activan o desactivan efectos activos en un actor."
+      },
+      "nameBlacklist": {
+        "Name": "Nombres ignorados / lista negra",
+        "Hint": "Lista separada por comas de nombres de objetos y efectos activos que se ignoran (sin distinguir mayúsculas, p. ej., «Aura de protección, Antorcha»). Admite comodines (*) y regex (/patrón/)."
+      },
+      "customTrackersMenu": {
+        "Name": "Valores registrados personalizados",
+        "Label": "Configurar",
+        "Hint": "Configura rutas de datos de actor personalizadas para registrar (p. ej., Heridas, Fatiga) junto con sus mensajes, colores e iconos."
+      },
+      "importExportMenu": {
+        "Name": "Importar / exportar ajustes",
+        "Label": "Importar / exportar",
+        "Hint": "Exporta todos los ajustes del módulo y los registros personalizados a un archivo JSON, o importa ajustes de un archivo exportado antes."
+      },
+      "autoDetectPaths": {
+        "Name": "Detectar rutas de PG automáticamente",
+        "Hint": "Si está activado, el módulo intenta determinar automáticamente las rutas de datos correctas para los PG y otros atributos según el sistema activo. Desactívalo para configurar las rutas manualmente abajo."
+      },
+      "hpPath": {
+        "Name": "Ruta del valor de PG",
+        "Hint": "Ruta manual de datos del sistema para el valor de PG."
+      },
+      "tempHpPath": {
+        "Name": "Ruta de PG temporales",
+        "Hint": "Ruta manual de datos del sistema para los PG temporales."
+      },
+      "tempHpMaxPath": {
+        "Name": "Ruta de PG temporales máx.",
+        "Hint": "Ruta manual de datos del sistema para el máximo de PG temporales."
+      },
+      "currencyBasePath": {
+        "Name": "Ruta base de monedas (avanzado)",
+        "Hint": "Ruta manual de datos del sistema para las monedas. Úsala para sustituir la detección por defecto si hace falta."
+      },
+      "trackDnd5eInspiration": {
+        "Name": "Registrar inspiración",
+        "Hint": "Si está activado, registra cuándo un personaje gana o usa Inspiración heroica."
+      },
+      "trackDnd5eDeathSaves": {
+        "Name": "Registrar salvaciones contra muerte",
+        "Hint": "Si está activado, registra los éxitos y fallos de las tiradas de salvación contra muerte de los personajes."
+      },
+      "trackDnd5eSpellPrep": {
+        "Name": "Registrar preparación de conjuros",
+        "Hint": "Si está activado, registra cuándo los personajes preparan conjuros o dejan de tenerlos preparados."
+      },
+      "trackDnd5eSpellSlots": {
+        "Name": "Registrar espacios de conjuro",
+        "Hint": "Si está activado, registra cuándo se gastan o recuperan espacios de conjuro."
+      },
+      "trackDnd5eHitDice": {
+        "Name": "Registrar dados de golpe",
+        "Hint": "Si está activado, registra cuándo los personajes gastan o recuperan dados de golpe."
+      },
+      "trackDnd5eXP": {
+        "Name": "Registrar puntos de experiencia",
+        "Hint": "Si está activado, registra cuándo un personaje gana o pierde puntos de experiencia."
+      },
+      "trackMorkBorgAbilities": {
+        "Name": "Registrar habilidades",
+        "Hint": "Si está activado, registra cuándo un personaje sube o baja sus puntuaciones de habilidad."
+      },
+      "trackMorkBorgOmens": {
+        "Name": "Registrar presagios",
+        "Hint": "Si está activado, registra cuándo un personaje gana o usa presagios."
+      },
+      "trackMorkBorgPowers": {
+        "Name": "Registrar poderes",
+        "Hint": "Si está activado, registra cuándo un personaje usa o recupera poderes."
+      }
+    },
+    "Line": {
+      "HP": "PG",
+      "Damage": "Daño",
+      "TempHP": "PG temp.",
+      "TempMax": "Máx. temp.",
+      "MaxHealth": "Salud máx.",
+      "XP": "PX",
+      "Omens": "Presagios",
+      "Powers": "Poderes",
+      "Items": "Objetos",
+      "ItemAdded": "añadió {items}",
+      "ItemDeleted": "eliminó {items}",
+      "ItemUses": "Usos de {item}",
+      "ItemEquipped": "equipó {item}",
+      "ItemUnequipped": "desequipó {item}",
+      "CoinsIn": "{coin} en {container}",
+      "Spells": "Conjuros",
+      "SpellsPrepared": "preparó {items}",
+      "SpellsUnprepared": "dejó de preparar {items}",
+      "Effects": "Efectos",
+      "UnknownEffect": "Efecto desconocido",
+      "EffectGained": "obtuvo {items}",
+      "EffectLost": "perdió {items}",
+      "EffectEnabled": "activó {effect}",
+      "EffectDisabled": "desactivó {effect}"
+    },
+    "Coin": {
+      "Platinum": "Platino",
+      "Gold": "Oro",
+      "Electrum": "Electro",
+      "Silver": "Plata",
+      "Copper": "Cobre",
+      "GoldCrowns": "Coronas de oro",
+      "SilverShillings": "Chelines de plata",
+      "CopperPennies": "Peniques de cobre",
+      "Bits": "Piezas"
+    },
+    "Dnd5e": {
+      "InspirationGained": "obtuvo Inspiración heroica",
+      "InspirationSpent": "gastó Inspiración heroica",
+      "SuccessGainedOne": "obtuvo 1 éxito en salvación contra muerte ({now}/3)",
+      "SuccessGainedMany": "obtuvo {count} éxitos en salvación contra muerte ({now}/3)",
+      "SuccessLostOne": "perdió 1 éxito en salvación contra muerte ({now}/3)",
+      "SuccessLostMany": "perdió {count} éxitos en salvación contra muerte ({now}/3)",
+      "FailureGainedOne": "sufrió 1 fallo en salvación contra muerte ({now}/3)",
+      "FailureGainedMany": "sufrió {count} fallos en salvación contra muerte ({now}/3)",
+      "FailureLostOne": "perdió 1 fallo en salvación contra muerte ({now}/3)",
+      "FailureLostMany": "perdió {count} fallos en salvación contra muerte ({now}/3)",
+      "SlotLevel": "Nivel {level}",
+      "SlotPact": "Magia del pacto",
+      "Slots": "Espacios ({slot})",
+      "HitDice": "Dados de golpe",
+      "HitDiceDie": "Dados de golpe ({die})"
+    },
+    "Chat": {
+      "OnlyGMDelete": "Solo un DJ puede eliminar los mensajes del registro.",
+      "OnlyGMEdit": "Solo un DJ puede editar los mensajes del registro.",
+      "UnknownPlayer": "Jugador desconocido",
+      "UnknownSpeaker": "Desconocido",
+      "DeletedChangelog": "<strong>{user}</strong> eliminó una entrada del registro: {entry}",
+      "DeletedMessage": "<strong>{user}</strong> eliminó un mensaje ({kind}) de <strong>{speaker}</strong>",
+      "KindWhisper": "susurro",
+      "KindRoll": "tirada",
+      "KindCard": "tarjeta",
+      "KindMessage": "mensaje",
+      "WhisperedTo": "susurrado a {users}",
+      "Public": "público"
+    },
+    "Trackers": {
+      "Title": "Valores registrados personalizados",
+      "Intro": "Define rutas de datos personalizadas para registrar en tus actores. Las rutas deben ser propiedades válidas de los datos del actor (p. ej., <code>system.attributes.fatigue.value</code>).",
+      "Placeholders": "<strong>Marcadores de formato:</strong> puedes usar <code>{name}</code>, <code>{old}</code>, <code>{new}</code> y <code>{diff}</code> en los mensajes de ganancia/pérdida para hacerlos dinámicos. Las propiedades booleanas (true/false) se tratan como números (1 o 0).",
+      "Icons": "<strong>Iconos:</strong> escribe una clase de FontAwesome (p. ej., <code>fa-solid fa-droplet</code>) o haz clic en el icono del selector de archivos para buscar una imagen.",
+      "Docs": "Lee la documentación completa y ejemplos en GitHub",
+      "ColName": "Nombre (p. ej., Heridas)",
+      "ColPath": "Ruta (p. ej., system.wounds.value)",
+      "ColGain": "Msj. de ganancia (p. ej., sufrió una herida)",
+      "ColLoss": "Msj. de pérdida (p. ej., curó una herida)",
+      "ColIcon": "Icono (clase FA o ruta)",
+      "ColColor": "Color",
+      "Add": "Añadir recurso",
+      "Delete": "Eliminar recurso",
+      "Browse": "Buscar archivos",
+      "IconPlaceholder": "fa-solid fa-star o icon.svg",
+      "Empty": "No hay recursos personalizados definidos. Haz clic en el icono + para añadir uno.",
+      "Export": "Exportar registros",
+      "ExportHint": "Exportar los registros personalizados a un archivo JSON",
+      "Import": "Importar registros",
+      "ImportHint": "Importar registros personalizados desde un archivo JSON",
+      "Save": "Guardar cambios",
+      "ImportTitle": "Importar registros personalizados",
+      "ImportPrompt": "<p>Se encontraron <strong>{count}</strong> registro(s) personalizado(s) en <em>{file}</em>.</p><p>¿Cómo quieres aplicarlos a tu lista actual?</p>",
+      "ImportAppend": "Añadir / combinar",
+      "ImportReplace": "Reemplazar todo",
+      "Cancel": "Cancelar",
+      "NoneFound": "No se encontraron configuraciones de registros personalizados en el archivo seleccionado.",
+      "Imported": "Se importaron {count} registro(s) personalizado(s). Haz clic en «Guardar cambios» para guardar.",
+      "ImportFailed": "No se pudieron importar los registros personalizados: {error}",
+      "Exported": "Se exportaron {count} registros personalizados a {file}"
+    },
+    "ImportExport": {
+      "Title": "Nik's Tiny Change Logs: importar / exportar ajustes",
+      "Intro": "Exporta la configuración de <strong>Nik's Tiny Change Logs</strong> a un archivo JSON portátil para hacer copia de seguridad o pasarla entre mundos, o importa una configuración existente.",
+      "ExportHeading": "Exportar configuración",
+      "ExportDesc": "Exporta todos los ajustes del módulo (visibilidad, opciones, lista negra y registros del sistema) y todas las definiciones de recursos personalizados.",
+      "Version": "Versión",
+      "ActiveSystem": "Sistema activo",
+      "Settings": "Ajustes",
+      "SettingsCount": "{count} registrados",
+      "CustomTrackers": "Registros personalizados",
+      "TrackersCount": "{count} definidos",
+      "ExportButton": "Exportar ajustes a JSON",
+      "ImportHeading": "Importar configuración",
+      "ImportDesc": "Sube un archivo <code>.json</code> exportado desde Nik's Tiny Change Logs. Verás una vista previa de los ajustes encontrados antes de aplicar los cambios.",
+      "TrackerMode": "Tratamiento de registros personalizados:",
+      "ModeReplace": "<strong>Reemplazar</strong> &mdash; sobrescribir todos los registros personalizados existentes",
+      "ModeMerge": "<strong>Combinar</strong> &mdash; conservar los registros existentes y añadir los nuevos",
+      "ImportButton": "Seleccionar archivo JSON para importar",
+      "Exported": "Ajustes exportados a {file}",
+      "ErrorNotObject": "Datos JSON no válidos: el contenido no es un objeto ni un array.",
+      "ErrorOtherModule": "Archivo de configuración no válido: pertenece al módulo «{module}», no a «{expected}».",
+      "ErrorNothingFound": "No se encontraron ajustes ni registros personalizados reconocibles en el archivo.",
+      "FoundSettings": "<strong>{count}</strong> ajuste(s) del módulo",
+      "FoundTrackers": "<strong>{count}</strong> registro(s) personalizado(s) (se <em>{mode}</em> con los existentes)",
+      "ModeMergeWith": "combinarán",
+      "ModeReplaceVerb": "reemplazarán",
+      "And": "y",
+      "ConfirmTitle": "Importar ajustes de Nik's Tiny Change Logs",
+      "ConfirmContent": "<p>Se encontró: {found} en <em>{file}</em>.</p><p>¿Importar y aplicar ahora esta configuración a tu mundo?</p>",
+      "SettingsUpdated": "{count} ajuste(s) actualizado(s)",
+      "TrackersConfigured": "{count} registro(s) personalizado(s) configurado(s)",
+      "Imported": "Configuración importada correctamente desde {file}{details}.",
+      "SkippedInvalid": "Algunos ajustes tenían valores no válidos y se omitieron: {keys}",
+      "NoPermission": "No tienes permiso para modificar los ajustes del mundo.",
+      "ImportFailed": "Error al importar: {error}"
+    }
+  }
+}

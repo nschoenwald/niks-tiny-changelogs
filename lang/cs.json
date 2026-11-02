@@ -1,0 +1,266 @@
+{
+  "NTCL": {
+    "Settings": {
+      "compactMessages": {
+        "Name": "Kompaktní zprávy",
+        "Hint": "Je-li zapnuto, zprávy protokolu změn zabírají jen jeden řádek a rozbalí se po najetí, zaměření nebo klepnutí. Pomáhá udržet chat přehledný."
+      },
+      "messageStyle": {
+        "Name": "Styl zpráv",
+        "Hint": "Jak se zprávy obarvují. „Tónovaný“ ponechá kartu chatu systému s lehkým nádechem a barevným proužkem (výchozí). „Plný“ vyplní řádek jeho barvou a použije bílý text. „Karta systému“ ponechá kartu chatu systému beze změny kromě barevného proužku.",
+        "Tinted": "Tónovaný (výchozí)",
+        "Solid": "Plný",
+        "Accent": "Karta systému"
+      },
+      "simpleOutput": {
+        "Name": "Zjednodušený výstup",
+        "Hint": "Je-li zapnuto, zprávy ukazují jen změnu (např. „+5“) místo staré a nové hodnoty (např. „10 → 15“). Platí pro zprávy zveřejněné po změně."
+      },
+      "messageVisibility": {
+        "Name": "Viditelnost zpráv",
+        "Hint": "Určuje, kdo vidí zprávy protokolu změn. „Jen PJ“ šeptá výhradně PJ. „PJ + vlastníci“ šeptá PJ a vlastnícím hráčům (výchozí). „Všichni“ zveřejní veřejnou zprávu viditelnou pro všechny. „Jen hráči“ šeptá všem hráčům, kteří nejsou PJ. U CP se publikum dále zužuje nastavením „Publikum zpráv CP“, pokud viditelnost není „Jen PJ“ nebo „Jen hráči“.",
+        "GM": "Jen PJ",
+        "GMPlayer": "PJ + vlastníci (výchozí)",
+        "Everyone": "Všichni",
+        "Player": "Jen hráči"
+      },
+      "npcAudience": {
+        "Name": "Publikum zpráv CP",
+        "Hint": "Určuje, kdo vidí zprávy protokolu změn u aktérů CP. „Jen PJ“ šeptá výhradně PJ. „PJ + vlastníci“ šeptá PJ a vlastnícím hráčům (výchozí). „Všichni“ zveřejní veřejnou zprávu viditelnou pro všechny. Platí jen tehdy, když je viditelnost „PJ + vlastníci“ nebo „Všichni“.",
+        "GM": "Jen PJ",
+        "GMOwners": "PJ + vlastníci (výchozí)",
+        "Everyone": "Všichni"
+      },
+      "trackCurrency": {
+        "Name": "Sledovat měnu",
+        "Hint": "Je-li zapnuto, modul sleduje a zaznamenává změny měny aktérů a kontejnerů."
+      },
+      "trackItemChanges": {
+        "Name": "Sledovat změny předmětů",
+        "Hint": "Je-li zapnuto, modul sleduje a zaznamenává změny předmětů."
+      },
+      "trackDeletedMessages": {
+        "Name": "Sledovat smazané zprávy chatu",
+        "Hint": "Je-li zapnuto a hráč smaže zprávu v chatu, její kopie se pošeptá PJ."
+      },
+      "protectChangelogMessages": {
+        "Name": "Chránit zprávy protokolu",
+        "Hint": "Je-li zapnuto, hráči nemohou mazat ani upravovat zprávy protokolu změn, takže změny (např. přírůstky ŽB) nelze před PJ skrýt. PJ je mohou mazat i nadále."
+      },
+      "trackEquipUnequip": {
+        "Name": "Sledovat nasazení / sundání",
+        "Hint": "Je-li zapnuto, modul zaznamenává, kdy si aktér předměty nasadí nebo sundá."
+      },
+      "trackActiveEffects": {
+        "Name": "Sledovat aktivní efekty",
+        "Hint": "Je-li zapnuto, modul zaznamenává, kdy jsou aktivní efekty na aktérovi přidány, odebrány, zapnuty nebo vypnuty."
+      },
+      "nameBlacklist": {
+        "Name": "Ignorovaná jména / černá listina",
+        "Hint": "Čárkami oddělený seznam názvů předmětů a aktivních efektů, které protokol ignoruje (bez ohledu na velikost písmen, např. „Aura ochrany, Pochodeň“). Podporuje zástupné znaky (*) a regex (/vzor/)."
+      },
+      "customTrackersMenu": {
+        "Name": "Vlastní sledované hodnoty",
+        "Label": "Nastavit",
+        "Hint": "Nastavte vlastní datové cesty aktérů ke sledování (např. Zranění, Únava) včetně zpráv, barev a ikon."
+      },
+      "importExportMenu": {
+        "Name": "Import / export nastavení",
+        "Label": "Import / export",
+        "Hint": "Exportuje všechna nastavení modulu a vlastní sledování do souboru JSON, nebo importuje nastavení z dříve exportovaného souboru."
+      },
+      "autoDetectPaths": {
+        "Name": "Automaticky zjistit cesty ŽB",
+        "Hint": "Je-li zapnuto, modul se pokusí automaticky určit správné datové cesty pro ŽB a další atributy podle aktivního systému. Vypněte, chcete-li cesty níže nastavit ručně."
+      },
+      "hpPath": {
+        "Name": "Cesta hodnoty ŽB",
+        "Hint": "Ruční systémová datová cesta pro hodnotu ŽB."
+      },
+      "tempHpPath": {
+        "Name": "Cesta dočasných ŽB",
+        "Hint": "Ruční systémová datová cesta pro dočasné ŽB."
+      },
+      "tempHpMaxPath": {
+        "Name": "Cesta max. dočasných ŽB",
+        "Hint": "Ruční systémová datová cesta pro maximum dočasných ŽB."
+      },
+      "currencyBasePath": {
+        "Name": "Základní cesta měny (pokročilé)",
+        "Hint": "Ruční systémová datová cesta pro měnu. Umožní v případě potřeby přepsat výchozí zjišťování."
+      },
+      "trackDnd5eInspiration": {
+        "Name": "Sledovat inspiraci",
+        "Hint": "Je-li zapnuto, zaznamenává, kdy postava získá nebo použije Hrdinskou inspiraci."
+      },
+      "trackDnd5eDeathSaves": {
+        "Name": "Sledovat záchranné hody proti smrti",
+        "Hint": "Je-li zapnuto, zaznamenává úspěchy a neúspěchy postav v záchranných hodech proti smrti."
+      },
+      "trackDnd5eSpellPrep": {
+        "Name": "Sledovat připravení kouzel",
+        "Hint": "Je-li zapnuto, zaznamenává, kdy si postavy kouzla připraví nebo je přestanou mít připravená."
+      },
+      "trackDnd5eSpellSlots": {
+        "Name": "Sledovat pozice kouzel",
+        "Hint": "Je-li zapnuto, zaznamenává, kdy se pozice kouzel spotřebují nebo obnoví."
+      },
+      "trackDnd5eHitDice": {
+        "Name": "Sledovat kostky životů",
+        "Hint": "Je-li zapnuto, zaznamenává, kdy postavy spotřebují nebo obnoví kostky životů."
+      },
+      "trackDnd5eXP": {
+        "Name": "Sledovat zkušenostní body",
+        "Hint": "Je-li zapnuto, zaznamenává, kdy postava získá nebo ztratí zkušenostní body."
+      },
+      "trackMorkBorgAbilities": {
+        "Name": "Sledovat vlastnosti",
+        "Hint": "Je-li zapnuto, zaznamenává, kdy postava zvýší nebo sníží hodnoty vlastností."
+      },
+      "trackMorkBorgOmens": {
+        "Name": "Sledovat znamení",
+        "Hint": "Je-li zapnuto, zaznamenává, kdy postava získá nebo použije znamení."
+      },
+      "trackMorkBorgPowers": {
+        "Name": "Sledovat moci",
+        "Hint": "Je-li zapnuto, zaznamenává, kdy postava použije nebo obnoví moci."
+      }
+    },
+    "Line": {
+      "HP": "ŽB",
+      "Damage": "Zranění",
+      "TempHP": "Dočasné ŽB",
+      "TempMax": "Dočasné max.",
+      "MaxHealth": "Max. zdraví",
+      "XP": "ZK",
+      "Omens": "Znamení",
+      "Powers": "Moci",
+      "Items": "Předměty",
+      "ItemAdded": "přidáno: {items}",
+      "ItemDeleted": "smazáno: {items}",
+      "ItemUses": "Použití: {item}",
+      "ItemEquipped": "nasazeno: {item}",
+      "ItemUnequipped": "sundáno: {item}",
+      "CoinsIn": "{coin} v {container}",
+      "Spells": "Kouzla",
+      "SpellsPrepared": "připraveno: {items}",
+      "SpellsUnprepared": "zrušena příprava: {items}",
+      "Effects": "Efekty",
+      "UnknownEffect": "Neznámý efekt",
+      "EffectGained": "získáno: {items}",
+      "EffectLost": "ztraceno: {items}",
+      "EffectEnabled": "zapnuto: {effect}",
+      "EffectDisabled": "vypnuto: {effect}"
+    },
+    "Coin": {
+      "Platinum": "Platina",
+      "Gold": "Zlato",
+      "Electrum": "Elektrum",
+      "Silver": "Stříbro",
+      "Copper": "Měď",
+      "GoldCrowns": "Zlaté koruny",
+      "SilverShillings": "Stříbrné šilinky",
+      "CopperPennies": "Měděné pence",
+      "Bits": "Drobné"
+    },
+    "Dnd5e": {
+      "InspirationGained": "získal(a) Hrdinskou inspiraci",
+      "InspirationSpent": "použil(a) Hrdinskou inspiraci",
+      "SuccessGainedOne": "získal(a) 1 úspěch v hodu proti smrti ({now}/3)",
+      "SuccessGainedMany": "úspěchy v hodech proti smrti získané: {count} ({now}/3)",
+      "SuccessLostOne": "ztratil(a) 1 úspěch v hodu proti smrti ({now}/3)",
+      "SuccessLostMany": "úspěchy v hodech proti smrti ztracené: {count} ({now}/3)",
+      "FailureGainedOne": "1 neúspěch v hodu proti smrti ({now}/3)",
+      "FailureGainedMany": "neúspěchy v hodech proti smrti: {count} ({now}/3)",
+      "FailureLostOne": "odebrán 1 neúspěch v hodu proti smrti ({now}/3)",
+      "FailureLostMany": "odebrané neúspěchy v hodech proti smrti: {count} ({now}/3)",
+      "SlotLevel": "Úroveň {level}",
+      "SlotPact": "Magie paktu",
+      "Slots": "Pozice ({slot})",
+      "HitDice": "Kostky životů",
+      "HitDiceDie": "Kostky životů ({die})"
+    },
+    "Chat": {
+      "OnlyGMDelete": "Zprávy protokolu změn může mazat jen PJ.",
+      "OnlyGMEdit": "Zprávy protokolu změn může upravovat jen PJ.",
+      "UnknownPlayer": "Neznámý hráč",
+      "UnknownSpeaker": "Neznámý",
+      "DeletedChangelog": "<strong>{user}</strong> smazal(a) záznam protokolu: {entry}",
+      "DeletedMessage": "<strong>{user}</strong> smazal(a) zprávu ({kind}) od <strong>{speaker}</strong>",
+      "KindWhisper": "šepot",
+      "KindRoll": "hod",
+      "KindCard": "karta",
+      "KindMessage": "zpráva",
+      "WhisperedTo": "pošeptáno: {users}",
+      "Public": "veřejná"
+    },
+    "Trackers": {
+      "Title": "Vlastní sledované hodnoty",
+      "Intro": "Definujte vlastní datové cesty ke sledování u svých aktérů. Cesty musí být platné vlastnosti dat aktéra (např. <code>system.attributes.fatigue.value</code>).",
+      "Placeholders": "<strong>Zástupné symboly:</strong> ve zprávách o přírůstku/úbytku můžete použít <code>{name}</code>, <code>{old}</code>, <code>{new}</code> a <code>{diff}</code>, aby byly dynamické. Logické vlastnosti (true/false) se berou jako čísla (1 nebo 0).",
+      "Icons": "<strong>Ikony:</strong> zadejte třídu FontAwesome (např. <code>fa-solid fa-droplet</code>) nebo klikněte na ikonu výběru souboru a vyberte obrázek.",
+      "Docs": "Úplná dokumentace a příklady na GitHubu",
+      "ColName": "Název (např. Zranění)",
+      "ColPath": "Cesta (např. system.wounds.value)",
+      "ColGain": "Zpráva přírůstku (např. utržil zranění)",
+      "ColLoss": "Zpráva úbytku (např. vyléčil zranění)",
+      "ColIcon": "Ikona (třída FA nebo cesta)",
+      "ColColor": "Barva",
+      "Add": "Přidat zdroj",
+      "Delete": "Smazat zdroj",
+      "Browse": "Procházet soubory",
+      "IconPlaceholder": "fa-solid fa-star nebo icon.svg",
+      "Empty": "Nejsou definovány žádné vlastní sledované zdroje. Klikněte na ikonu + a přidejte jeden.",
+      "Export": "Exportovat sledování",
+      "ExportHint": "Exportovat vlastní sledování do souboru JSON",
+      "Import": "Importovat sledování",
+      "ImportHint": "Importovat vlastní sledování ze souboru JSON",
+      "Save": "Uložit změny",
+      "ImportTitle": "Importovat vlastní sledování",
+      "ImportPrompt": "<p>V <em>{file}</em> nalezena vlastní sledování (<strong>{count}</strong>).</p><p>Jak je chcete použít na aktuální seznam?</p>",
+      "ImportAppend": "Připojit / sloučit",
+      "ImportReplace": "Nahradit vše",
+      "Cancel": "Zrušit",
+      "NoneFound": "Ve vybraném souboru nebyla nalezena žádná nastavení vlastních sledování.",
+      "Imported": "Importovaná vlastní sledování: {count}. Uložte kliknutím na „Uložit změny“.",
+      "ImportFailed": "Import vlastních sledování se nezdařil: {error}",
+      "Exported": "Vlastní sledování ({count}) exportována do {file}"
+    },
+    "ImportExport": {
+      "Title": "Nik's Tiny Change Logs: import / export nastavení",
+      "Intro": "Exportujte konfiguraci <strong>Nik's Tiny Change Logs</strong> do přenosného souboru JSON jako zálohu nebo pro přenos mezi světy, nebo importujte existující konfiguraci.",
+      "ExportHeading": "Export konfigurace",
+      "ExportDesc": "Exportuje všechna nastavení modulu (viditelnost, přepínače funkcí, černou listinu a systémová sledování) a všechny definice vlastních sledovaných zdrojů.",
+      "Version": "Verze",
+      "ActiveSystem": "Aktivní systém",
+      "Settings": "Nastavení",
+      "SettingsCount": "registrováno: {count}",
+      "CustomTrackers": "Vlastní sledování",
+      "TrackersCount": "definováno: {count}",
+      "ExportButton": "Exportovat nastavení do JSON",
+      "ImportHeading": "Import konfigurace",
+      "ImportDesc": "Nahrajte soubor <code>.json</code> exportovaný z Nik's Tiny Change Logs. Před použitím změn uvidíte náhled nalezených nastavení.",
+      "TrackerMode": "Zacházení s vlastními sledováními:",
+      "ModeReplace": "<strong>Nahradit</strong> &mdash; přepsat všechna stávající vlastní sledování",
+      "ModeMerge": "<strong>Sloučit</strong> &mdash; ponechat stávající sledování a připojit nová",
+      "ImportButton": "Vybrat soubor JSON k importu",
+      "Exported": "Nastavení exportována do {file}",
+      "ErrorNotObject": "Neplatná data JSON: obsah není objekt ani pole.",
+      "ErrorOtherModule": "Neplatný konfigurační soubor: patří modulu „{module}“, ne „{expected}“.",
+      "ErrorNothingFound": "V souboru nebyla nalezena žádná rozpoznatelná nastavení ani vlastní sledování.",
+      "FoundSettings": "nastavení modulu: <strong>{count}</strong>",
+      "FoundTrackers": "vlastní sledování: <strong>{count}</strong> (stávající sledování budou <em>{mode}</em>)",
+      "ModeMergeWith": "sloučena",
+      "ModeReplaceVerb": "nahrazena",
+      "And": "a",
+      "ConfirmTitle": "Import nastavení Nik's Tiny Change Logs",
+      "ConfirmContent": "<p>V <em>{file}</em> nalezeno: {found}.</p><p>Importovat a použít tuto konfiguraci ve vašem světě nyní?</p>",
+      "SettingsUpdated": "aktualizovaná nastavení: {count}",
+      "TrackersConfigured": "nastavená vlastní sledování: {count}",
+      "Imported": "Konfigurace úspěšně importována z {file}{details}.",
+      "SkippedInvalid": "Některá nastavení měla neplatné hodnoty a byla přeskočena: {keys}",
+      "NoPermission": "Nemáte oprávnění měnit nastavení světa.",
+      "ImportFailed": "Import se nezdařil: {error}"
+    }
+  }
+}

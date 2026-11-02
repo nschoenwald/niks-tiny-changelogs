@@ -1,0 +1,266 @@
+{
+  "NTCL": {
+    "Settings": {
+      "compactMessages": {
+        "Name": "Kompakte Nachrichten",
+        "Hint": "Wenn aktiviert, sind Änderungsnachrichten auf eine Zeile begrenzt und klappen beim Überfahren, Fokussieren oder Antippen auf. Hält den Chatverlauf übersichtlich."
+      },
+      "messageStyle": {
+        "Name": "Nachrichtenstil",
+        "Hint": "Wie Änderungsnachrichten eingefärbt werden. „Getönt“ behält die Chatkarte deines Systems mit leichter Tönung und farbigem Streifen (Standard). „Vollfarbig“ füllt die Zeile mit ihrer Farbe und nutzt weiße Schrift. „Systemkarte“ lässt die Chatkarte des Systems bis auf einen farbigen Streifen unverändert.",
+        "Tinted": "Getönt (Standard)",
+        "Solid": "Vollfarbig",
+        "Accent": "Systemkarte"
+      },
+      "simpleOutput": {
+        "Name": "Vereinfachte Ausgabe",
+        "Hint": "Wenn aktiviert, zeigen Änderungsnachrichten nur die Änderung (z. B. „+5“) statt zusätzlich alten und neuen Wert (z. B. „10 → 15“). Gilt für Nachrichten, die nach der Änderung gepostet werden."
+      },
+      "messageVisibility": {
+        "Name": "Sichtbarkeit der Nachrichten",
+        "Hint": "Legt fest, wer Änderungsnachrichten sieht. „Nur SL“ flüstert ausschließlich an SL. „SL + Besitzer“ flüstert an SL und die besitzenden Spieler (Standard). „Alle“ postet eine öffentliche Nachricht für alle Spieler und SL. „Nur Spieler“ flüstert an alle Spieler, die keine SL sind. Bei NSC wird das Publikum zusätzlich durch die Einstellung „Publikum für NSC-Nachrichten“ eingegrenzt, außer die Sichtbarkeit steht auf „Nur SL“ oder „Nur Spieler“.",
+        "GM": "Nur SL",
+        "GMPlayer": "SL + Besitzer (Standard)",
+        "Everyone": "Alle",
+        "Player": "Nur Spieler"
+      },
+      "npcAudience": {
+        "Name": "Publikum für NSC-Nachrichten",
+        "Hint": "Legt fest, wer Änderungsnachrichten zu NSC-Akteuren sieht. „Nur SL“ flüstert ausschließlich an SL. „SL + Besitzer“ flüstert an SL und die besitzenden Spieler (Standard). „Alle“ postet eine öffentliche Nachricht für alle Spieler und SL. Gilt nur, wenn die Sichtbarkeit auf „SL + Besitzer“ oder „Alle“ steht.",
+        "GM": "Nur SL",
+        "GMOwners": "SL + Besitzer (Standard)",
+        "Everyone": "Alle"
+      },
+      "trackCurrency": {
+        "Name": "Währung verfolgen",
+        "Hint": "Wenn aktiviert, überwacht und protokolliert das Modul Änderungen an der Währung von Akteuren und Behältern."
+      },
+      "trackItemChanges": {
+        "Name": "Gegenstandsänderungen verfolgen",
+        "Hint": "Wenn aktiviert, überwacht und protokolliert das Modul Änderungen an Gegenständen."
+      },
+      "trackDeletedMessages": {
+        "Name": "Gelöschte Chatnachrichten verfolgen",
+        "Hint": "Wenn aktiviert, wird beim Löschen einer Chatnachricht durch einen Spieler eine Kopie an die SL geflüstert."
+      },
+      "protectChangelogMessages": {
+        "Name": "Änderungsnachrichten schützen",
+        "Hint": "Wenn aktiviert, können Spieler Änderungsnachrichten weder löschen noch bearbeiten, sodass Änderungen (z. B. TP-Zuwächse) nicht vor der SL verborgen werden können. SL können sie weiterhin löschen."
+      },
+      "trackEquipUnequip": {
+        "Name": "An-/Ablegen verfolgen",
+        "Hint": "Wenn aktiviert, protokolliert das Modul, wenn Gegenstände an einem Akteur angelegt oder abgelegt werden."
+      },
+      "trackActiveEffects": {
+        "Name": "Aktive Effekte verfolgen",
+        "Hint": "Wenn aktiviert, protokolliert das Modul, wenn aktive Effekte an einem Akteur hinzugefügt, entfernt, aktiviert oder deaktiviert werden."
+      },
+      "nameBlacklist": {
+        "Name": "Ignorierte Namen / Sperrliste",
+        "Hint": "Kommagetrennte Liste von Gegenstands- und Effektnamen, die in Änderungsprotokollen ignoriert werden (ohne Groß-/Kleinschreibung, z. B. „Aura des Schutzes, Fackel“). Unterstützt Platzhalter (*) und Regex (/Muster/)."
+      },
+      "customTrackersMenu": {
+        "Name": "Eigene verfolgte Werte",
+        "Label": "Konfigurieren",
+        "Hint": "Eigene Datenpfade von Akteuren zum Verfolgen festlegen (z. B. Wunden, Erschöpfung), samt Nachrichten, Farben und Symbolen."
+      },
+      "importExportMenu": {
+        "Name": "Einstellungen importieren / exportieren",
+        "Label": "Import / Export",
+        "Hint": "Alle Moduleinstellungen und eigenen Tracker in eine JSON-Datei exportieren oder Einstellungen aus einer zuvor exportierten Datei importieren."
+      },
+      "autoDetectPaths": {
+        "Name": "TP-Pfade automatisch erkennen",
+        "Hint": "Wenn aktiviert, versucht das Modul, die richtigen Datenpfade für TP und andere Attribute anhand des aktiven Systems automatisch zu ermitteln. Deaktivieren, um die Pfade unten manuell festzulegen."
+      },
+      "hpPath": {
+        "Name": "Pfad für TP-Wert",
+        "Hint": "Manueller System-Datenpfad für den TP-Wert."
+      },
+      "tempHpPath": {
+        "Name": "Pfad für temp. TP",
+        "Hint": "Manueller System-Datenpfad für temporäre TP."
+      },
+      "tempHpMaxPath": {
+        "Name": "Pfad für max. temp. TP",
+        "Hint": "Manueller System-Datenpfad für maximale temporäre TP."
+      },
+      "currencyBasePath": {
+        "Name": "Basispfad Währung (erweitert)",
+        "Hint": "Manueller System-Datenpfad für Währung. Damit lässt sich die automatische Erkennung bei Bedarf überschreiben."
+      },
+      "trackDnd5eInspiration": {
+        "Name": "Inspiration verfolgen",
+        "Hint": "Wenn aktiviert, wird protokolliert, wenn ein Charakter Heroische Inspiration erhält oder einsetzt."
+      },
+      "trackDnd5eDeathSaves": {
+        "Name": "Todesrettungswürfe verfolgen",
+        "Hint": "Wenn aktiviert, werden Erfolge und Fehlschläge bei Todesrettungswürfen von Charakteren protokolliert."
+      },
+      "trackDnd5eSpellPrep": {
+        "Name": "Zaubervorbereitung verfolgen",
+        "Hint": "Wenn aktiviert, wird protokolliert, wenn Zauber von Charakteren vorbereitet oder nicht mehr vorbereitet werden."
+      },
+      "trackDnd5eSpellSlots": {
+        "Name": "Zauberplätze verfolgen",
+        "Hint": "Wenn aktiviert, wird protokolliert, wenn Zauberplätze verbraucht oder zurückgewonnen werden."
+      },
+      "trackDnd5eHitDice": {
+        "Name": "Trefferwürfel verfolgen",
+        "Hint": "Wenn aktiviert, wird protokolliert, wenn Charaktere Trefferwürfel verbrauchen oder zurückgewinnen."
+      },
+      "trackDnd5eXP": {
+        "Name": "Erfahrungspunkte verfolgen",
+        "Hint": "Wenn aktiviert, wird protokolliert, wenn ein Charakter Erfahrungspunkte erhält oder verliert."
+      },
+      "trackMorkBorgAbilities": {
+        "Name": "Attribute verfolgen",
+        "Hint": "Wenn aktiviert, wird protokolliert, wenn ein Charakter Attributswerte erhöht oder senkt."
+      },
+      "trackMorkBorgOmens": {
+        "Name": "Omen verfolgen",
+        "Hint": "Wenn aktiviert, wird protokolliert, wenn ein Charakter Omen erhält oder einsetzt."
+      },
+      "trackMorkBorgPowers": {
+        "Name": "Kräfte verfolgen",
+        "Hint": "Wenn aktiviert, wird protokolliert, wenn ein Charakter Kräfte einsetzt oder zurückerhält."
+      }
+    },
+    "Line": {
+      "HP": "TP",
+      "Damage": "Schaden",
+      "TempHP": "Temp. TP",
+      "TempMax": "Temp. max.",
+      "MaxHealth": "Max. Gesundheit",
+      "XP": "EP",
+      "Omens": "Omen",
+      "Powers": "Kräfte",
+      "Items": "Gegenstände",
+      "ItemAdded": "{items} hinzugefügt",
+      "ItemDeleted": "{items} gelöscht",
+      "ItemUses": "Nutzungen von {item}",
+      "ItemEquipped": "{item} angelegt",
+      "ItemUnequipped": "{item} abgelegt",
+      "CoinsIn": "{coin} in {container}",
+      "Spells": "Zauber",
+      "SpellsPrepared": "{items} vorbereitet",
+      "SpellsUnprepared": "{items} nicht mehr vorbereitet",
+      "Effects": "Effekte",
+      "UnknownEffect": "Unbekannter Effekt",
+      "EffectGained": "{items} erhalten",
+      "EffectLost": "{items} verloren",
+      "EffectEnabled": "{effect} aktiviert",
+      "EffectDisabled": "{effect} deaktiviert"
+    },
+    "Coin": {
+      "Platinum": "Platin",
+      "Gold": "Gold",
+      "Electrum": "Elektrum",
+      "Silver": "Silber",
+      "Copper": "Kupfer",
+      "GoldCrowns": "Goldkronen",
+      "SilverShillings": "Silberschillinge",
+      "CopperPennies": "Kupferpfennige",
+      "Bits": "Bits"
+    },
+    "Dnd5e": {
+      "InspirationGained": "erhielt Heroische Inspiration",
+      "InspirationSpent": "setzte Heroische Inspiration ein",
+      "SuccessGainedOne": "erhielt 1 Erfolg beim Todesrettungswurf ({now}/3)",
+      "SuccessGainedMany": "erhielt {count} Erfolge beim Todesrettungswurf ({now}/3)",
+      "SuccessLostOne": "verlor 1 Erfolg beim Todesrettungswurf ({now}/3)",
+      "SuccessLostMany": "verlor {count} Erfolge beim Todesrettungswurf ({now}/3)",
+      "FailureGainedOne": "erhielt 1 Fehlschlag beim Todesrettungswurf ({now}/3)",
+      "FailureGainedMany": "erhielt {count} Fehlschläge beim Todesrettungswurf ({now}/3)",
+      "FailureLostOne": "verlor 1 Fehlschlag beim Todesrettungswurf ({now}/3)",
+      "FailureLostMany": "verlor {count} Fehlschläge beim Todesrettungswurf ({now}/3)",
+      "SlotLevel": "Grad {level}",
+      "SlotPact": "Paktmagie",
+      "Slots": "Zauberplätze ({slot})",
+      "HitDice": "Trefferwürfel",
+      "HitDiceDie": "Trefferwürfel ({die})"
+    },
+    "Chat": {
+      "OnlyGMDelete": "Änderungsnachrichten können nur von einer SL gelöscht werden.",
+      "OnlyGMEdit": "Änderungsnachrichten können nur von einer SL bearbeitet werden.",
+      "UnknownPlayer": "Unbekannter Spieler",
+      "UnknownSpeaker": "Unbekannt",
+      "DeletedChangelog": "<strong>{user}</strong> hat einen Änderungseintrag gelöscht: {entry}",
+      "DeletedMessage": "<strong>{user}</strong> hat eine Nachricht ({kind}) von <strong>{speaker}</strong> gelöscht",
+      "KindWhisper": "Flüstern",
+      "KindRoll": "Wurf",
+      "KindCard": "Karte",
+      "KindMessage": "Nachricht",
+      "WhisperedTo": "geflüstert an {users}",
+      "Public": "öffentlich"
+    },
+    "Trackers": {
+      "Title": "Eigene verfolgte Werte",
+      "Intro": "Lege eigene Datenpfade fest, die an deinen Akteuren verfolgt werden. Pfade müssen gültige Eigenschaften der Akteursdaten sein (z. B. <code>system.attributes.fatigue.value</code>).",
+      "Placeholders": "<strong>Platzhalter:</strong> In den Nachrichten für Zuwachs/Verlust kannst du <code>{name}</code>, <code>{old}</code>, <code>{new}</code> und <code>{diff}</code> verwenden, um sie dynamisch zu machen. Boolesche Eigenschaften (true/false) werden als Zahl behandelt (1 oder 0).",
+      "Icons": "<strong>Symbole:</strong> Gib eine FontAwesome-Klasse ein (z. B. <code>fa-solid fa-droplet</code>) oder klicke auf das Dateiauswahl-Symbol, um ein Bild zu wählen.",
+      "Docs": "Vollständige Dokumentation und Beispiele auf GitHub lesen",
+      "ColName": "Name (z. B. Wunden)",
+      "ColPath": "Pfad (z. B. system.wounds.value)",
+      "ColGain": "Zuwachs-Text (z. B. erlitt eine Wunde)",
+      "ColLoss": "Verlust-Text (z. B. heilte eine Wunde)",
+      "ColIcon": "Symbol (FA-Klasse oder Pfad)",
+      "ColColor": "Farbe",
+      "Add": "Ressource hinzufügen",
+      "Delete": "Ressource löschen",
+      "Browse": "Dateien durchsuchen",
+      "IconPlaceholder": "fa-solid fa-star oder icon.svg",
+      "Empty": "Keine eigenen verfolgten Ressourcen festgelegt. Klicke auf das +-Symbol, um eine hinzuzufügen.",
+      "Export": "Tracker exportieren",
+      "ExportHint": "Eigene Tracker in eine JSON-Datei exportieren",
+      "Import": "Tracker importieren",
+      "ImportHint": "Eigene Tracker aus einer JSON-Datei importieren",
+      "Save": "Änderungen speichern",
+      "ImportTitle": "Eigene Tracker importieren",
+      "ImportPrompt": "<p><strong>{count}</strong> eigene(r) Tracker in <em>{file}</em> gefunden.</p><p>Wie sollen sie auf deine aktuelle Liste angewendet werden?</p>",
+      "ImportAppend": "Anhängen / Zusammenführen",
+      "ImportReplace": "Alle ersetzen",
+      "Cancel": "Abbrechen",
+      "NoneFound": "In der gewählten Datei wurden keine eigenen Tracker gefunden.",
+      "Imported": "{count} eigene(r) Tracker importiert. Klicke auf „Änderungen speichern“, um zu speichern.",
+      "ImportFailed": "Import der eigenen Tracker fehlgeschlagen: {error}",
+      "Exported": "{count} eigene Tracker nach {file} exportiert"
+    },
+    "ImportExport": {
+      "Title": "Nik's Tiny Change Logs: Einstellungen importieren / exportieren",
+      "Intro": "Exportiere deine Konfiguration von <strong>Nik's Tiny Change Logs</strong> in eine portable JSON-Datei zur Sicherung oder Übertragung zwischen Welten, oder importiere eine vorhandene Konfiguration.",
+      "ExportHeading": "Konfiguration exportieren",
+      "ExportDesc": "Exportiert alle Moduleinstellungen (Sichtbarkeit, Funktionsschalter, Sperrliste und System-Tracker) und alle eigenen verfolgten Ressourcen.",
+      "Version": "Version",
+      "ActiveSystem": "Aktives System",
+      "Settings": "Einstellungen",
+      "SettingsCount": "{count} registriert",
+      "CustomTrackers": "Eigene Tracker",
+      "TrackersCount": "{count} festgelegt",
+      "ExportButton": "Einstellungen als JSON exportieren",
+      "ImportHeading": "Konfiguration importieren",
+      "ImportDesc": "Lade eine aus Nik's Tiny Change Logs exportierte <code>.json</code>-Datei hoch. Vor dem Übernehmen siehst du eine Vorschau der gefundenen Einstellungen.",
+      "TrackerMode": "Umgang mit eigenen Trackern:",
+      "ModeReplace": "<strong>Ersetzen</strong> &mdash; Alle vorhandenen eigenen Tracker überschreiben",
+      "ModeMerge": "<strong>Zusammenführen</strong> &mdash; Vorhandene eigene Tracker behalten und neue anhängen",
+      "ImportButton": "JSON-Datei zum Importieren wählen",
+      "Exported": "Einstellungen nach {file} exportiert",
+      "ErrorNotObject": "Ungültige JSON-Daten: Inhalt ist kein Objekt und kein Array.",
+      "ErrorOtherModule": "Ungültige Konfigurationsdatei: Die Datei gehört zum Modul \"{module}\", nicht zu \"{expected}\".",
+      "ErrorNothingFound": "In der Datei wurden keine erkennbaren Einstellungen oder eigenen Tracker gefunden.",
+      "FoundSettings": "<strong>{count}</strong> Moduleinstellung(en)",
+      "FoundTrackers": "<strong>{count}</strong> eigene(r) Tracker (vorhandene Tracker werden <em>{mode}</em>)",
+      "ModeMergeWith": "zusammengeführt",
+      "ModeReplaceVerb": "ersetzt",
+      "And": "und",
+      "ConfirmTitle": "Einstellungen von Nik's Tiny Change Logs importieren",
+      "ConfirmContent": "<p>{found} in <em>{file}</em> gefunden.</p><p>Diese Konfiguration jetzt importieren und auf deine Welt anwenden?</p>",
+      "SettingsUpdated": "{count} Einstellung(en) aktualisiert",
+      "TrackersConfigured": "{count} eigene(r) Tracker konfiguriert",
+      "Imported": "Konfiguration aus {file} erfolgreich importiert{details}.",
+      "SkippedInvalid": "Einige Einstellungen hatten ungültige Werte und wurden übersprungen: {keys}",
+      "NoPermission": "Du hast keine Berechtigung, Welteinstellungen zu ändern.",
+      "ImportFailed": "Import fehlgeschlagen: {error}"
+    }
+  }
+}
