@@ -100,7 +100,7 @@ li.chat-message.tiny-monitor-msg.tm-style-solid .tm-detail {
 /* -------------------------------
    Line Layout
    ------------------------------- */
-/* icon · actor · what changed · change · old → new · time. The line flows like a sentence and wraps word by word;
+/* icon · actor · what changed · change · old → new. The line flows like a sentence and wraps word by word;
    wrapped rows line up under the actor because the icon sits in its own column. Compact lines use a single row
    instead (see Compact Mode). */
 li.chat-message.tiny-monitor-msg .tiny-monitor-line {
@@ -139,20 +139,6 @@ li.chat-message.tiny-monitor-msg .tm-detail {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   opacity: 0.7;
-}
-
-/* Top right of the line (it comes first in the line, so the text flows around it) */
-li.chat-message.tiny-monitor-msg .tm-time {
-  display: none;
-  float: right;
-  margin-left: 8px;
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.6;
-}
-
-li.chat-message.tiny-monitor-msg:is(:hover, :focus-within) .tm-time {
-  display: inline;
 }
 
 /* Image icons of custom tracked values */

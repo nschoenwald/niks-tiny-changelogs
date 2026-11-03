@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.18.1
+
+- **Time on Hover**: The time of a changelog message now shows in a small tooltip to the left of the chat log instead of taking room in the message. Messages from an earlier day also show their date.
+
 ## 14.18.0
 
 - The module is now available in German, French, Spanish, Italian, Brazilian Portuguese, Japanese, Polish and Czech.

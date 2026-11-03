@@ -298,7 +298,7 @@ function shouldHideMessage(message) {
 }
 
 /**
- * Give a line from before 14.17.0 the current structure, so it lays out like new lines (icon gap, time on the right).
+ * Give a line from before 14.17.0 the current structure, so it lays out like new lines (icon gap).
  * Old lines are either `<i> <span.tm-actor> <span.tm-text>` or, for items and effects, `<i> link text` without spans.
  */
 function upgradeLegacyLine(line) {
@@ -322,6 +322,14 @@ function upgradeLegacyLine(line) {
   if (actor) line.append(" ", wrap("tm-actor", [actor]));
   line.append(" ", wrap("tm-text", rest));
   for (const node of nodes.slice(0, Math.max(actorIndex, 0))) node.remove();
+}
+
+/** A message's time ("08:19"), with the date for messages from an earlier day. */
+function formatTime(timestamp) {
+  const date = new Date(timestamp);
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (date.toDateString() === new Date().toDateString()) return time;
+  return `${date.toLocaleDateString()} ${time}`;
 }
 
 const MESSAGE_STYLES = new Set(["tinted", "solid", "accent"]);
@@ -352,16 +360,14 @@ function applyMonitorStyling(message, html) {
   if (customColor) li.style.setProperty("--tm-tone", customColor);
   if (getWorldBool("compactMessages", true)) li.classList.add("tm-compact");
 
-  // Time, shown on hover; added at render time so it also appears on older messages
   const line = li.querySelector(".tiny-monitor-line");
   if (line) upgradeLegacyLine(line);
-  if (line && message.timestamp) {
-    const time = document.createElement("time");
-    time.className = "tm-time";
-    time.dateTime = new Date(message.timestamp).toISOString();
-    time.textContent = new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    // First in the line: it floats to the top right corner, whatever the line's length
-    line.prepend(time);
+
+  // Time as a tooltip left of the chat log (see patchTooltipAnchor), so it takes no room in the line. Links without a
+  // direction of their own open their tooltips to the left as well.
+  if (message.timestamp) {
+    li.dataset.tooltipText = formatTime(message.timestamp);
+    li.dataset.tooltipDirection = "LEFT";
   }
 
   // Merged messages open on keyboard focus or tap as well as on hover
@@ -433,9 +439,9 @@ function patchChatScroll() {
 }
 
 /**
- * Tooltips that open to the left of a link (e.g. dnd5e's item previews) cover the chat log when the link is in a
- * changelog message. For those links, anchor them to the left edge of the sidebar (or chat popout) instead; the
- * vertical position still follows the link.
+ * Tooltips that open to the left of a link (e.g. dnd5e's item previews) or of a changelog message (its time) cover the
+ * chat log. For those, anchor them to the left edge of the sidebar (or chat popout) instead; the vertical position
+ * still follows the link or message.
  */
 function patchTooltipAnchor() {
   wrapMethod("foundry.helpers.interaction.TooltipManager.prototype._setAnchor", function (wrapped, direction) {
