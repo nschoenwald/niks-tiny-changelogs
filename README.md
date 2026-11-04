@@ -13,7 +13,7 @@ It keeps track of health changes, currency adjustments, item inventory updates, 
 - **Foundry VTT**: V13 – V14
 - **System**: System-agnostic (Dedicated tracking for DnD5e, PF2e, Shadowdark, Mörk Borg, Demonlord)
 - **Optional**: [libWrapper](https://github.com/ruipin/fvtt-lib-wrapper) is used when active
-- **Languages**: Nine languages, see [Languages](#languages).
+- **Languages**: English and German, see [Languages](#languages).
 ---
 
 ## Features
@@ -148,9 +148,9 @@ If the module fails to detect your system's data structure automatically, disabl
 
 ## Languages
 
-🇬🇧 English · 🇩🇪 Deutsch · 🇫🇷 Français · 🇪🇸 Español · 🇮🇹 Italiano · 🇧🇷 Português (Brasil) · 🇯🇵 日本語 · 🇵🇱 Polski · 🇨🇿 Čeština
+🇬🇧 English · 🇩🇪 Deutsch
 
-All translations were written with AI help and may contain mistakes. Corrections are welcome as an issue or pull request.
+Translations into other languages by native speakers are welcome as an issue or pull request.
 
 ---
 

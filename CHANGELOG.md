@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.18.2
+### Removed
+- Removed the French, Spanish, Italian, Brazilian Portuguese, Japanese, Polish and Czech translations. They were machine-translated and never checked by a native speaker. Players who use Foundry in one of these languages now see this module in English. Translations by native speakers are welcome as an issue or pull request.
+
 ## 14.18.1
 
 - **Time on Hover**: The time of a changelog message now shows in a small tooltip to the left of the chat log instead of taking room in the message. Messages from an earlier day also show their date.
