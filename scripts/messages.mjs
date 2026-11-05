@@ -446,7 +446,8 @@ function patchChatScroll() {
 function patchTooltipAnchor() {
   wrapMethod("foundry.helpers.interaction.TooltipManager.prototype._setAnchor", function (wrapped, direction) {
     const container = this.element?.closest?.(".tiny-monitor-msg")?.closest("#sidebar, .chat-popout, #chat-notifications");
-    if (!container || direction !== this.constructor.TOOLTIP_DIRECTIONS.LEFT) return wrapped(direction);
+    const result = wrapped(direction);
+    if (!container || direction !== this.constructor.TOOLTIP_DIRECTIONS.LEFT) return result;
     const pad = this.constructor.TOOLTIP_MARGIN_PX;
     const link = this.element.getBoundingClientRect();
     const { innerWidth } = this.tooltip.ownerDocument.defaultView;
