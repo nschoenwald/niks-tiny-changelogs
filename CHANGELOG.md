@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.18.3
+### Fixed
+- **libWrapper**: Tooltips on changelog messages (the message time, item previews) now keep opening beside the chat log instead of over it. Before, libWrapper could switch this off after the first hover and show a conflict warning. Thanks to zxlit for the fix.
+
 ## 14.18.2
 ### Removed
 - Removed the French, Spanish, Italian, Brazilian Portuguese, Japanese, Polish and Czech translations. They were machine-translated and never checked by a native speaker. Players who use Foundry in one of these languages now see this module in English. Translations by native speakers are welcome as an issue or pull request.
