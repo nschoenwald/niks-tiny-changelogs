@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.20.2
+### Fixed
+- **Compact Messages**: Actor names are no longer cut off while there is still room in the line. When a line is too long, the old and new value give way first, then what changed; the change itself always stays.
+
 ## 14.20.1
 ### Changed
 - **Easier to Scan**: What changed (`HP`, `XP`, an item name) now sits on the right, right before its numbers (`HP 21 → 17 −4`), instead of next to the actor with a gap after it.

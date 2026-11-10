@@ -245,7 +245,8 @@ li.chat-message.tiny-monitor-msg a.content-link:hover {
 /* -------------------------------
    Compact Mode (one line; expands on hover, keyboard focus or tap)
    ------------------------------- */
-/* A single row: the actor keeps up to 45% of it, then the old and new value give way first and the text last */
+/* A single row. When it doesn't fit, the old and new value give way first, then what changed; the actor is cut only
+   at its maximum width. The change itself always stays. */
 li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tiny-monitor-line {
   display: flex;
   flex-wrap: nowrap;
@@ -253,9 +254,11 @@ li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tiny-mon
   overflow: hidden;
 }
 
+/* The actor doesn't shrink (a shrink of a fraction of a pixel already shows the ellipsis); its maximum width leaves
+   room for a short what changed (its minimum width) and the change */
 li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-actor {
   flex: 0 0 auto;
-  max-width: 45%;
+  max-width: calc(100% - 6.5em);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -267,10 +270,19 @@ li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-text 
   text-overflow: ellipsis;
 }
 
+/* Lines without numbers: the long text gives way before the actor and reads from the left */
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tiny-monitor-line:not(:has(> :is(.tm-values, .tm-delta, .tm-detail))) .tm-text {
+  flex: 1 100 auto;
+  text-align: left;
+}
+
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tiny-monitor-line:not(:has(> :is(.tm-values, .tm-delta, .tm-detail))) .tm-actor {
+  max-width: 60%;
+}
+
+/* The two numbers become items of the row, so the old and new value can give way before the actor */
 li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-values {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
+  display: contents;
 }
 
 li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-delta {
