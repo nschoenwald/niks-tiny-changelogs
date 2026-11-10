@@ -100,14 +100,15 @@ li.chat-message.tiny-monitor-msg.tm-style-solid .tm-detail {
 /* -------------------------------
    Line Layout
    ------------------------------- */
-/* icon · actor · what changed · old → new · change. The old and new value and the change sit in two right-aligned
-   columns of a minimum width at the right edge, so the changes of consecutive messages line up under each other.
-   New lines wrap both in .tm-values so they move to the next row together. When a line doesn't fit, what changed
-   moves to its own row, then the values (still at the right edge, via flex-end); rows line up under the actor because
-   the icon sits in its own column. Compact lines keep everything on one row (see Compact Mode). Lines posted before
-   14.20.0 have no .tm-values and the change before the old and new value; `order` puts the change last for them too. */
+/* icon · actor ··· what changed · old → new · change. The actor sits at the left; what changed, the old and new value
+   and the change form one group at the right edge (the free space goes into the actor's auto margin). The change is
+   the right-most column, right-aligned with a minimum width, so the changes of consecutive messages line up under
+   each other. New lines wrap the two numbers in .tm-values so they move to the next row together. When a line
+   doesn't fit, the group moves to the next row, still at the right edge (via flex-end); rows line up under the actor
+   because the icon sits in its own column. Compact lines keep everything on one row (see Compact Mode). Lines posted
+   before 14.20.0 have no .tm-values and the change before the old and new value; `order` puts the change last for
+   them too. */
 li.chat-message.tiny-monitor-msg .tiny-monitor-line {
-  --tm-col-detail: 5.2em;
   --tm-col-delta: 2.4em;
   position: relative;
   display: flex;
@@ -122,10 +123,12 @@ li.chat-message.tiny-monitor-msg .tiny-monitor-line {
   overflow-wrap: break-word;
 }
 
-/* Takes the free space of its row, so the columns stay at the right edge */
+/* Sits right before the numbers, as part of the change; right-aligned so it stays next to them when it wraps or
+   when compact mode gives it a minimum width */
 li.chat-message.tiny-monitor-msg .tm-text {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
+  text-align: right;
 }
 
 /* Lines without numbers (equipping, effects, renames) flow like a sentence and wrap word by word */
@@ -139,7 +142,6 @@ li.chat-message.tiny-monitor-msg .tm-values {
   display: inline-flex;
   align-items: baseline;
   column-gap: 0.35em;
-  margin-left: auto;
   white-space: nowrap;
 }
 
@@ -153,7 +155,7 @@ li.chat-message.tiny-monitor-msg .tm-icon {
   color: var(--tm-ink-tone);
 }
 
-/* The auto margin keeps the actor at the left when what changed wraps to the next row */
+/* The auto margin takes the free space: the actor stays at the left, the rest at the right edge */
 li.chat-message.tiny-monitor-msg .tm-actor {
   flex: 0 1 auto;
   min-width: 0;
@@ -175,8 +177,6 @@ li.chat-message.tiny-monitor-msg .tm-delta {
 li.chat-message.tiny-monitor-msg .tm-detail {
   order: 1;
   flex: 0 0 auto;
-  min-width: var(--tm-col-detail);
-  text-align: right;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -261,7 +261,7 @@ li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-actor
 }
 
 li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-text {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 2.5em;
   overflow: hidden;
   text-overflow: ellipsis;

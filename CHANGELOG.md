@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.20.1
+### Changed
+- **Easier to Scan**: What changed (`HP`, `XP`, an item name) now sits on the right, right before its numbers (`HP 21 → 17 −4`), instead of next to the actor with a gap after it.
+
 ## 14.20.0
 ### Changed
 - **Easier to Scan**: The old and new value (`21 → 17`) and the change (`−4`) now sit in two columns at the right edge of each message, with the change last. The changes of messages below each other line up in one column, so a string of HP changes can be read at a glance. Messages already in the chat get the new layout too.
