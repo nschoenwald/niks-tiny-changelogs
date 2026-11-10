@@ -143,6 +143,10 @@ If the module fails to detect your system's data structure automatically, disabl
 ## Compatibility
 - **Foundry VTT**: Verified for V13 and V14.
 - **Systems**: Fully supports `dnd5e` (5.2+ and 6.0+), `pf2e`, `shadowdark`, `demonlord`, and `morkborg` out of the box. Other systems are supported dynamically or via manual configuration.
+- **[Nik's Give & Take](https://github.com/nschoenwald/niks-give-and-take)**: Items and money handed over with Give & Take aren't logged here, since Give & Take posts its own message for each transfer.
+
+### For Module Developers
+To keep a document change out of the changelog, pass `niksTinyChangelogs: { skip: true }` in the operation options, e.g. `item.update(changes, { niksTinyChangelogs: { skip: true } })` or `Item.createDocuments(data, { parent, niksTinyChangelogs: { skip: true } })`. This works for creating, updating and deleting items and for updating actors.
 
 ---
 

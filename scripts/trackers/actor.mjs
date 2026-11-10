@@ -9,7 +9,8 @@ import { stashCurrency, reportCurrency } from "../currency.mjs";
 import ChangeDebouncer from "../debounce.mjs";
 import { t } from "../i18n.mjs";
 import {
-  describeChange, escapeHTML, formatLine, getActorLink, getDelta, readNumber, toneOf, updateTouchesRoots, willUpdatePath
+  describeChange, escapeHTML, formatLine, getActorLink, getDelta, isSkipped, readNumber, toneOf, updateTouchesRoots,
+  willUpdatePath
 } from "../utils.mjs";
 
 let cachedActiveCustomResources = null;
@@ -133,7 +134,7 @@ const debouncer = new ChangeDebouncer(reportActorChanges);
 
 export function registerActorTracking() {
   Hooks.on("preUpdateActor", (actor, change, options, userId) => {
-    if (!adapter.isTrackedActor(actor)) return;
+    if (isSkipped(options) || !adapter.isTrackedActor(actor)) return;
     // Skip updates that cannot touch anything tracked (e.g. flag-only, name, image or ownership updates)
     if (!updateTouchesRoots(change, getWatchedRoots())) return;
     const stash = stashActorChanges(actor, change);

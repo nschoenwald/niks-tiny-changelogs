@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.19.0
+### Added
+- **Nik's Give & Take**: Items and money handed over with Nik's Give & Take no longer show up as separate "added" and "deleted" lines, since Give & Take already posts a message for each transfer.
+
 ## 14.18.3
 ### Fixed
 - **libWrapper**: Tooltips on changelog messages (the message time, item previews) now keep opening beside the chat log instead of over it. Before, libWrapper could switch this off after the first hover and show a conflict warning. Thanks to zxlit for the fix.

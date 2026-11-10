@@ -3,6 +3,17 @@
 import { MAX_NAME_CHARS } from "./constants.mjs";
 import { getWorldBool } from "./settings.mjs";
 
+/**
+ * Whether another module asked not to log this document operation, by passing
+ * `{ niksTinyChangelogs: { skip: true } }` in the operation options (create, update or delete). Used by
+ * Nik's Give & Take, which posts its own message for a transfer.
+ * @param {object} [options]  The operation options passed to the document hooks.
+ * @returns {boolean}
+ */
+export function isSkipped(options) {
+  return options?.niksTinyChangelogs?.skip === true;
+}
+
 export function escapeHTML(str) {
   return foundry.utils.escapeHTML(String(str ?? ""));
 }

@@ -9,7 +9,7 @@ import { buildRecipients, createEmitter } from "../messages.mjs";
 import { stashCurrency, reportCurrency } from "../currency.mjs";
 import ChangeDebouncer from "../debounce.mjs";
 import {
-  describeChange, escapeHTML, formatLine, getActorLink, getDelta, getItemLink, readNumber, readRaw, toneOf,
+  describeChange, escapeHTML, formatLine, getActorLink, getDelta, getItemLink, isSkipped, readNumber, readRaw, toneOf,
   updateTouchesRoots, willUpdatePath
 } from "../utils.mjs";
 import { getTrackedActor } from "./tracked-actor.mjs";
@@ -113,7 +113,7 @@ const debouncer = new ChangeDebouncer(reportItemChanges);
 
 export function registerItemTracking() {
   Hooks.on("createItem", (item, options, userId) => {
-    if (userId !== game.userId || !getWorldBool("trackItemChanges")) return;
+    if (userId !== game.userId || isSkipped(options) || !getWorldBool("trackItemChanges")) return;
     const actor = getTrackedActor(item.parent);
     if (!actor || isNameBlacklisted(item.name)) return;
 
@@ -129,7 +129,7 @@ export function registerItemTracking() {
   });
 
   Hooks.on("preUpdateItem", (item, change, options, userId) => {
-    if (!getTrackedActor(item.parent)) return;
+    if (isSkipped(options) || !getTrackedActor(item.parent)) return;
     if (!updateTouchesRoots(change, ITEM_WATCHED_ROOTS)) return;
     const stash = stashItemChanges(item, change);
     if (!stash) return;
@@ -140,14 +140,14 @@ export function registerItemTracking() {
   });
 
   Hooks.on("updateItem", (item, change, options, userId) => {
-    if (userId !== game.userId || !(item.parent instanceof Actor)) return;
+    if (userId !== game.userId || isSkipped(options) || !(item.parent instanceof Actor)) return;
     const stash = options?.[MOD_ID]?.[item.id];
     // An update without tracked changes still extends a pending report
     if (stash || debouncer.has(item)) debouncer.push(item, stash);
   });
 
   Hooks.on("preDeleteItem", (item, options, userId) => {
-    if (!getWorldBool("trackItemChanges")) return;
+    if (isSkipped(options) || !getWorldBool("trackItemChanges")) return;
     const actor = getTrackedActor(item.parent);
     if (!actor || isNameBlacklisted(item.name)) return;
 
