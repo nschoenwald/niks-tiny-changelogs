@@ -100,17 +100,47 @@ li.chat-message.tiny-monitor-msg.tm-style-solid .tm-detail {
 /* -------------------------------
    Line Layout
    ------------------------------- */
-/* icon · actor · what changed · change · old → new. The line flows like a sentence and wraps word by word;
-   wrapped rows line up under the actor because the icon sits in its own column. Compact lines use a single row
-   instead (see Compact Mode). */
+/* icon · actor · what changed · old → new · change. The old and new value and the change sit in two right-aligned
+   columns of a minimum width at the right edge, so the changes of consecutive messages line up under each other.
+   New lines wrap both in .tm-values so they move to the next row together. When a line doesn't fit, what changed
+   moves to its own row, then the values (still at the right edge, via flex-end); rows line up under the actor because
+   the icon sits in its own column. Compact lines keep everything on one row (see Compact Mode). Lines posted before
+   14.20.0 have no .tm-values and the change before the old and new value; `order` puts the change last for them too. */
 li.chat-message.tiny-monitor-msg .tiny-monitor-line {
+  --tm-col-detail: 5.2em;
+  --tm-col-delta: 2.4em;
   position: relative;
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  column-gap: 0.35em;
   padding-left: 20px;
   font-size: 13px;
   line-height: 1.35;
   color: inherit;
   overflow-wrap: break-word;
+}
+
+/* Takes the free space of its row, so the columns stay at the right edge */
+li.chat-message.tiny-monitor-msg .tm-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Lines without numbers (equipping, effects, renames) flow like a sentence and wrap word by word */
+li.chat-message.tiny-monitor-msg .tiny-monitor-line:not(:has(> :is(.tm-values, .tm-delta, .tm-detail))) {
+  display: block;
+}
+
+li.chat-message.tiny-monitor-msg .tm-values {
+  order: 1;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  column-gap: 0.35em;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 li.chat-message.tiny-monitor-msg .tm-icon {
@@ -123,11 +153,19 @@ li.chat-message.tiny-monitor-msg .tm-icon {
   color: var(--tm-ink-tone);
 }
 
+/* The auto margin keeps the actor at the left when what changed wraps to the next row */
 li.chat-message.tiny-monitor-msg .tm-actor {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-right: auto;
   font-weight: 600;
 }
 
 li.chat-message.tiny-monitor-msg .tm-delta {
+  order: 2;
+  flex: 0 0 auto;
+  min-width: var(--tm-col-delta);
+  text-align: right;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -135,6 +173,10 @@ li.chat-message.tiny-monitor-msg .tm-delta {
 }
 
 li.chat-message.tiny-monitor-msg .tm-detail {
+  order: 1;
+  flex: 0 0 auto;
+  min-width: var(--tm-col-detail);
+  text-align: right;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -206,8 +248,7 @@ li.chat-message.tiny-monitor-msg a.content-link:hover {
 /* A single row: the actor keeps up to 45% of it, then the old and new value give way first and the text last */
 li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tiny-monitor-line {
   display: flex;
-  align-items: baseline;
-  column-gap: 0.3em;
+  flex-wrap: nowrap;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -224,6 +265,12 @@ li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-text 
   min-width: 2.5em;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-values {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 li.chat-message.tiny-monitor-msg.tm-compact:not(:hover, :focus-within) .tm-delta {

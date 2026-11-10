@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.20.0
+### Changed
+- **Easier to Scan**: The old and new value (`21 → 17`) and the change (`−4`) now sit in two columns at the right edge of each message, with the change last. The changes of messages below each other line up in one column, so a string of HP changes can be read at a glance. Messages already in the chat get the new layout too.
+
 ## 14.19.0
 ### Added
 - **Nik's Give & Take**: Items and money handed over with Nik's Give & Take no longer show up as separate "added" and "deleted" lines, since Give & Take already posts a message for each transfer.

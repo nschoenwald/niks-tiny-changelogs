@@ -44,7 +44,7 @@ export function icon(name) {
 }
 
 /**
- * One changelog line: icon, actor, what changed, then the change ("+5") and its old and new value ("10 → 15").
+ * One changelog line: icon, actor, what changed, then the old and new value ("10 → 15") and the change ("+5").
  * The old and new value are left out with Simplified Output.
  * @param {object} parts
  * @param {string} [parts.icon]      Font Awesome icon name
@@ -61,8 +61,11 @@ export function formatLine({ icon: iconName, iconHtml, actor, text = "", delta =
     `<span class="tm-actor">${actor}</span>`,
     `<span class="tm-text">${text}</span>`
   ];
-  if (delta) parts.push(`<span class="tm-delta">${delta}</span>`);
-  if (detail && !getWorldBool("simpleOutput")) parts.push(`<span class="tm-detail">${detail}</span>`);
+  // Old and new value, then the change: two right-aligned columns that wrap together (see Line Layout in the CSS)
+  const values = [];
+  if (detail && !getWorldBool("simpleOutput")) values.push(`<span class="tm-detail">${detail}</span>`);
+  if (delta) values.push(`<span class="tm-delta">${delta}</span>`);
+  if (values.length) parts.push(`<span class="tm-values">${values.join(" ")}</span>`);
   return parts.join(" ");
 }
 
