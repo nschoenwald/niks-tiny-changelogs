@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.21.0
+### Added
+- **French translation**: The module is now available in French, reviewed by Kameleau. Thank you!
+
 ## 14.20.2
 ### Fixed
 - **Compact Messages**: Actor names are no longer cut off while there is still room in the line. When a line is too long, the old and new value give way first, then what changed; the change itself always stays.

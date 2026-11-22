@@ -13,7 +13,7 @@ It keeps track of health changes, currency adjustments, item inventory updates, 
 - **Foundry VTT**: V13 – V14
 - **System**: System-agnostic (Dedicated tracking for DnD5e, PF2e, Shadowdark, Mörk Borg, Demonlord)
 - **Optional**: [libWrapper](https://github.com/ruipin/fvtt-lib-wrapper) is used when active
-- **Languages**: English and German, see [Languages](#languages).
+- **Languages**: English, German and French, see [Languages](#languages).
 ---
 
 ## Features
@@ -152,7 +152,7 @@ To keep a document change out of the changelog, pass `niksTinyChangelogs: { skip
 
 ## Languages
 
-🇬🇧 English · 🇩🇪 Deutsch
+🇬🇧 English · 🇩🇪 Deutsch · 🇫🇷 Français (thanks Kameleau)
 
 Translations into other languages by native speakers are welcome as an issue or pull request.
 
